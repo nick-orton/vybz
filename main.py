@@ -25,17 +25,18 @@ role = JUNIOR_DEV
 
 #template = read_role("prompts/epi.md")
 
-intent = f""" create a module that gets a google genai client and prints out the models available for the current API Key.  It should filter for the generative models.  I want to use these strings in the client.models.generate_content method.  It should return a list of strings
+intent = f""" Create a code snippet such that it takes the response from the generate_content command to genai.client and continuosly appends it to a log file.
+- Make the log file configurable and ensure that it's there creating it if it doesn't.
+- Put a dividor into the log file such that when we re-run it you can easily see the different outputs.  Append them with a timestamp.
+- It isn't necessary to configure the client.  Create this whole thing as a function that takes the client as a parameter
+- Also send the response to standard out
 """
 
-final_prompt = f"""
+prompt = f"""
 {role}
 
 {intent}
 """
-response = client.models.generate_content(
-    model=MODEL_ID,
-    contents=final_prompt
-)
+LOG_FILE="out.log"
+vibez.generate_and_continuous_log(client,MODEL_ID,prompt,LOG_FILE)
 
-print(response.text)

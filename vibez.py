@@ -1,6 +1,10 @@
 import os
+import sys
+import datetime
+from pathlib import Path
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 from typing import List
 
 def configure_genai_client() -> None:
@@ -42,3 +46,84 @@ def get_models(client: genai.Client) -> List[str]:
         return model_list
     except Exception as e:
         raise RuntimeError(f"Failed to fetch models from Gemini API: {str(e)}") from e
+
+def generate_and_continuous_log(
+    client: genai.Client,
+    model_id: str,
+    prompt: str,
+    log_file_path: str = "interaction_log.txt"
+) -> str:
+    """
+    Generates content via Google Gen AI SDK (v1.57), streams response to stdout,
+    and continuously appends output to a specific log file with timestamps.
+
+    Args:
+        client: Configured google.genai.Client instance.
+        model_id: Target model (e.g., 'gemini-2.0-flash-exp').
+        prompt: User input prompt.
+        log_file_path: Path to the log file. Created if non-existent.
+
+    Returns:
+        The complete generated text response.
+
+    Raises:
+        IOError: If file operations fail.
+        Exception: If the API call fails.
+    """
+    log_path = Path(log_file_path)
+    timestamp = datetime.datetime.now().isoformat()
+    divider = f"\n\n{'='*40}\nTIMESTAMP: {timestamp}\nMODEL: {model_id}\n{'='*40}\n"
+
+    full_response = []
+
+    try:
+        # Ensure parent directory exists
+        if not log_path.parent.exists():
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Open file in append mode. We keep it open during the stream to ensure
+        # "continuous" appending as chunks arrive.
+        with open(log_path, "a", encoding="utf-8") as f:
+            # Write metadata header to log
+            f.write(divider)
+            #TODO say which role was being used
+            #f.write(f"PROMPT: {prompt}\n\nRESPONSE:\n")
+            f.write(f"RESPONSE:\n")
+
+            # Execute generation with streaming
+            response_stream = client.models.generate_content_stream(
+                model=model_id,
+                contents=prompt,
+                config=types.GenerateContentConfig(response_mime_type="text/plain"),
+            )
+
+            for chunk in response_stream:
+                if chunk.text:
+                    # Echo to Standard Out
+                    sys.stdout.write(chunk.text)
+                    sys.stdout.flush()
+
+                    # Append to Log File immediately
+                    f.write(chunk.text)
+
+                    # Accumulate for return
+                    full_response.append(chunk.text)
+
+            # Trailing newline for log file readability
+            f.write("\n")
+            print() # Trailing newline for stdout
+
+    except Exception as e:
+        error_msg = f"\n[ERROR] Failed during generation/logging: {str(e)}\n"
+        sys.stderr.write(error_msg)
+
+        # Attempt to log the error if file system is accessible
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(error_msg)
+        except IOError:
+            pass
+        raise e
+
+    return "".join(full_response)
+
