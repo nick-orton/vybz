@@ -2,7 +2,7 @@
 """
 Auto-Commit Generator utilizing Google Gemini 3.0.
 
-This script analyzes staged git changes and optional context logs to generate
+Analyzes staged git changes and optional context logs to generate
 professional, Conventional Commit messages.
 
 Usage:
@@ -25,26 +25,28 @@ from google.genai import types
 # Configuration & Constants
 # -----------------------------------------------------------------------------
 
-# Using Gemini 2.0 Flash as the current accessible SOTA for speed/cost.
-# If Gemini 3.0 is available in your region/tier, update this string.
 TARGET_MODEL = "gemini-3-flash-preview"
 
-SYSTEM_INSTRUCTION = """
-You are a Senior Release Engineer and Technical Writer.
-Your task is to generate a git commit message based on:
-1. The `git diff --cached` output (The Truth).
-2. An optional vibe-coding log file (The Context/Why).
+# Text content formatted to stay within 79-character width.
+SYSTEM_INSTRUCTION = (
+    "You are a Senior Release Engineer and Technical Writer.\n"
+    "Your task is to generate a git commit message based on:\n"
+    "1. The `git diff --cached` output (The Truth).\n"
+    "2. An optional vibe-coding log file (The Context/Why).\n\n"
+    "**Rules:**\n"
+    "1. Use the **Conventional Commits** specification.\n"
+    "   Format: <type>(<scope>): <subject> followed by a blank line and\n"
+    "   a <body>.\n"
+    "   Types: feat, fix, docs, style, refactor, perf, test, build, ci,\n"
+    "   chore, revert.\n"
+    "2. The <subject> must be imperative, lower-case, no period at end.\n"
+    "3. The <body> should explain *what* and *why*, not just *how*.\n"
+    "4. Context: If logs are provided, prioritize the user's intent to\n"
+    "   explain the 'Why'.\n"
+    "5. Human Changes: Acknowledge that humans may have modified the code.\n"
+    "6. Output: Return ONLY the commit message. No markdown or preamble."
+)
 
-**Rules:**
-1. Use the **Conventional Commits** specification.
-   Format: `<type>(<scope>): <subject>` followed by a blank line and a `<body>`.
-   Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert.
-2. The `<subject>` must be imperative, lower-case, no period at end (e.g., "add feature" not "Added feature").
-3. The `<body>` should explain *what* and *why*, not just *how*.
-4. **Context Integration:** If a log file is provided, prioritize the user's *intent* found in the logs to explain the "Why".
-5. **Human Changes:** Acknowledge that humans may have modified the code after the AI agents. The Diff is the ultimate source of truth for code changes.
-6. **Output:** Return ONLY the commit message. Do not include markdown code blocks (```), phrasing like "Here is the commit", or preamble.
-"""
 
 # -----------------------------------------------------------------------------
 # Exceptions
@@ -54,9 +56,11 @@ class GitOperationError(Exception):
     """Raised when a git command fails or environment is invalid."""
     pass
 
+
 class GenAIConfigurationError(Exception):
     """Raised when API keys or client configuration is invalid."""
     pass
+
 
 # -----------------------------------------------------------------------------
 # Services
@@ -74,7 +78,6 @@ class GitService:
             GitOperationError: If not in a git repo.
         """
         try:
-            # Redirect output to devnull to keep stdout clean
             subprocess.run(
                 ["git", "rev-parse", "--is-inside-work-tree"],
                 check=True,
@@ -82,9 +85,9 @@ class GitService:
                 stderr=subprocess.DEVNULL
             )
         except subprocess.CalledProcessError:
-            raise GitOperationError("Current directory is not a git repository.")
+            raise GitOperationError("Directory is not a git repository.")
         except FileNotFoundError:
-            raise GitOperationError("Git binary not found. Please install git.")
+            raise GitOperationError("Git binary not found. Install git.")
 
     @staticmethod
     def get_staged_diff() -> str:
@@ -95,10 +98,9 @@ class GitService:
             str: The raw diff output.
 
         Raises:
-            GitOperationError: If fetching the diff fails or no changes are staged.
+            GitOperationError: If fetching the diff fails or none staged.
         """
         try:
-            # --cached implies staged changes
             result = subprocess.run(
                 ["git", "diff", "--cached"],
                 capture_output=True,
@@ -109,62 +111,63 @@ class GitService:
 
             if not diff:
                 raise GitOperationError(
-                    "No staged changes found. Run 'git add <file>' first."
+                    "No staged changes. Run 'git add <file>' first."
                 )
             return diff
         except subprocess.CalledProcessError as e:
             raise GitOperationError(f"Failed to get git diff: {e.stderr}")
 
+
 class GeminiCommitAgent:
     """Wrapper for the Google Gen AI SDK (v1.57+)."""
 
-    def __init__(self, api_key: str | None = None):
+    def __init__(self, api_key: Optional[str] = None) -> None:
         """
         Initialize the GenAI client.
 
         Args:
-            api_key: The Google API Key. Defaults to env var GEMINI_API_KEY.
+            api_key: The Google API Key.
         """
         _key = api_key or os.getenv("GEMINI_API_KEY")
         if not _key:
             raise GenAIConfigurationError(
-                "GEMINI_API_KEY not found in environment variables."
+                "GEMINI_API_KEY not found in environment."
             )
 
         self.client = genai.Client(api_key=_key)
 
-    def generate_message(self, diff: str, context_log: str | None) -> str:
+    def generate_message(self, diff: str, context: Optional[str]) -> str:
         """
         Generates a commit message using the LLM.
 
         Args:
             diff: The raw git diff.
-            context_log: Optional string content of agent logs.
+            context: Optional string content of agent logs.
 
         Returns:
             str: The generated commit message.
         """
-        user_content_parts = [f"### GIT DIFF (Staged Changes)\n{diff}"]
+        parts = [f"### GIT DIFF (Staged Changes)\n{diff}"]
 
-        if context_log:
-            user_content_parts.append(f"\n### AGENT/VIBE LOGS (Context)\n{context_log}")
-            user_content_parts.append(
-                "\nNote: The logs describe the intent. The Diff shows the actual result. "
-                "Synthesize the message based on the actual result (Diff), using the logs "
-                "to explain the motivation."
+        if context:
+            parts.append(f"\n### AGENT LOGS (Context)\n{context}")
+            parts.append(
+                "\nNote: The logs describe intent. The Diff shows result. "
+                "Synthesize the message based on Diff, using logs for "
+                "motivation."
             )
 
-        prompt_content = "\n".join(user_content_parts)
+        prompt = "\n".join(parts)
 
         try:
-            # Unified SDK v1.57+ call structure
+            config = types.GenerateContentConfig(
+                system_instruction=SYSTEM_INSTRUCTION,
+                temperature=0.2,
+            )
             response = self.client.models.generate_content(
                 model=TARGET_MODEL,
-                contents=prompt_content,
-                config=types.GenerateContentConfig(
-                    system_instruction=SYSTEM_INSTRUCTION,
-                    temperature=0.2, # Low temperature for deterministic formatting
-                )
+                contents=prompt,
+                config=config
             )
 
             if not response.text:
@@ -173,8 +176,8 @@ class GeminiCommitAgent:
             return response.text.strip()
 
         except Exception as e:
-            # Catching generic Exception as SDK specific exceptions can vary
             return f"Error generating commit message: {str(e)}"
+
 
 # -----------------------------------------------------------------------------
 # Main Execution
@@ -182,9 +185,8 @@ class GeminiCommitAgent:
 
 def main() -> None:
     """Main entry point for the script."""
-    parser = argparse.ArgumentParser(
-        description="Generate Conventional Commit messages from staged changes."
-    )
+    desc = "Generate Conventional Commit messages from staged changes."
+    parser = argparse.ArgumentParser(description=desc)
     parser.add_argument(
         "--log-file",
         type=Path,
@@ -194,33 +196,27 @@ def main() -> None:
     args = parser.parse_args()
 
     try:
-        # 1. Validate Git Environment
         GitService.assert_git_repo()
-
-        # 2. Get Staged Changes
         diff_text = GitService.get_staged_diff()
 
-        # 3. Load Context (if provided)
         context_content: Optional[str] = None
         if args.log_file:
             if not args.log_file.exists():
-                print(f"Warning: Log file '{args.log_file}' not found. Ignoring.", file=sys.stderr)
+                msg = f"Warning: Log '{args.log_file}' not found. Ignoring."
+                print(msg, file=sys.stderr)
             else:
                 try:
                     context_content = args.log_file.read_text(encoding='utf-8')
                 except Exception as e:
-                    print(f"Warning: Could not read log file: {e}. Ignoring.", file=sys.stderr)
+                    msg = f"Warning: Could not read log: {e}. Ignoring."
+                    print(msg, file=sys.stderr)
 
-        # 4. Generate Commit Message
         load_dotenv()
-        api_key = os.getenv("GEMINI_API_KEY")
-        agent = GeminiCommitAgent(api_key)
+        agent = GeminiCommitAgent()
 
-        print("Analyzing changes and generating commit message...", file=sys.stderr)
+        print("Analyzing changes...", file=sys.stderr)
         commit_message = agent.generate_message(diff_text, context_content)
 
-        # 5. Output Result
-        # We print to stdout so it can be piped: python script.py | git commit -F -
         print(commit_message)
 
     except (GitOperationError, GenAIConfigurationError) as e:
@@ -229,6 +225,7 @@ def main() -> None:
     except Exception as e:
         print(f"Unexpected Error: {e}", file=sys.stderr)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
