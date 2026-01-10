@@ -5,7 +5,9 @@
 - should be able to have conversations with different agents filling different roles
 - should be able to operate across multiple files and have an understanding of the full directory structure of a project
 
-- should be able to generate a commit message for a series of code changes
-
 # Tactical todos
 - be able to pull code out of the log history
+
+# Git Commit Helper
+- refactor to ensure doesn't go over 80 chars per line
+- have it start git commit and send the text to the buffer

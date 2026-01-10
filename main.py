@@ -23,10 +23,11 @@ print(f"    Loaded: {JUNIOR_DEV.get_identity()}")
 ADVISOR = Agent.from_toml(Path("agents/advisor.toml"))
 print(f"    Loaded: {ADVISOR.get_identity()}")
 
-role = JUNIOR_DEV
+role = SENIOR_DEV
 
+design = read_file("designs/git-commit-helper.txt")
 intent = f"""
-create hello-world.py
+{design}
 """
 
 #MODEL_ID = "gemini-3-flash-preview"
