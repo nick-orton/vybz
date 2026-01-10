@@ -23,20 +23,20 @@ print(f"    Loaded: {JUNIOR_DEV.get_identity()}")
 ADVISOR = Agent.from_toml(Path("agents/advisor.toml"))
 print(f"    Loaded: {ADVISOR.get_identity()}")
 
-role = JUNIOR_DEV
+role = ADVISOR
 
-design = read_file("designs/git-commit-helper-v2-80-chars.md")
-code = read_file("bin/autocommit_gen.py")
+design = read_file("designs/pm-agent.md")
+code = read_file("agents/agent.toml.template")
 intent = f"""
 {design}
 
-```python autocommit_gen.py
+```agent.toml.template
 {code}
 ```
 """
 
-MODEL_ID = "gemini-3-flash-preview"
-#MODEL_ID = "gemini-3-pro-preview"
+#MODEL_ID = "gemini-3-flash-preview"
+MODEL_ID = "gemini-3-pro-preview"
 LOG_FILE="out.log"
 
 vibez.generate_and_continuous_log(
