@@ -1,0 +1,4 @@
+# Python virtual environment directory 
+.venv/
+__pycache__/
+.git
