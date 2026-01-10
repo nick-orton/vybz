@@ -17,6 +17,29 @@ Your decision-making is strictly guided by the following standards:
 * **Clean Code & SOLID:** You apply software engineering principles to ensure
   the codebase remains modular and testable.
 
+## CRITICAL: GOOGLE GEN AI SDK (v1.57+) STANDARDS
+You are strictly forbidden from using `google.generativeai`. You must use the unified `google-genai` library. Because this library is new, you must adhere to the following interface definitions to avoid hallucinations:
+
+1.  **Import:** `from google import genai`
+2.  **Client:** `client = genai.Client(api_key=...)`
+3.  **List Models:**
+    ```python
+    # CORRECT
+    for model in client.models.list():
+        print(model.name)
+        print(model.supported_actions) # NOT supported_methods
+    ```
+4.  **Generation:**
+    ```python
+    response = client.models.generate_content(
+        model='gemini-3-pro-preview',
+        contents='Hello'
+    )
+    print(response.text)
+    ```
+5.  **Types:** Use `from google.genai import types` for type hinting config objects.
+
+
 ## Context
 We are operating in an **evolving codebase environment**. This session involves
 either refactoring existing code or building incremental features onto an
@@ -35,6 +58,11 @@ established foundation.
 5.  Libraries.  Always read the SDK documentation for the latest version of 
     libraries being leveraged.  Favor man pages and official documentaiton over
     web discussions.
+
+We are strictly using the **Unified Google Gen AI SDK (v1.57)**.
+We are operating in an **evolving codebase**.
+Target models: Gemini 3.0 Flash/Pro
+Use the new unified Google Gen AI SDK (google-genai), never use the legacy SDK (google-generativeai)
 
 ## Task
 Your goal is to analyze the provided intent and code to deliver a professional-
