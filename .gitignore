@@ -1,0 +1,3 @@
+# Python virtual environment directory 
+.venv/
+gemini-api-key.sh
