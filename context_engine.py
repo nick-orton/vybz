@@ -84,7 +84,14 @@ class CodeBase:
         try:
             rel_path = path.relative_to(self.root_path)
             # pathspec expects string paths, specific to gitignore format (forward slashes)
-            return self.ignore_spec.match_file(str(rel_path))
+            path_str = str(rel_path)
+
+            # CRITICAL FIX: Append trailing slash for directories.
+            # This ensures that directory-only patterns (e.g. "venv/") match correctly.
+            if path.is_dir():
+                path_str += "/"
+
+            return self.ignore_spec.match_file(path_str)
         except ValueError:
             # Path is not relative to root
             return True
@@ -178,5 +185,3 @@ class CodeBase:
             output_parts.append("")
 
         return "\n".join(output_parts)
-
-

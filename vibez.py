@@ -6,7 +6,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-from typing import List
+from typing import List, Optional
+from context_engine import CodeBase
 
 def configure_genai_client() -> None:
     """
@@ -53,6 +54,7 @@ def generate_and_continuous_log(
     model_id: str,
     agent: Agent,
     intent: str,
+    codebase: Optional[CodeBase] = None,
     log_file_path: str = "interaction_log.txt"
 ) -> str:
     """
@@ -62,7 +64,9 @@ def generate_and_continuous_log(
     Args:
         client: Configured google.genai.Client instance.
         model_id: Target model (e.g., 'gemini-2.0-flash-exp').
-        prompt: User input prompt.
+        agent: The Agent instance defining the persona.
+        intent: User input prompt/intent.
+        codebase: Optional CodeBase snapshot to inject into the LLM context.
         log_file_path: Path to the log file. Created if non-existent.
 
     Returns:
@@ -77,6 +81,10 @@ def generate_and_continuous_log(
 
     # Construct the full system prompt internally
     full_prompt = agent.construct_full_prompt(intent)
+
+    # Inject codebase if provided. Do NOT include in log header.
+    if codebase:
+        full_prompt += "\n\n" + codebase.render()
 
     # Header emphasizes Agent Identity and Intent, not the boilerplate system prompt
     header = (
