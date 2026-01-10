@@ -1,8 +1,11 @@
 import os
 import vibez
+import sys
 from google import genai
 from pathlib import Path
 from agent import Agent
+from context_engine import CodeBase
+from squad import Squad
 
 # Initialize the client.
 client = vibez.configure_genai_client()
@@ -14,35 +17,37 @@ def read_file(filepath: str):
         return
     return filetext.read_text(encoding="utf-8")
 
-SENIOR_DEV = Agent.from_toml(Path("agents/senior-dev.toml"))
-print(f"    Loaded: {SENIOR_DEV.get_identity()}")
+cb = CodeBase(Path("."))
 
-JUNIOR_DEV = Agent.from_toml(Path("agents/junior-dev.toml"))
-print(f"    Loaded: {JUNIOR_DEV.get_identity()}")
-
-ADVISOR = Agent.from_toml(Path("agents/advisor.toml"))
-print(f"    Loaded: {ADVISOR.get_identity()}")
-
-role = ADVISOR
-
-design = read_file("designs/pm-agent.md")
-code = read_file("agents/agent.toml.template")
 intent = f"""
-{design}
-
-```agent.toml.template
-{code}
-```
+implement hello-world.py
 """
 
-#MODEL_ID = "gemini-3-flash-preview"
-MODEL_ID = "gemini-3-pro-preview"
-LOG_FILE="out.log"
+MODEL_ID = "gemini-3-flash-preview"
+#MODEL_ID = "gemini-3-pro-preview"
+LOG_FILE = "out.log"
+AGENT = "junior-dev"
+
+try:
+    # Listing agents triggers lazy initialization/logging
+    available_agents = Squad.list_agents()
+
+    # Select role (defaults to junior-dev, could be arg-parsed)
+    if AGENT not in available_agents:
+        print(f"Error: Default agent '{AGENT}' not found in {available_agents}")
+        sys.exit(1)
+
+    role = Squad.get_agent(AGENT)
+except Exception as e:
+    print(f"Squad Error: {e}", file=sys.stderr)
+    sys.exit(1)
+
 
 vibez.generate_and_continuous_log(
     client=client,
     model_id=MODEL_ID,
     agent=role,
     intent=intent,
+    codebase=cb,
     log_file_path=LOG_FILE
 )
