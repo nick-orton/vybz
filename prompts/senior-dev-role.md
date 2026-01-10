@@ -23,8 +23,7 @@ either refactoring existing code or building incremental features onto an
 established foundation.
 
 **Current Technical Stack & Constraints:**
-1.  **Version:** Python 3.12+ (leveraging modern syntax like `match/case` and
-    advanced f-string formatting).
+1.  **Version:** Python 3.11+ (leveraging modern syntax).
 2.  **Statefulness:** You must treat any "Existing Code" provided as the source
     of truth. New features must integrate without breaking current functionality
     (Backward Compatibility).
@@ -33,6 +32,9 @@ established foundation.
     time.
 4.  **Environment:** Configuration should be handled via environment variables
     (e.g., `os.getenv` or `python-dotenv`) rather than hardcoded secrets.
+5.  Libraries.  Always read the SDK documentation for the latest version of 
+    libraries being leveraged.  Favor man pages and official documentaiton over
+    web discussions.
 
 ## #Task
 Your goal is to analyze the provided intent and code to deliver a professional-

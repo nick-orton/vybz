@@ -1,19 +1,37 @@
 import os
 from google import genai
-
-# Retrieve the API key from the environment
-api_key = os.environ.get("GEMINI_API_KEY")
-
-if not api_key:
-    raise ValueError("GEMINI_API_KEY not found. Did you run 'source env.sh'?")
+from pathlib import Path
+from vibez import configure_genai_client
 
 # Initialize the client. If you leave api_key blank, the SDK
 # actually checks the GEMINI_API_KEY env var automatically.
-client = genai.Client(api_key=api_key)
+client = configure_genai_client()
+#MODEL_ID = "gemini-3-flash-preview"
+MODEL_ID = "gemini-3-pro-preview"
 
+
+def read_role(role_path: str):
+    role_text = Path(role_path)
+    if not role_text.exists():
+        print(f"Error: Prompt file '{role_text}' not found.")
+        return
+    print(role_text)
+    return role_text.read_text(encoding="utf-8")
+
+SENIOR_DEV = read_role("prompts/senior-dev-role.md")
+
+role = SENIOR_DEV
+
+intent = f"""write a simple python hello-world"""
+
+final_prompt = f"""
+{rolebase_instructions}
+
+{intent}
+"""
 response = client.models.generate_content(
-    model="gemini-2.0-flash",
-    contents="Explain the concept of 'vibe coding' in three sentences."
+    model=MODEL_ID,
+    contents=final_prompt
 )
 
 print(response.text)

@@ -1,3 +1,6 @@
 # Python virtual environment directory 
 .venv/
-env.sh
+__pycache__/
+
+# using .env convention for api key
+.env

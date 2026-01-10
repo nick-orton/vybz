@@ -1,0 +1,3 @@
+# pip install -r requirements.txt
+google-genai
+python-dotenv
