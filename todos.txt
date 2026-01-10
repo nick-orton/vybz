@@ -5,10 +5,7 @@
 - should be able to have conversations with different agents filling different roles
 - should be able to operate across multiple files and have an understanding of the full directory structure of a project
 
+- should be able to generate a commit message for a series of code changes
 
 # Tactical todos
 - be able to pull code out of the log history
-- elevate the role to an object.
-  - pass in the role object to the streamer
-  - logs just the role identity instead of the full prompt
-  - logs the intent

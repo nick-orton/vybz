@@ -1,0 +1,13 @@
+name = "{{INSERT NAME HERE}}
+version = 1
+role_spec = """
+{{Describe the role of this agent}}
+"""
+
+operating_context = """
+{{Describe general knowledge of this agent}}
+"""
+
+task_directive = """
+{{Common task directives}}
+"""

@@ -1,6 +1,7 @@
 import os
 import sys
 import datetime
+from agent import Agent
 from pathlib import Path
 from dotenv import load_dotenv
 from google import genai
@@ -50,7 +51,8 @@ def get_models(client: genai.Client) -> List[str]:
 def generate_and_continuous_log(
     client: genai.Client,
     model_id: str,
-    prompt: str,
+    agent: Agent,
+    intent: str,
     log_file_path: str = "interaction_log.txt"
 ) -> str:
     """
@@ -72,7 +74,19 @@ def generate_and_continuous_log(
     """
     log_path = Path(log_file_path)
     timestamp = datetime.datetime.now().isoformat()
-    divider = f"\n\n{'='*40}\nTIMESTAMP: {timestamp}\nMODEL: {model_id}\n{'='*40}\n"
+
+    # Construct the full system prompt internally
+    full_prompt = agent.construct_full_prompt(intent)
+
+    # Header emphasizes Agent Identity and Intent, not the boilerplate system prompt
+    header = (
+        f"\n\n{'='*60}\n"
+        f"TIMESTAMP: {timestamp}\n"
+        f"MODEL:     {model_id}\n"
+        f"AGENT:     {agent.get_identity()}\n"
+        f"INTENT:    {intent}\n"
+        f"{'='*60}\n"
+    )
 
     full_response = []
 
@@ -85,15 +99,13 @@ def generate_and_continuous_log(
         # "continuous" appending as chunks arrive.
         with open(log_path, "a", encoding="utf-8") as f:
             # Write metadata header to log
-            f.write(divider)
-            #TODO say which role was being used
-            #f.write(f"PROMPT: {prompt}\n\nRESPONSE:\n")
+            f.write(header)
             f.write(f"RESPONSE:\n")
 
             # Execute generation with streaming
             response_stream = client.models.generate_content_stream(
                 model=model_id,
-                contents=prompt,
+                contents=full_prompt,
                 config=types.GenerateContentConfig(response_mime_type="text/plain"),
             )
 
