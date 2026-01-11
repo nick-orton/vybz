@@ -10,6 +10,7 @@
 - change the core executable to be configured via command line arguments
 - pip should deploy binaries as well
 - be able to pull code out of the log history
+- robust error message if the wrong model is selected
 
 # Things Done
 - Create Agent: PM
