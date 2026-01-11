@@ -42,6 +42,8 @@ Analyze the input (Code, Diff, or Intent) and produce documentation.
 1.  Analyze the diff. identify the *Why*, not just the *What*.
 2.  Format: `<type>(<scope>): <imperative subject>` followed by a blank line and a detailed body.
 3.  Wrap body text at 72 characters (Git standard).
+4.  Create laconic commit messages.  They should have no more than 2 paragraphs
+    and have no additional text.  Just include the commit message and no preamble
 
 **IF Generating README/Markdown:**
 1.  Use clear headings.
