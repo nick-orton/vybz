@@ -3,6 +3,7 @@ import sys
 import datetime
 from vybz.agent import Agent
 from vybz.context_engine import CodeBase
+import vybz.ui as ui
 from pathlib import Path
 from dotenv import load_dotenv
 from google import genai
@@ -77,7 +78,8 @@ def generate_and_continuous_log(
         Exception: If the API call fails.
     """
     log_path = Path(log_file_path)
-    timestamp = datetime.datetime.now().isoformat()
+    timestamp_iso = datetime.datetime.now().isoformat()
+    timestamp_display = datetime.datetime.now().strftime("%H:%M:%S")
 
     # Construct the full system prompt internally
     full_prompt = agent.construct_full_prompt(intent)
@@ -86,14 +88,25 @@ def generate_and_continuous_log(
     if codebase:
         full_prompt += "\n\n" + codebase.render()
 
+    # Render UI Header (Visual Only)
+    ui.render_header(
+        agent_name=agent.get_identity(),
+        model_id=model_id,
+        intent=intent,
+        timestamp=timestamp_display
+    )
+    ui.print_system("Stream initialized...")
+
+
     # Header emphasizes Agent Identity and Intent, not the boilerplate system prompt
-    header = (
+    raw_header = (
         f"\n\n{'='*60}\n"
-        f"TIMESTAMP: {timestamp}\n"
+        f"TIMESTAMP: {timestamp_iso}\n"
         f"MODEL:     {model_id}\n"
         f"AGENT:     {agent.get_identity()}\n"
         f"INTENT:    {intent}\n"
         f"{'='*60}\n"
+        f"RESPONSE:\n"
     )
 
     full_response = []
@@ -107,8 +120,7 @@ def generate_and_continuous_log(
         # "continuous" appending as chunks arrive.
         with open(log_path, "a", encoding="utf-8") as f:
             # Write metadata header to log
-            f.write(header)
-            f.write(f"RESPONSE:\n")
+            f.write(raw_header)
 
             # Execute generation with streaming
             response_stream = client.models.generate_content_stream(
@@ -119,9 +131,8 @@ def generate_and_continuous_log(
 
             for chunk in response_stream:
                 if chunk.text:
-                    # Echo to Standard Out
-                    sys.stdout.write(chunk.text)
-                    sys.stdout.flush()
+                    # Echo to Standard Out via UI (Styled)
+                    ui.stream_chunk(chunk.text)
 
                     # Append to Log File immediately
                     f.write(chunk.text)
@@ -134,8 +145,8 @@ def generate_and_continuous_log(
             print() # Trailing newline for stdout
 
     except Exception as e:
-        error_msg = f"\n[ERROR] Failed during generation/logging: {str(e)}\n"
-        sys.stderr.write(error_msg)
+        error_msg = f"Failed during generation/logging: {str(e)}"
+        ui.print_error(error_msg)
 
         # Attempt to log the error if file system is accessible
         try:
@@ -146,4 +157,3 @@ def generate_and_continuous_log(
         raise e
 
     return "".join(full_response)
-

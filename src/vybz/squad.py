@@ -1,4 +1,5 @@
 import sys
+import vybz.ui as ui
 from pathlib import Path
 from typing import Dict, List, Type
 from vybz.agent import Agent
@@ -25,10 +26,10 @@ class Squad:
         if cls._initialized:
             return
 
-        print(f"--- Spinning up the Squad ({cls._source_dir}) ---", file=sys.stderr)
+        ui.print_system(f"Spinning up the Squad ({cls._source_dir})")
 
         if not cls._source_dir.exists():
-            print(f"Warning: Directory '{cls._source_dir}' not found.", file=sys.stderr)
+            ui.print_warning(f"Directory '{cls._source_dir}' not found.")
             return
 
         count = 0
@@ -42,13 +43,17 @@ class Squad:
                 key = entry.stem
                 agent = Agent.from_toml(entry)
                 cls._agents[key] = agent
-                print(f"  [+] Activated: {key:<15} | {agent.get_identity()}", file=sys.stderr)
+
+                # Log success
+                ui.print_success(f"Activated: {key:<15} | {agent.get_identity()}")
                 count += 1
             except Exception as e:
-                print(f"  [!] Failed to load '{entry.name}': {e}", file=sys.stderr)
+                ui.print_error(f"Failed to load '{entry.name}': {e}")
 
         cls._initialized = True
-        print(f"--- Squad Ready: {count} agents loaded ---\n", file=sys.stderr)
+        ui.print_system(f"Squad Ready: {count} agents loaded")
+        # Print a visual separator to stderr to separate init from app logic
+        ui.error_console.print("")
 
     @classmethod
     def get_agent(cls, name: str) -> Agent:

@@ -20,6 +20,7 @@ dependencies = [
     "google-genai>=1.57",  # Assuming v1.57+ syntax alignment
     "python-dotenv",
     "pathspec>=0.11.0",
+    "rich>=13.0",
 ]
 
 [project.scripts]

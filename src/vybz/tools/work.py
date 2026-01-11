@@ -20,6 +20,7 @@ from typing import Optional
 
 # Vybz Kartel Core Imports
 import vybz.vibez as vibez
+import vybz.ui as ui
 from vybz.context_engine import CodeBase
 from vybz.squad import Squad
 
@@ -75,28 +76,28 @@ def main() -> None:
         try:
             agent = Squad.get_agent(args.agent)
         except ValueError:
-            print(f"[!] Error: Agent '{args.agent}' not found.", file=sys.stderr)
-            print(f"[-] Available Agents: {', '.join(Squad.list_agents())}", file=sys.stderr)
+            ui.print_error(f"Agent '{args.agent}' not found.")
+            ui.print_system(f"Available Agents: {', '.join(Squad.list_agents())}")
             sys.exit(1)
 
         # 3. Snapshot Codebase (Optional)
         codebase: Optional[CodeBase] = None
         if args.codebase:
             cb_path = Path(args.codebase)
-            print(f"[-] Snapshotting codebase at: {cb_path.resolve()} ...")
+            ui.print_system(f"Snapshotting codebase at: {cb_path.resolve()} ...")
             try:
                 codebase = CodeBase(cb_path)
             except (FileNotFoundError, NotADirectoryError) as e:
-                print(f"[!] CodeBase Error: {e}", file=sys.stderr)
+                ui.print_error(f"CodeBase Error: {e}")
                 sys.exit(1)
         else:
-            print("[-] No codebase provided. Running in GREENFIELD mode.")
+            ui.print_system("No codebase provided. Running in GREENFIELD mode.")
 
         # 4. Execution
-        print("-" * 60)
-        print(f"AGENT: {agent.get_identity()}")
-        print(f"MODEL: {args.model}")
-        print("-" * 60)
+#        print("-" * 60)
+#        print(f"AGENT: {agent.get_identity()}")
+#        print(f"MODEL: {args.model}")
+#        print("-" * 60)
 
         # 5. Generate and Stream
         vibez.generate_and_continuous_log(
@@ -109,10 +110,10 @@ def main() -> None:
         )
 
     except KeyboardInterrupt:
-        print("\n[!] Session interrupted by user.", file=sys.stderr)
+        ui.print_warning("Session interrupted by user.")
         sys.exit(130)
     except Exception as e:
-        print(f"\n[!] Critical Runtime Error: {e}", file=sys.stderr)
+        ui.print_error(f"Critical Runtime Error: {e}")
         sys.exit(1)
 
 
