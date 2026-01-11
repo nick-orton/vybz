@@ -1,13 +1,13 @@
 import os
 import sys
 import datetime
-from agent import Agent
+from vybz.agent import Agent
+from vybz.context_engine import CodeBase
 from pathlib import Path
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from typing import List, Optional
-from context_engine import CodeBase
 
 def configure_genai_client() -> None:
     """

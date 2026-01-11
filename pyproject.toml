@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vybz"
+version = "0.1.0"
+description = "AI-Orchestrated Vibe Coding Workbench"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+  { name = "Vybz Team", email = "vybz@orton.info" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: POSIX :: BSD",
+]
+dependencies = [
+    "google-genai>=1.57",  # Assuming v1.57+ syntax alignment
+    "python-dotenv",
+    "pathspec>=0.11.0",
+]
+
+[project.scripts]
+vybz = "vybz.tools.work:main"
+vybz-commit = "vybz.tools.autocommit_gen:main"
+vybz-fmt = "vybz.tools.mdformat:main"
+
+[tool.setuptools.package-data]
+vybz = ["agents/*.toml"]
+

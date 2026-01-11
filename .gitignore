@@ -7,3 +7,10 @@ __pycache__/
 
 # output log from using the workbench
 out.log
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+

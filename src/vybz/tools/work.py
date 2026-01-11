@@ -9,9 +9,9 @@ import sys
 from pathlib import Path
 
 # Vybz Kartel Core Imports
-import vibez
-from context_engine import CodeBase
-from squad import Squad
+import vybz.vibez as vibez
+from vybz.context_engine import CodeBase
+from vybz.squad import Squad
 
 # -----------------------------------------------------------------------------
 # Configuration
@@ -23,15 +23,15 @@ TARGET_AGENT = "junior-dev"
 
 # Select the Model.
 # Options: 'gemini-3-pro-preview', 'gemini-3-flash-preview'
-TARGET_MODEL = "gemini-3-flash-preview"
+TARGET_MODEL = "gemini-3-pro-preview"
 
 # Define the Intent.
 # Be specific. If using 'junior-dev', provide architectural constraints.
 INTENT = """
-Create a new utility module in 'bin/cleanup.py'.
-It should recursively delete all '__pycache__' directories and '.DS_Store'
-files in the current directory.
-Ensure it uses pathlib and handles PermissionErrors gracefully.
+create a plan of action to carry out the refactoring specified in
+`refactor-python-module.md`
+
+Don't re-write all the python code, just indicate what needs to be changed and what is net new
 """
 
 # Output log file

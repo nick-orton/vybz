@@ -1,4 +1,0 @@
-# pip install -r requirements.txt
-google-genai
-python-dotenv
-pathspec>=0.11.0

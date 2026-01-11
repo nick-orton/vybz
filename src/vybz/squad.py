@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 from typing import Dict, List, Type
-from agent import Agent
+from vybz.agent import Agent
 
 
 class Squad:
@@ -14,7 +14,7 @@ class Squad:
     """
     _agents: Dict[str, Agent] = {}
     _initialized: bool = False
-    _source_dir: Path = Path("agents")
+    _source_dir: Path = Path(__file__).parent / "agents"
 
     @classmethod
     def _initialize(cls) -> None:

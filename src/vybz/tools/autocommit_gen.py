@@ -21,14 +21,10 @@ from dotenv import load_dotenv
 # -----------------------------------------------------------------------------
 # Path Setup (Allow imports from project root)
 # -----------------------------------------------------------------------------
-ROOT_DIR = Path(__file__).resolve().parent.parent
-if str(ROOT_DIR) not in sys.path:
-    sys.path.append(str(ROOT_DIR))
-
 from google import genai
 from google.genai import types
-from squad import Squad
-from agent import Agent
+from vybz.squad import Squad
+from vybz.agent import Agent
 
 # -----------------------------------------------------------------------------
 # Configuration & Constants

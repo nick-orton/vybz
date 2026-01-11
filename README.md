@@ -45,7 +45,7 @@ standard output and logs.
     ```bash
     python3 -m venv .venv
     source .venv/bin/activate
-    pip install -r requirements.txt
+    pip install -e .
     ```
 
 3.  **Configure API Key:**
@@ -86,7 +86,7 @@ minimal chatter.
 **The Translator.** Analyzes diffs and code logic to produce human-centric
 documentation. It generates:
 *   `README.md` files (it wrote this one).
-*   Conventional Commit messages (via `bin/autocommit_gen.py`).
+*   Conventional Commit messages (via `vybz-commit`).
 *   Docstrings adhering to Google Style.
 
 ## Design Artifacts
@@ -125,9 +125,9 @@ import sys
 from pathlib import Path
 
 # Vybz Kartel Core Imports
-import vibez
-from context_engine import CodeBase
-from squad import Squad
+import vybz.vibez as vibez
+from vybz.context_engine import CodeBase
+from vybz.squad import Squad
 
 # -----------------------------------------------------------------------------
 # Configuration
@@ -203,13 +203,13 @@ The output will stream to your terminal and be logged to out.log. Code blocks
 will be formatted in Markdown, ready to be piped into files or copied into your
 editor.
 
-## CLI Utilities (`bin/`)
+## CLI Utilities 
 
-Vybz Kartel includes standalone Python scripts in the `bin/` directory to
-automate routine tasks and enforce style constraints. These tools are designed
-to be chainable and POSIX-compliant.
+Vybz Kartel includes standalone Python executables to automate routine tasks 
+and enforce style constraints. These tools are designed to be chainable and
+POSIX-compliant.
 
-### 1. Auto-Commit Generator (`bin/autocommit_gen.py`)
+### 1. Auto-Commit Generator (`vybz-commit`)
 This script utilizes the **Lead Technical Writer** agent to analyze your
 currently staged git changes and generate a Conventional Commit message.
 
@@ -225,13 +225,13 @@ currently staged git changes and generate a Conventional Commit message.
 git add .
 
 # 2. Generate message (requires GEMINI_API_KEY in env)
-bin/autocommit_gen.py
+vybz-commit
 
 # 3. Generate with context from a previous coding session
-bin/autocommit_gen.py --log-file out.log
+vybz-commit --log-file out.log
 ```
 
-### 2. Markdown Formatter (`bin/mdformat`)
+### 2. Markdown Formatter (`vybz-fmt`)
 A utility to enforce hard line wrapping on Markdown files. This ensures that
 documentation and git commit messages remain readable in terminal buffers and
 `git log` outputs without horizontal scrolling.
@@ -243,10 +243,10 @@ documentation and git commit messages remain readable in terminal buffers and
 **Usage:**
 ```bash
 # Format a file and output to stdout
-bin/mdformat docs/architecture.md
+vybz-fmt docs/architecture.md
 
 # Set a custom width
-bin/mdformat README.md -w 100
+vybz-fmt README.md -w 100
 ```
 
 ### Recommended Workflow: The `gc` Alias
@@ -255,7 +255,7 @@ commit workflow. Add the following alias to your shell configuration (as seen
 in `env.sh`):
 
 ```bash
-alias gc="./bin/autocommit_gen.py > /tmp/commit; ./bin/mdformat /tmp/commit | git commit -F - -e"
+alias gc="vybz-commit > /tmp/commit; vybz-fmt /tmp/commit | git commit -F - -e"
 ```
 
 **Workflow:**

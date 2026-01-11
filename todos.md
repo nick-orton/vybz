@@ -7,7 +7,7 @@
 - should be able to operate across multiple files and have an understanding of the full directory structure of a project
 
 # Tactical todos
-- refactor code into idiomatic package structure
+- change the core executable to be configured via command line arguments
 - pip should deploy binaries as well
 - be able to pull code out of the log history
 
@@ -20,3 +20,4 @@
 - Create Agent: Technical Writer
   - refactor the git commit helper to use the technical writer
   - Write readme
+- refactor code into idiomatic package structure
