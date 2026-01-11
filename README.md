@@ -1,4 +1,4 @@
-# Vybz Kartel: The Vibe Coding Workbench
+# Vybz Kartel: AI-Orchestrated Vibe Coding Workbench
 
 **Vybz Kartel** is a terminal-centric, AI-orchestrated coding workbench designed
 for POSIX environments (FreeBSD/Debian). It leverages the **Google Gemini 3.0**
@@ -6,32 +6,33 @@ models via the unified `google-genai` SDK (v1.57+) to facilitate "Vibe
 Coding"—a workflow that prioritizes flow state, low-friction CLI interactions,
 and high-velocity software evolution.
 
-This system is not an autocomplete plugin; it is a **Context Engine** that
-snapshots your entire codebase, injects it into specialized AI Personas
-(Agents), and streams architectural plans, code, or documentation directly to
-standard output and logs.
+This system is not a simple autocomplete plugin. It is a **Context Engine**
+that snapshots your local filesystem, injects it into specialized AI Personas
+(Agents), and enables stateful, multi-turn architectural discussions directly
+in your terminal.
 
 ## Core Features
 
-*   **The Squad (Agent System):** A collection of specialized AI personas 
-    defined in TOML configuration files.  These agents design features, write
-    code or even create new agents.
-*   **Context Engine:** A robust filesystem snapshot tool (`CodeBase`) that
+*   **Interactive REPL:** A robust Read-Eval-Print Loop powered by
+    `prompt_toolkit`. Supports multi-line input, slash commands, and persistent
+    chat history for iterative development.
+*   **The Squad:** A modular system of specialized AI agents defined in TOML.
+    Agents range from "Junior Developers" (code generation) to "Product
+    Managers" (specification) and "Technical Writers" (documentation).
+*   **Context Engine:** A read-only filesystem snapshot tool (`CodeBase`) that
     respects `.gitignore`, excludes binary files, and serializes your source
     tree into Markdown for accurate LLM context.
-*   **Continuous Logging:** All interactions are streamed to `stdout` for real-
-    time feedback and simultaneously appended to log files for history
-    tracking.
-*   **Design-First Architecture:** Prompts are treated as source code, stored
-    in `designs/`, and managed via version control.
+*   **TUI Experience:** Styled output using `rich` with a "Cyber/Oceanic"
+    theme, ensuring clear visual separation between user input, system logs,
+    and agent responses.
 
 ## Prerequisites
 
 *   **Python:** 3.11 or higher.
 *   **API Key:** Google Gemini API key (`GEMINI_API_KEY`).
-*   **OS:** Code is POSIX compliant tailored for FreeBSD and Debian
-*   **Terminal:** Tmux and your preferred text editor recommended for optimal 
-    rendering.
+*   **OS:** POSIX-compliant (FreeBSD/Linux/macOS).
+*   **Terminal:** A modern terminal emulator. Neovim and Tmux are recommended
+    for optimal rendering.
 
 ## Installation
 
@@ -54,133 +55,135 @@ standard output and logs.
     GEMINI_API_KEY="your-google-api-key-here"
     ```
 
-## The Squad: Specialized Agents
+## Usage
 
-The logic of Vybz Kartel is driven by **Agents**. These are not generic
-chatbots; they are strict personas defined in `agents/*.toml`.
+The primary interface is the `vybz` command. It supports two modes:
+**Interactive (Recommended)** and **One-Shot**.
 
-### 1. Advisor (`agents/advisor.toml`)
-**The Meta-Architect.** The Advisor does not write application code. Its sole
-purpose is to design *other* agents. It understands prompt engineering, context
-windows, and the specific strengths of Gemini models. Use the Advisor when you
-need to create a new role (e.g., a "QA Engineer" or "Security Auditor").
+### 1. Interactive Mode (REPL)
+Launch a stateful chat session with a specific agent. This mode allows you to
+refine requirements, ask follow-up questions, and paste large blocks of code
+for refactoring.
 
-### 2. PM Lead (`agents/pm.toml`)
-**The Ambiguity Filter.** The PM transforms vague user intent into concrete,
-atomic technical specifications. It produces User Stories, Acceptance Criteria,
-and Implementation Hints. It bridges the gap between "I want a blog" and strictly
-defined Python tasks.
-
-### 3. Senior Python Architect (`agents/senior-dev.toml`)
-**The Brain.** This agent focuses on system design, PEP standards, and
-maintainability. It refuses to write code without first analyzing architectural
-impact. It enforces the use of the `google-genai` v1.57 SDK and modern Python
-3.11+ syntax.
-
-### 4. Tactical Python Architect (`agents/junior-dev.toml`)
-**The Hands.** A "code engine" designed for speed. It assumes the architecture
-decisions are already made. It produces high-volume, compliant code blocks with
-minimal chatter.
-
-### 5. Lead Technical Writer (`agents/tech-writer.toml`)
-**The Translator.** Analyzes diffs and code logic to produce human-centric
-documentation. It generates:
-*   `README.md` files (it wrote this one).
-*   Conventional Commit messages (via `vybz-commit`).
-*   Docstrings adhering to Google Style.
-
-## Design Artifacts
-
-The `designs/` directory contains the "Source of Truth" for the project's
-intelligence. In Vybz Kartel, **Prompt Engineering is Code**.
-
-*   **`designs/codebase.md`**: Defines how the system sees itself (the
-    specification for the Context Engine).
-*   **`designs/pm-agent.md`**: The blueprint used to generate the PM agent.
-*   **`designs/agent-plans.md`**: The meta-structure for how agents are stored
-    and loaded.
-
-Modifying these files allows you to fundamentally alter the behavior of the
-system using the system itself.
-
-## Usage: The Workbench
-
-The core interaction model is the `vybz` CLI. It initializes the environment,
-loads a specific agent, creates a snapshot of the code, and submits an intent
-directly from your shell.
-
-### CLI Example
-
-To execute a task, pass the agent name and your intent string as positional
-arguments. You can optionally attach the current codebase context, specify a
-model, and define a log output.
-
+**Command:**
 ```bash
-vybz junior-dev \
-    "Create a new utility module in 'bin/cleanup.py'. \
-    It should recursively delete all '__pycache__' directories and \
-    '.DS_Store' files in the current directory. \
-    Ensure it uses pathlib and handles PermissionErrors gracefully." \
-    --codebase . \
-    --model gemini-3-flash-preview \
-    --log-file out.log
+# Syntax: vybz <agent> [-c path/to/codebase]
+vybz junior-dev --codebase .
 ```
 
-The output will stream to your terminal and be logged to `out.log`. Code blocks
-will be formatted in Markdown, ready to be piped into files or copied into your
-editor.
+**Keybindings & Commands:**
+*   **Alt+Enter** (or `Esc` then `Enter`): Submit input to the agent.
+*   **Enter**: Insert a newline (allows for multi-line code pasting).
+*   **`/clear`**: Clear the terminal screen (preserves chat history).
+*   **`/exit`**: End the session.
 
+### 2. One-Shot Mode (Legacy)
+Execute a single, fire-and-forget task. Useful for quick questions or scripting.
 
-## CLI Utilities 
+**Command:**
+```bash
+# Syntax: vybz <agent> "Your instruction here"
+vybz senior-dev "Explain the factory pattern in Python"
+```
 
-Vybz Kartel includes standalone Python executables to automate routine tasks 
-and enforce style constraints. These tools are designed to be chainable and
-POSIX-compliant.
+### Context Injection (`--codebase`)
+The `--codebase` (or `-c`) snapshots the target directory
+and injects it into the Agent's system instructions.
 
-### 1. Auto-Commit Generator (`vybz-commit`)
-This script utilizes the **Lead Technical Writer** agent to analyze your
-currently staged git changes and generate a Conventional Commit message.
+*   **Without `-c`:** The agent runs in "Greenfield" mode.
+*   **With `-c .`:** The agent "sees" your current project structure and file
+    contents (respecting `.gitignore`).
 
-*   **Logic:** It reads `git diff --cached`, loads the `tech-writer` agent via
-    `squad.py`, and outputs a formatted message to `stdout`.
-*   **Context Injection:** You can optionally pass an agent interaction log.
-    The script will use the log to understand the *intent* (Why) while using
-    the diff to verify the *implementation* (What).
+## The Squad: Specialized Agents
+
+Agents are defined in `src/vybz/agents/*.toml`. Use the right agent for the
+right task:
+
+*   **`advisor`:** The meta-agent. Designs prompts for new agents.
+*   **`pm` (Product Manager):** Translates vague intent into strict technical
+    specifications. Use this first for new features.
+*   **`senior-dev`:** Focuses on architecture, safety, and PEP standards.
+    Refuses to write code without impact analysis.
+*   **`junior-dev`:** High-speed code generator. Assumes architecture is
+    decided.
+*   **`tech-writer`:** Generates documentation and commit messages.
+*   **`librarian`:** Organizes documentation and ensures doc metadata is 
+    up-to-date
+
+## Design Philosophy: Instructions as Code
+
+In Vybz Kartel, **Prompt Engineering is Source Code**. We do not rely on 
+ephemeral chat history to build complex software. Instead, we treat natural 
+language instructions as persistent artifacts that evolve through a strict 
+lifecycle.
+
+The agents are **opinionated** about the location and structure of these files.
+They expect specific artifacts to exist in specific directories to function 
+correctly.
+
+### The Workflow
+
+1.  **Intents (`intents/`)**
+    *   **Author:** Human User.
+    *   **Purpose:** Raw, high-level desires. These can be vague or 
+        stream-of-consciousness (e.g., "I want a dark mode feature").
+    *   **Consumer:** The **PM Agent** reads these to understand the "Why."
+
+2.  **Designs (`designs/`)**
+    *   **Author:** PM Agent.
+    *   **Purpose:** Translation of Intents into concrete specifications. These
+        files contain User Stories, Acceptance Criteria, and Technical 
+        Constraints.
+    *   **Consumer:** The **Senior Developer** uses these as the "Source of 
+        Truth" for functionality.
+
+3.  **Blueprints (`blueprints/`)**
+    *   **Author:** Senior Developer Agent.
+    *   **Purpose:** Architectural implementation plans. These define *how* the
+        code changes will occur, mapping out module structures, refactoring 
+        strategies, and dependency management.
+    *   **Consumer:** The **Junior Developer** follows these blueprints to 
+        generate code without needing to make architectural decisions.
+
+By formalizing this pipeline, Vybz Kartel ensures that code generation is not a
+"guess" by an LLM, but the result of a structured engineering process.
+
+## CLI Utilities
+
+Vybz Kartel includes standalone tools to automate routine maintenance tasks.
+
+### Auto-Commit Generator (`vybz-commit`)
+Uses the **Lead Technical Writer** agent to analyze staged git changes and
+generate a Conventional Commit message.
 
 **Usage:**
 ```bash
-# 1. Stage your changes
+# 1. Stage changes
 git add .
 
-# 2. Generate message (requires GEMINI_API_KEY in env)
+# 2. Generate commit message based on diff
 vybz-commit
 
-# 3. Generate with context from a previous coding session
-vybz-commit --log-file out.log
+# 3. (Optional) Provide context from an interaction log
+vybz-commit --log-file /tmp/vybz.log
 ```
 
-### 2. Markdown Formatter (`vybz-fmt`)
-A utility to enforce hard line wrapping on Markdown files. This ensures that
-documentation and git commit messages remain readable in terminal buffers and
-`git log` outputs without horizontal scrolling.
-
-*   **Default Width:** 80 characters (configurable).
-*   **Logic:** It respects Markdown syntax, preserving headers, code blocks,
-    and list indentation while reflowing paragraph text.
+### Markdown Formatter (`vybz-fmt`)
+Enforces a hard wrap limit (default: 80 chars) on Markdown files. This ensures
+readability in terminal buffers and git logs.
 
 **Usage:**
 ```bash
 # Format a file and output to stdout
-vybz-fmt docs/architecture.md
+vybz-fmt README.md > README.md.tmp && mv README.md.tmp README.md
 
-# Set a custom width
-vybz-fmt README.md -w 100
+# Custom width
+vybz-fmt docs/spec.md -w 100
 ```
 
-### Recommended Workflow: The `gc` Alias
-For the optimal "Vibe Coding" experience, combine these tools to automate your
-commit workflow. Add the following alias to your shell configuration (as seen
-in `env.sh`):
+### Recommended Workflow Alias
+Add this alias to your shell configuration (e.g., `.bashrc` or `.zshrc`) to
+streamline your commit workflow:
 
 ```bash
 alias gc="vybz-commit > /tmp/commit; vybz-fmt /tmp/commit | git commit -F - -e"
@@ -188,6 +191,17 @@ alias gc="vybz-commit > /tmp/commit; vybz-fmt /tmp/commit | git commit -F - -e"
 
 **Workflow:**
 1.  `git add .`
-2.  `gc`
-3.  The script generates a message, formats it to 80 chars, and opens your
-    editor (`-e`) for final review before committing.
+2.  `gc` -> Generates message, formats it, and opens your editor for review.
+
+## Project Structure
+
+*   `src/vybz/`: Core source code.
+*   `src/vybz/agents/`: TOML definitions for AI personas.
+*   `designs/`: High-level specifications and designs.
+*   `blueprints/`: Architectural implementation plans.
+*   `intents/`: Raw user intents (historical).
+
+## License
+
+MIT License. See `LICENSE` for details.
+----------------------------------------
