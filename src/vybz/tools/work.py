@@ -3,14 +3,6 @@
 work.py
 
 The primary CLI entry point for Vybz Kartel.
-Orchestrates the interaction between the User (Intent), the CodeBase (Context),
-and the AI Squad (Agents).
-
-Usage:
-    vybz <agent> <intent> [-m model] [-c codebase_path] [-l log_path]
-
-Example:
-    vybz junior-dev "Refactor main.py" -c .
 """
 
 import argparse
@@ -18,9 +10,9 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-# Vybz Kartel Core Imports
 import vybz.vibez as vibez
 import vybz.ui as ui
+import vybz.repl as repl
 from vybz.context_engine import CodeBase
 from vybz.squad import Squad
 
@@ -39,9 +31,12 @@ def main() -> None:
         "agent",
         help="Target Agent Persona \n['junior-dev', 'pm', 'senior-dev', 'advisor', 'tech-writer' ]"
     )
+
     parser.add_argument(
         "intent",
-        help="The task description or intent for the agent."
+        nargs='?',
+        default=None,
+        help="The task description. If omitted, enters Interactive Mode."
     )
 
     # Optional Arguments
@@ -68,11 +63,9 @@ def main() -> None:
 
     try:
         # 1. Initialize the Google GenAI Client
-        # We do this first to fail fast if API keys are missing.
         client = vibez.configure_genai_client()
 
         # 2. Load the Agent
-        # Validate agent existence before expensive operations.
         try:
             agent = Squad.get_agent(args.agent)
         except ValueError:
@@ -93,29 +86,34 @@ def main() -> None:
         else:
             ui.print_system("No codebase provided. Running in GREENFIELD mode.")
 
-        # 4. Execution
-#        print("-" * 60)
-#        print(f"AGENT: {agent.get_identity()}")
-#        print(f"MODEL: {args.model}")
-#        print("-" * 60)
-
-        # 5. Generate and Stream
-        vibez.generate_and_continuous_log(
-            client=client,
-            model_id=args.model,
-            agent=agent,
-            intent=args.intent,
-            codebase=codebase,
-            log_file_path=args.log_file
-        )
+        # 4. Execution Branching
+        if args.intent:
+            # ---> ONE-SHOT MODE (Legacy)
+            vibez.generate_and_continuous_log(
+                client=client,
+                model_id=args.model,
+                agent=agent,
+                intent=args.intent,
+                codebase=codebase,
+                log_file_path=args.log_file
+            )
+        else:
+            # ---> INTERACTIVE MODE (New Phase 1)
+            # Note: We aren't passing 'client' or 'codebase' to the stub yet in Phase 1
+            session = repl.ReplSession(agent=agent, model_id=args.model)
+            session.start()
 
     except KeyboardInterrupt:
         ui.print_warning("Session interrupted by user.")
         sys.exit(130)
     except Exception as e:
         ui.print_error(f"Critical Runtime Error: {e}")
+        # Print stack trace for debugging if needed, or rely on ui error
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 
 if __name__ == "__main__":
     main()
+
