@@ -11,13 +11,13 @@ client = vibez.configure_genai_client()
 cb = CodeBase(Path("."))
 
 intent = f"""
-execute the design: designs/refactor-autocommit_gen_use_tech_writer.md
+Create an addendum to the README that covers the usages of the scripts in bin/
 """
 
 #MODEL_ID = "gemini-3-flash-preview"
 MODEL_ID = "gemini-3-pro-preview"
 LOG_FILE = "out.log"
-AGENT = "junior-dev"
+AGENT = "tech-writer"
 
 try:
     # Listing agents triggers lazy initialization/logging

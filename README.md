@@ -202,4 +202,64 @@ python workbench.py
 The output will stream to your terminal and be logged to out.log. Code blocks 
 will be formatted in Markdown, ready to be piped into files or copied into your
 editor.
+
+## CLI Utilities (`bin/`)
+
+Vybz Kartel includes standalone Python scripts in the `bin/` directory to
+automate routine tasks and enforce style constraints. These tools are designed
+to be chainable and POSIX-compliant.
+
+### 1. Auto-Commit Generator (`bin/autocommit_gen.py`)
+This script utilizes the **Lead Technical Writer** agent to analyze your
+currently staged git changes and generate a Conventional Commit message.
+
+*   **Logic:** It reads `git diff --cached`, loads the `tech-writer` agent via
+    `squad.py`, and outputs a formatted message to `stdout`.
+*   **Context Injection:** You can optionally pass an agent interaction log.
+    The script will use the log to understand the *intent* (Why) while using
+    the diff to verify the *implementation* (What).
+
+**Usage:**
+```bash
+# 1. Stage your changes
+git add .
+
+# 2. Generate message (requires GEMINI_API_KEY in env)
+bin/autocommit_gen.py
+
+# 3. Generate with context from a previous coding session
+bin/autocommit_gen.py --log-file out.log
 ```
+
+### 2. Markdown Formatter (`bin/mdformat`)
+A utility to enforce hard line wrapping on Markdown files. This ensures that
+documentation and git commit messages remain readable in terminal buffers and
+`git log` outputs without horizontal scrolling.
+
+*   **Default Width:** 80 characters (configurable).
+*   **Logic:** It respects Markdown syntax, preserving headers, code blocks,
+    and list indentation while reflowing paragraph text.
+
+**Usage:**
+```bash
+# Format a file and output to stdout
+bin/mdformat docs/architecture.md
+
+# Set a custom width
+bin/mdformat README.md -w 100
+```
+
+### Recommended Workflow: The `gc` Alias
+For the optimal "Vibe Coding" experience, combine these tools to automate your
+commit workflow. Add the following alias to your shell configuration (as seen
+in `env.sh`):
+
+```bash
+alias gc="./bin/autocommit_gen.py > /tmp/commit; ./bin/mdformat /tmp/commit | git commit -F - -e"
+```
+
+**Workflow:**
+1.  `git add .`
+2.  `gc`
+3.  The script generates a message, formats it to 80 chars, and opens your
+    editor (`-e`) for final review before committing.
