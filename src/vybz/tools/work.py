@@ -98,9 +98,14 @@ def main() -> None:
                 log_file_path=args.log_file
             )
         else:
-            # ---> INTERACTIVE MODE (New Phase 1)
-            # Note: We aren't passing 'client' or 'codebase' to the stub yet in Phase 1
-            session = repl.ReplSession(agent=agent, model_id=args.model)
+            # ---> INTERACTIVE MODE (Phase 2)
+            session = repl.ReplSession(
+                client=client,
+                agent=agent,
+                model_id=args.model,
+                codebase=codebase,
+                log_file=Path(args.log_file)
+            )
             session.start()
 
     except KeyboardInterrupt:
