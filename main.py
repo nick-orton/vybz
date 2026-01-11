@@ -20,13 +20,22 @@ def read_file(filepath: str):
 cb = CodeBase(Path("."))
 
 intent = f"""
-implement hello-world.py
+Create a technical writer agent.
+
+I would like to have an agent that does technical writing.  It should be skilled
+at reading code, understanding what it does, and explaining it in simple language.
+It should be good at writing README files, git commit messages, and comment strings
+for code.  It should be skilled at Python style guides and have the abilities of
+someone certified by the Society for Technical Communication (STC).
+
+Create the agent using the .toml syntax similar to pm.toml.  Use the template
+agent.toml.template
 """
 
-MODEL_ID = "gemini-3-flash-preview"
-#MODEL_ID = "gemini-3-pro-preview"
+#MODEL_ID = "gemini-3-flash-preview"
+MODEL_ID = "gemini-3-pro-preview"
 LOG_FILE = "out.log"
-AGENT = "junior-dev"
+AGENT = "advisor"
 
 try:
     # Listing agents triggers lazy initialization/logging
