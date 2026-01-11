@@ -7,7 +7,7 @@ professional, Conventional Commit messages.
 
 Usage:
     export GEMINI_API_KEY="your_key"
-    python autocommit_gen.py [--log-file path/to/log.txt]
+    python bin/autocommit_gen.py [--log-file path/to/log.txt]
 """
 
 import argparse
@@ -18,34 +18,24 @@ from pathlib import Path
 from typing import Optional
 from dotenv import load_dotenv
 
+# -----------------------------------------------------------------------------
+# Path Setup (Allow imports from project root)
+# -----------------------------------------------------------------------------
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.append(str(ROOT_DIR))
+
 from google import genai
 from google.genai import types
+from squad import Squad
+from agent import Agent
 
 # -----------------------------------------------------------------------------
 # Configuration & Constants
 # -----------------------------------------------------------------------------
 
 TARGET_MODEL = "gemini-3-flash-preview"
-
-# Text content formatted to stay within 79-character width.
-SYSTEM_INSTRUCTION = (
-    "You are a Senior Release Engineer and Technical Writer.\n"
-    "Your task is to generate a git commit message based on:\n"
-    "1. The `git diff --cached` output (The Truth).\n"
-    "2. An optional vibe-coding log file (The Context/Why).\n\n"
-    "**Rules:**\n"
-    "1. Use the **Conventional Commits** specification.\n"
-    "   Format: <type>(<scope>): <subject> followed by a blank line and\n"
-    "   a <body>.\n"
-    "   Types: feat, fix, docs, style, refactor, perf, test, build, ci,\n"
-    "   chore, revert.\n"
-    "2. The <subject> must be imperative, lower-case, no period at end.\n"
-    "3. The <body> should explain *what* and *why*, not just *how*.\n"
-    "4. Context: If logs are provided, prioritize the user's intent to\n"
-    "   explain the 'Why'.\n"
-    "5. Human Changes: Acknowledge that humans may have modified the code.\n"
-    "6. Output: Return ONLY the commit message. No markdown or preamble."
-)
+TARGET_AGENT = "tech-writer"
 
 
 # -----------------------------------------------------------------------------
@@ -121,13 +111,15 @@ class GitService:
 class GeminiCommitAgent:
     """Wrapper for the Google Gen AI SDK (v1.57+)."""
 
-    def __init__(self, api_key: Optional[str] = None) -> None:
+    def __init__(self, agent: Agent, api_key: Optional[str] = None) -> None:
         """
-        Initialize the GenAI client.
+        Initialize the GenAI client with a specific persona.
 
         Args:
+            agent: The Agent instance defining the persona (Tech Writer).
             api_key: The Google API Key.
         """
+        self.agent = agent
         _key = api_key or os.getenv("GEMINI_API_KEY")
         if not _key:
             raise GenAIConfigurationError(
@@ -147,6 +139,7 @@ class GeminiCommitAgent:
         Returns:
             str: The generated commit message.
         """
+        # Construct the raw intent from diff and context
         parts = [f"### GIT DIFF (Staged Changes)\n{diff}"]
 
         if context:
@@ -157,16 +150,21 @@ class GeminiCommitAgent:
                 "motivation."
             )
 
-        prompt = "\n".join(parts)
+        raw_intent = "\n".join(parts)
+
+        # Wrap intent in the Agent's full prompt structure
+        full_prompt = self.agent.construct_full_prompt(raw_intent)
 
         try:
+            # We pass the full prompt as 'contents' rather than using
+            # 'system_instruction' in config, aligning with the pattern
+            # used in vibez.py for full context control.
             config = types.GenerateContentConfig(
-                system_instruction=SYSTEM_INSTRUCTION,
                 temperature=0.2,
             )
             response = self.client.models.generate_content(
                 model=TARGET_MODEL,
-                contents=prompt,
+                contents=full_prompt,
                 config=config
             )
 
@@ -212,7 +210,15 @@ def main() -> None:
                     print(msg, file=sys.stderr)
 
         load_dotenv()
-        agent = GeminiCommitAgent()
+
+        # Initialize Squad and load the Tech Writer agent
+        try:
+            tech_writer = Squad.get_agent(TARGET_AGENT)
+        except Exception as e:
+            print(f"Error loading agent '{TARGET_AGENT}': {e}", file=sys.stderr)
+            sys.exit(1)
+
+        agent = GeminiCommitAgent(agent=tech_writer)
 
         print("Analyzing changes...", file=sys.stderr)
         commit_message = agent.generate_message(diff_text, context_content)
