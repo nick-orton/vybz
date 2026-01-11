@@ -4,12 +4,13 @@ repl.py
 Handles the Interactive Read-Eval-Print Loop (REPL) for Vybz.
 Leverages prompt_toolkit for multi-line editing and custom keybindings.
 Connects to Google GenAI SDK for stateful chat.
+Supports multi-agent session switching.
 """
 
 import sys
 import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
@@ -21,11 +22,13 @@ from google.genai import types
 
 from vybz.agent import Agent
 from vybz.context_engine import CodeBase
+from vybz.squad import Squad
 from vybz import ui
 
 class ReplSession:
     """
     Manages the state and input loop for an interactive session.
+    Supports switching between multiple agent personas.
     """
 
     def __init__(
@@ -37,10 +40,14 @@ class ReplSession:
         log_file: Optional[Path] = None
     ):
         self.client = client
-        self.agent = agent
         self.model_id = model_id
         self.codebase = codebase
         self.log_file = log_file or Path("/tmp/vybz.log")
+
+        # Session Management
+        self.sessions: Dict[str, Any] = {} # Map agent_name -> ChatSession
+        self.active_agent: Optional[Agent] = None
+        self.active_chat: Any = None
 
         self.kb = KeyBindings()
         self._setup_keybindings()
@@ -48,8 +55,8 @@ class ReplSession:
         # Initialize PromptSession with our bindings
         self.session = PromptSession(key_bindings=self.kb)
 
-        # Initialize the Chat Session
-        self.chat = self._init_chat()
+        # Initialize the starting agent
+        self._switch_to_agent_by_object(agent)
 
     def _setup_keybindings(self) -> None:
         """
@@ -62,60 +69,93 @@ class ReplSession:
             """Submit when Meta+Enter or Esc+Enter is pressed."""
             event.current_buffer.validate_and_handle()
 
-    def _init_chat(self) -> any:
+    def _get_or_create_chat(self, agent: Agent) -> Any:
         """
-        Constructs system instructions and initializes the GenAI Chat object.
+        Retrieves an existing chat session for the agent or creates a new one.
         """
-        ui.print_system("Initializing Chat Session context...")
+        if agent.name in self.sessions:
+            return self.sessions[agent.name]
+
+        ui.print_system(f"Initializing Chat Session for {agent.name}...")
 
         # 1. Base Agent Role
-        sys_instructions = self.agent.construct_agent_role_profile()
+        sys_instructions = agent.construct_agent_role_profile()
 
         # 2. Date Knowledge
         current_date = datetime.datetime.now().strftime("%Y-%m-%d")
         sys_instructions += f"\n\n### SYSTEM METADATA\nCurrent Date: {current_date}\n"
 
-        # 3. CodeBase Injection
+        # 3. CodeBase Injection (Shared across all agents in this REPL)
         if self.codebase:
-            ui.print_system(f"Injecting CodeBase context from: {self.codebase.root_path}")
             sys_instructions += "\n\n" + self.codebase.render()
 
         # 4. Create Chat
         try:
-            return self.client.chats.create(
+            chat = self.client.chats.create(
                 model=self.model_id,
                 config=types.GenerateContentConfig(
                     system_instruction=sys_instructions,
                     temperature=0.7
                 )
             )
+            self.sessions[agent.name] = chat
+            return chat
         except Exception as e:
-            ui.print_error(f"Failed to initialize Chat: {e}")
-            sys.exit(1)
+            ui.print_error(f"Failed to initialize Chat for {agent.name}: {e}")
+            raise e
+
+    def _switch_to_agent_by_object(self, agent: Agent) -> None:
+        """
+        Internal helper to switch context to a specific Agent object.
+        """
+        try:
+            self.active_chat = self._get_or_create_chat(agent)
+            self.active_agent = agent
+
+            # Log the switch
+            self._log_to_file(f"\n{'='*40}\nSWITCHED AGENT: {agent.get_identity()}\n{'='*40}\n")
+
+            # Update UI
+            cb_root = str(self.codebase.root_path) if self.codebase else None
+            ui.render_session_header(
+                agent_name=self.active_agent.get_identity(),
+                model_id=self.model_id,
+                codebase_root=cb_root
+            )
+        except Exception as e:
+            ui.print_error(f"Could not switch to agent {agent.name}: {e}")
+
+    def _switch_to_agent_by_name(self, name: str) -> bool:
+        """
+        Resolves agent name via Squad and switches.
+        Returns True if successful.
+        """
+        try:
+            new_agent = Squad.get_agent(name)
+            self._switch_to_agent_by_object(new_agent)
+            return True
+        except ValueError:
+            ui.print_error(f"Agent '{name}' not found.")
+            ui.print_system(f"Available: {', '.join(Squad.list_agents())}")
+            return False
+        except Exception as e:
+            ui.print_error(f"Error switching agent: {e}")
+            return False
 
     def start(self) -> None:
         """
         Starts the interactive loop.
         """
-        # Determine context string for UI
-        cb_root = str(self.codebase.root_path) if self.codebase else None
-
-        # Render Phase 3 Session Header
-        ui.render_session_header(
-            agent_name=self.agent.get_identity(),
-            model_id=self.model_id,
-            codebase_root=cb_root
-        )
-
         ui.print_system("Tip: Press 'Alt+Enter' (or Esc+Enter) to submit. Type '/help' for commands.")
 
         # Log Session Start
         self._log_to_file(f"\n{'='*40}\nSESSION START: {datetime.datetime.now()}\n{'='*40}\n")
 
-        # Visual Prompt Styling
-        prompt_text = HTML(f"<b><style fg='cyan'>[{self.agent.name}]</style></b> >> ")
-
         while True:
+            # Dynamic Prompt Styling based on Active Agent
+            agent_label = self.active_agent.name if self.active_agent else "Unknown"
+            prompt_text = HTML(f"<b><style fg='cyan'>[{agent_label}]</style></b> >> ")
+
             try:
                 # 1. READ
                 user_input = self.session.prompt(prompt_text, multiline=True)
@@ -124,7 +164,6 @@ class ReplSession:
                     continue
 
                 # 2. CHECK COMMANDS
-                # Intercept slash commands before sending to LLM
                 if self._handle_command(user_input):
                     continue
 
@@ -143,9 +182,13 @@ class ReplSession:
         """
         Intercepts slash commands.
         Returns True if a command was handled (skipping LLM inference).
-        Returns False if the input should be processed as a prompt.
         """
-        cmd = text.strip().lower()
+        parts = text.strip().split()
+        if not parts:
+            return False
+
+        cmd = parts[0].lower()
+        args = parts[1:]
 
         # Exit Commands
         if cmd in ["/exit", "/quit", "exit", "quit"]:
@@ -154,10 +197,9 @@ class ReplSession:
         # Clear Screen
         if cmd == "/clear":
             ui.console.clear()
-            # We re-render the header so the user remembers where they are
             cb_root = str(self.codebase.root_path) if self.codebase else None
             ui.render_session_header(
-                agent_name=self.agent.get_identity(),
+                agent_name=self.active_agent.get_identity(),
                 model_id=self.model_id,
                 codebase_root=cb_root
             )
@@ -166,12 +208,26 @@ class ReplSession:
         # Help
         if cmd == "/help":
             ui.print_system("--- COMMANDS ---")
-            ui.print_system(" /exit, /quit : End the session.")
-            ui.print_system(" /clear       : Clear the terminal screen.")
-            ui.print_system(" /help        : Show this menu.")
+            ui.print_system(" /agent [name] : Switch active agent (or list available).")
+            ui.print_system(" /exit, /quit  : End the session.")
+            ui.print_system(" /clear        : Clear the terminal screen.")
+            ui.print_system(" /help         : Show this menu.")
             ui.print_system("--- KEYBINDINGS ---")
-            ui.print_system(" Alt+Enter    : Submit input.")
-            ui.print_system(" Enter        : Insert newline.")
+            ui.print_system(" Alt+Enter     : Submit input.")
+            ui.print_system(" Enter         : Insert newline.")
+            return True
+
+        # Agent Switching
+        if cmd == "/agent":
+            if not args:
+                # List agents
+                agents = Squad.list_agents()
+                ui.print_system(f"Current Agent: {self.active_agent.name}")
+                ui.print_system(f"Available Agents: {', '.join(agents)}")
+                ui.print_system("Usage: /agent <name>")
+            else:
+                target_name = args[0]
+                self._switch_to_agent_by_name(target_name)
             return True
 
         return False
@@ -181,7 +237,7 @@ class ReplSession:
         Sends input to the model, streams the response, and logs the turn.
         """
         # Log User Input
-        self._log_to_file(f"\n[USER]: {text}\n")
+        self._log_to_file(f"\n[USER ({self.active_agent.name})]: {text}\n")
 
         # Visual separator
         ui.console.print()
@@ -189,8 +245,12 @@ class ReplSession:
         full_response = []
 
         try:
-            # SDK Call: Stream Message
-            response_stream = self.chat.send_message_stream(text)
+            # SDK Call: Stream Message using ACTIVE chat
+            if not self.active_chat:
+                ui.print_error("No active chat session.")
+                return
+
+            response_stream = self.active_chat.send_message_stream(text)
 
             for chunk in response_stream:
                 if chunk.text:
@@ -202,7 +262,7 @@ class ReplSession:
 
             # Log Model Response
             combined_response = "".join(full_response)
-            self._log_to_file(f"\n[MODEL]: {combined_response}\n")
+            self._log_to_file(f"\n[MODEL ({self.active_agent.name})]: {combined_response}\n")
             self._log_to_file("-" * 40)
 
         except Exception as e:
@@ -219,3 +279,4 @@ class ReplSession:
                 f.write(text)
         except IOError as e:
             ui.print_error(f"Logging failed: {e}")
+

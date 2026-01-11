@@ -73,7 +73,10 @@ vybz junior-dev --codebase .
 **Keybindings & Commands:**
 *   **Alt+Enter** (or `Esc` then `Enter`): Submit input to the agent.
 *   **Enter**: Insert a newline (allows for multi-line code pasting).
+*   **`/agent [name]`**: Switch active agent (e.g., `/agent pm`). Type without
+    arguments to list available agents.
 *   **`/clear`**: Clear the terminal screen (preserves chat history).
+*   **`/help`**: Show available commands and keybindings.
 *   **`/exit`**: End the session.
 
 ### 2. One-Shot Mode (Legacy)
