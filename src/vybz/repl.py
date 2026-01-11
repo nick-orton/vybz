@@ -97,12 +97,17 @@ class ReplSession:
         """
         Starts the interactive loop.
         """
-        ui.render_header(
+        # Determine context string for UI
+        cb_root = str(self.codebase.root_path) if self.codebase else None
+
+        # Render Phase 3 Session Header
+        ui.render_session_header(
             agent_name=self.agent.get_identity(),
             model_id=self.model_id,
-            intent="Interactive Session"
+            codebase_root=cb_root
         )
-        ui.print_system("Tip: Press 'Alt+Enter' (or Esc+Enter) to submit. Type '/exit' to quit.")
+
+        ui.print_system("Tip: Press 'Alt+Enter' (or Esc+Enter) to submit. Type '/help' for commands.")
 
         # Log Session Start
         self._log_to_file(f"\n{'='*40}\nSESSION START: {datetime.datetime.now()}\n{'='*40}\n")
@@ -115,14 +120,15 @@ class ReplSession:
                 # 1. READ
                 user_input = self.session.prompt(prompt_text, multiline=True)
 
-                # Check for exit commands
-                if user_input.strip().lower() in ["/exit", "quit", "exit"]:
-                    raise EOFError
-
                 if not user_input.strip():
                     continue
 
-                # 2. EVAL & PRINT
+                # 2. CHECK COMMANDS
+                # Intercept slash commands before sending to LLM
+                if self._handle_command(user_input):
+                    continue
+
+                # 3. EVAL & PRINT
                 self._handle_input(user_input)
 
             except KeyboardInterrupt:
@@ -132,6 +138,43 @@ class ReplSession:
                 break
             except Exception as e:
                 ui.print_error(f"REPL Error: {e}")
+
+    def _handle_command(self, text: str) -> bool:
+        """
+        Intercepts slash commands.
+        Returns True if a command was handled (skipping LLM inference).
+        Returns False if the input should be processed as a prompt.
+        """
+        cmd = text.strip().lower()
+
+        # Exit Commands
+        if cmd in ["/exit", "/quit", "exit", "quit"]:
+            raise EOFError
+
+        # Clear Screen
+        if cmd == "/clear":
+            ui.console.clear()
+            # We re-render the header so the user remembers where they are
+            cb_root = str(self.codebase.root_path) if self.codebase else None
+            ui.render_session_header(
+                agent_name=self.agent.get_identity(),
+                model_id=self.model_id,
+                codebase_root=cb_root
+            )
+            return True
+
+        # Help
+        if cmd == "/help":
+            ui.print_system("--- COMMANDS ---")
+            ui.print_system(" /exit, /quit : End the session.")
+            ui.print_system(" /clear       : Clear the terminal screen.")
+            ui.print_system(" /help        : Show this menu.")
+            ui.print_system("--- KEYBINDINGS ---")
+            ui.print_system(" Alt+Enter    : Submit input.")
+            ui.print_system(" Enter        : Insert newline.")
+            return True
+
+        return False
 
     def _handle_input(self, text: str) -> None:
         """
@@ -176,5 +219,3 @@ class ReplSession:
                 f.write(text)
         except IOError as e:
             ui.print_error(f"Logging failed: {e}")
-
-

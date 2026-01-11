@@ -28,6 +28,7 @@ VYBZ_THEME = Theme({
     "header.value": "spring_green1",
     "content": "white",
     "panel.border": "blue",
+    "session.border": "spring_green1",
     "timestamp": "dim white",
 })
 
@@ -51,7 +52,7 @@ def render_header(
     timestamp: str | None = None
 ) -> None:
     """
-    Renders a styled metadata panel to the console.
+    Renders a styled metadata panel to the console for one-shot tasks.
 
     Args:
         agent_name: Identity of the agent.
@@ -83,6 +84,45 @@ def render_header(
 
     console.print(panel)
     console.print()  # Spacer
+
+def render_session_header(
+    agent_name: str,
+    model_id: str,
+    codebase_root: str | None = None
+) -> None:
+    """
+    Renders a distinct styled header for Interactive Sessions.
+
+    Args:
+        agent_name: Identity of the agent.
+        model_id: Gemini model identifier.
+        codebase_root: String representation of context root (optional).
+    """
+    timestamp = datetime.now().strftime("%H:%M:%S")
+    context_str = codebase_root if codebase_root else "[dim]Greenfield (No Context)[/]"
+
+    # Create an internal table for alignment
+    grid = Table.grid(padding=(0, 2))
+    grid.add_column(style="header.label", justify="right")
+    grid.add_column(style="header.value", justify="left")
+
+    grid.add_row("AGENT", agent_name)
+    grid.add_row("MODEL", model_id)
+    grid.add_row("CONTEXT", context_str)
+
+    panel = Panel(
+        grid,
+        title="[bold spring_green1]VYBZ KARTEL // INTERACTIVE SESSION[/]",
+        subtitle="[dim]Commands: /exit, /clear, /help | Submit: Alt+Enter[/]",
+        border_style="session.border",
+        box=ROUNDED,
+        padding=(1, 2),
+    )
+
+    console.print(panel)
+    console.print()  # Spacer
+
+
 
 
 def stream_chunk(text: str) -> None:
