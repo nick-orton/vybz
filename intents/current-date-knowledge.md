@@ -1,5 +1,5 @@
 ---
-status: "Draft"
+status: "Completed"
 type: "Intent"
 last_updated: "date"
 references: 
