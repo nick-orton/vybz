@@ -54,14 +54,12 @@ class Agent:
         """Returns the signature for logging purposes."""
         return f"{self.name} (v{self.version})"
 
-    def construct_full_prompt(self, intent: str) -> str:
+    def construct_agent_role_profile(self) -> str:
         """
-        Composes the final prompt by layering role, context, task, and intent.
-        Uses Markdown headers to separate concerns for the LLM.
+        Composes the system instructions for the model to behave as the agent
         """
         return (
             f"### ROLE SPECIFICATION\n{self.role_spec}\n\n"
             f"### OPERATING CONTEXT\n{self.operating_context}\n\n"
             f"### TASK GUIDELINES\n{self.task_directive}\n\n"
-            f"### CURRENT INTENT\n{intent}"
         )

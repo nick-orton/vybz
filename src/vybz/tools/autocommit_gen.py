@@ -148,19 +148,16 @@ class GeminiCommitAgent:
 
         raw_intent = "\n".join(parts)
 
-        # Wrap intent in the Agent's full prompt structure
-        full_prompt = self.agent.construct_full_prompt(raw_intent)
 
         try:
-            # We pass the full prompt as 'contents' rather than using
-            # 'system_instruction' in config, aligning with the pattern
-            # used in vibez.py for full context control.
+            sys_instructions = self.agent.construct_agent_role_profile()
             config = types.GenerateContentConfig(
                 temperature=0.2,
+                system_instruction=sys_instructions
             )
             response = self.client.models.generate_content(
                 model=TARGET_MODEL,
-                contents=full_prompt,
+                contents=raw_intent,
                 config=config
             )
 

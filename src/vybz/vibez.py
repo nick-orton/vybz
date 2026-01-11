@@ -82,11 +82,11 @@ def generate_and_continuous_log(
     timestamp_display = datetime.datetime.now().strftime("%H:%M:%S")
 
     # Construct the full system prompt internally
-    full_prompt = agent.construct_full_prompt(intent)
+    sys_instructions = agent.construct_agent_role_profile()
 
     # Inject codebase if provided. Do NOT include in log header.
     if codebase:
-        full_prompt += "\n\n" + codebase.render()
+        sys_instructions += "\n\n" + codebase.render()
 
     # Render UI Header (Visual Only)
     ui.render_header(
@@ -125,9 +125,13 @@ def generate_and_continuous_log(
             # Execute generation with streaming
             response_stream = client.models.generate_content_stream(
                 model=model_id,
-                contents=full_prompt,
-                config=types.GenerateContentConfig(response_mime_type="text/plain"),
+                contents=intent,
+                config=types.GenerateContentConfig(
+                   response_mime_type="text/plain",
+                   system_instruction=sys_instructions
+                )
             )
+
 
             for chunk in response_stream:
                 if chunk.text:
