@@ -1,7 +1,5 @@
-import os
 import vibez
 import sys
-from google import genai
 from pathlib import Path
 from agent import Agent
 from context_engine import CodeBase
@@ -20,22 +18,22 @@ def read_file(filepath: str):
 cb = CodeBase(Path("."))
 
 intent = f"""
-Create a technical writer agent.
+Create a README.md for this code base.
 
-I would like to have an agent that does technical writing.  It should be skilled
-at reading code, understanding what it does, and explaining it in simple language.
-It should be good at writing README files, git commit messages, and comment strings
-for code.  It should be skilled at Python style guides and have the abilities of
-someone certified by the Society for Technical Communication (STC).
+Name the project Vybz Kartel.
 
-Create the agent using the .toml syntax similar to pm.toml.  Use the template
-agent.toml.template
+Give an overview of what it does and how to use it.
+Pay special attention to the design artifacts and the various agents.  Explain
+all the agents and what they're for.
+
+Give a complete example workbench.py that copies the essential code from main.py and
+calls vibez.generate_and_continuous_log.
 """
 
 #MODEL_ID = "gemini-3-flash-preview"
 MODEL_ID = "gemini-3-pro-preview"
 LOG_FILE = "out.log"
-AGENT = "advisor"
+AGENT = "tech-writer"
 
 try:
     # Listing agents triggers lazy initialization/logging
