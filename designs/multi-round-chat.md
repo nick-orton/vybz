@@ -1,5 +1,5 @@
 ---
-status: "Draft"
+status: "Completed"
 type: "Design"
 last_updated: "2026-01-11"
 references: intents/multi-round-chat.md, designs/pretty-print-sysout.md

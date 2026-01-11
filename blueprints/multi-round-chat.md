@@ -1,5 +1,5 @@
 ---
-status: "Proposed"
+status: "Completed"
 type: "Blueprint"
 last_updated: "2026-01-11"
 references: designs/multi-round-chat.md
