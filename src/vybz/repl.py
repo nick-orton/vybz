@@ -11,6 +11,7 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.formatted_text import HTML
 from vybz.agent import Agent
 from vybz import ui
+from rich.markup import escape
 
 class ReplSession:
     """
@@ -79,7 +80,7 @@ class ReplSession:
         Temporary handler to verify input capture in Phase 1.
         """
         ui.console.print(f"[dim]DEBUG: Captured {len(text)} chars[/dim]")
-        ui.console.print(f"[green]{text}[/green]")
+        ui.console.print(f"[green]{escape(text)}[/green]")
         ui.console.print("-" * 40)
 
 

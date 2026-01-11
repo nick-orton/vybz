@@ -12,6 +12,7 @@ from rich.theme import Theme
 from rich.panel import Panel
 from rich.table import Table
 from rich.box import ROUNDED
+from rich.markup import escape
 
 # -----------------------------------------------------------------------------
 # Theme Configuration
@@ -92,7 +93,7 @@ def stream_chunk(text: str) -> None:
         text: The raw text chunk from the LLM stream.
     """
     # We use end="" to ensure the stream flows naturally without extra newlines
-    console.print(text, style="content", end="", highlight=False)
+    console.print(text, style="content", end="", highlight=False, markup=False)
 
 
 # -----------------------------------------------------------------------------
@@ -101,16 +102,16 @@ def stream_chunk(text: str) -> None:
 
 def print_error(message: str) -> None:
     """Prints a styled error message."""
-    error_console.print(f"[error]ERROR:[/error] {message}")
+    error_console.print(f"[error]ERROR:[/error] {escape(message)}")
 
 def print_warning(message: str) -> None:
     """Prints a styled warning message to stderr."""
-    error_console.print(f"[warning]WARNING:[/warning] {message}")
+    error_console.print(f"[warning]WARNING:[/warning] {escape(message)}")
 
 def print_system(message: str) -> None:
     """Prints a system/info message."""
-    error_console.print(f"[info]>> {message}[/info]")
+    error_console.print(f"[info]>> {escape(message)}[/info]")
 
 def print_success(message: str) -> None:
     """Prints a success message to stderr."""
-    error_console.print(f"[success]✓[/success] {message}")
+    error_console.print(f"[success]✓[/success] {escape(message)}")
