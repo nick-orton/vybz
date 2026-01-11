@@ -147,6 +147,24 @@ correctly.
 By formalizing this pipeline, Vybz Kartel ensures that code generation is not a
 "guess" by an LLM, but the result of a structured engineering process.
 
+#### Metadata & Lifecycle Tracking
+
+To bridge the gap between human prose and machine logic, every artifact in the
+`designs/` and `blueprints/` directories should begin with **YAML Frontmatter**.
+This metadata transforms static Markdown into a queryable knowledge graph,
+enabling the **Librarian** agent to track document lineage and lifecycle states.
+
+**Schema:**
+
+```yaml
+---
+status: "Draft"        # Options: [Draft, Proposed, In Progress, Completed]
+type: "Design"         # Options: [Design, Intent, Blueprint]
+last_updated: "2026-01-11"
+references: designs/feature-spec.md  # Comma-separated list of upstream docs
+---
+```
+
 ## CLI Utilities
 
 Vybz Kartel includes standalone tools to automate routine maintenance tasks.
