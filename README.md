@@ -50,9 +50,8 @@ in your terminal.
     ```
 
 3.  **Configure API Key:**
-    Create a `.env` file in the root directory:
     ```bash
-    GEMINI_API_KEY="your-google-api-key-here"
+    export GEMINI_API_KEY="your-google-api-key-here"
     ```
 
 ## Usage
