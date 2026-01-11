@@ -1,3 +1,10 @@
+---
+status: "Completed"
+type: "Intent"
+last_updated: "2026-01-10"
+references: 
+---
+
 # Standard Out Ricing
 
 I want to make the terminal output of vybz pretty with nice colors for log headings

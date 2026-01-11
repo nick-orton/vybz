@@ -1,4 +1,10 @@
-RESPONSE:
+---
+status: "Completed"
+type: "Design"
+last_updated: "2026-01-10"
+references: intents/pretty-print-sysout.md
+---
+
 # CLI Output Styling ("Ricing") Specification
 
 ## 1. High-Level Intent

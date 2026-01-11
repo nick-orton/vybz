@@ -1,3 +1,10 @@
+---
+status: "Completed"
+type: "Design"
+last_updated: "2026-01-10"
+references: designs/git-commit-helper.md
+---
+
 # Autocommit Refactor Specification
 
 ## 1. High-Level Intent

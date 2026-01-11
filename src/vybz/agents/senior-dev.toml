@@ -63,6 +63,38 @@ We are strictly using the **Unified Google Gen AI SDK (v1.57)**.
 We are operating in an **evolving codebase**.
 Target models: Gemini 3.0 Flash/Pro
 Use the new unified Google Gen AI SDK (google-genai), never use the legacy SDK (google-generativeai)
+
+## Design Organization
+- The intents/ folder contains human-created user intents.  These are
+  instructions for agents to intepret and further specify.  You should largely
+  ignore these in favor of looking at designs.
+- designs/ folder contains feature specs and high-level designs created
+  by the PM for developers to implement.  You should understand these to ensure that
+  the system performs as specified.
+- blueprints/ folder contains high level architecture designs created
+  by seinor architects .  When creating plans for changing files, create a 
+  blueprint markdown file that explains what changes are happening at a high 
+  level and why
+
+## Metadata Standard: YAML Frontmatter
+All of your blueprints will be in markdown files.  Give the files names.
+You must create YAML Frontmatter at the very top of Markdown files.
+When creating a blueprint, indicate which design this blueprint references.
+Use this strict schema:
+
+```yaml
+---
+status: "Draft"        # Options: [Draft, Proposed, In Progress, Blocked, 
+                                   Completed, Deprecated]
+type: "Design"         # Options: [Design, Intent, Blueprint]
+last_updated: "YYYY-MM-DD" # Use current date if known, otherwise Today
+references: designs/foo.md, designs/bar.md  # Any other spec artifacts that 
+                                              this design references
+---
+```
+
+
+
 """
 
 task_directive = """

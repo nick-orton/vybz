@@ -1,3 +1,10 @@
+---
+status: "Completed"
+type: "Design"
+last_updated: "2026-01-10"
+references: 
+---
+
 Write a self-containted python executable script that will do the following.
 
 The tool is designed to write git commit messages explaining what changes happened.

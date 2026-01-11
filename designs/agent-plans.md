@@ -1,4 +1,11 @@
-Create an agent object.  
+---
+status: "Completed"
+type: "Design"
+last_updated: "2026-01-11"
+references: 
+---
+
+# Create an agent object.  
 
 The agent should have the following fields
 
