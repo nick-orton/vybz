@@ -1,5 +1,5 @@
 ---
-status: "Draft"
+status: "In Progress"
 type: "Intent"
 last_updated: "2026-01-12"
 references: 
@@ -33,12 +33,18 @@ more agents.
     ```toml
     skills = ["python-sdk-v1-57", "git-operations", "freebsd-sysadmin"]
     ```
+*   The toml schema for a skill should consist of two lists: "knowledge" and 
+    "abilities".  Each list is a list of string.  These are expected to be 
+    multi-line strings
 
 ### 3. Dynamic Composition
 *   When an Agent is initialized (via `Squad`), it should dynamically load the
     referenced skills.
 *   The `construct_agent_role_profile()` method must iterate through the
     attached skills and append their `instructions` to the final System Prompt.
+*   There should be the ability to add a skill via a special command from the 
+    user input.  /upskill <agent> <skill>.  This feature should be implemented 
+    towards the end.
 
 ### 4. Shareability
 *   Multiple agents must be able to reference the same skill file. For example,
