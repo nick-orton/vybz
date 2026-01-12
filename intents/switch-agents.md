@@ -1,7 +1,8 @@
 ---
 status: "Completed" 
 type: "Intent" 
-last_updated: "2026-01-11" references: 
+last_updated: "2026-01-11" 
+references: 
 ---
 
 # Agent Switching
