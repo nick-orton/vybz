@@ -1,6 +1,6 @@
 ---
 status: "Fixed"
-type: "Intent"
+type: "Bug"
 last_updated: "date"
 references: 
 ---

@@ -5,7 +5,7 @@ last_updated: "2026-01-11"
 references: designs/no-copy-pasting.md
 ---
 
-# Bug Fix: Artifact Parsing Robustness
+# Artifact Parsing Robustness
 
 ## 1. High-Level Intent
 Refactor the `_parse_artifact` method in `src/vybz/repl.py` to address critical
