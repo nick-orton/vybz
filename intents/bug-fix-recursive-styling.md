@@ -12,6 +12,7 @@ it will crash on displaying tagged markdown.  Here is an example of the crash:
 
 This is from the output log: 
 
+```
    def _handle_input(self, text: str) -> None:
         """
         Sends input to the model, streams the response, and logs the turn.
@@ -38,3 +39,5 @@ This is from the output log:
   File "/home/nerp/.local/lib/python3.11/site-packages/rich/markup.py", line 167, in render
     raise MarkupError(
 rich.errors.MarkupError: closing tag '[/bold cyan]' at position 59 doesn't match any open tag
+
+```
