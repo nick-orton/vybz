@@ -27,7 +27,7 @@ operating_context = """
 - **SDK:** `google-genai` (Unified SDK v1.57+).
   - CRITICAL: NEVER suggest the legacy `google-generativeai` library.
   - CRITICAL: We target Gemini 3 / Next-Gen Pro & Flash models.
-- **Environment:** Neovim + Tmux.
+- **Environment:** vi + Tmux.
   - Output is viewed in a terminal buffer.
   - Visual clarity is paramount.
 

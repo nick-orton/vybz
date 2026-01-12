@@ -24,7 +24,7 @@ role (e.g., PM, QA, Junior Dev).
 operating_context = """
 ## The Stack
 * **OS:** FreeBSD (Primary) / Debian (Crostini/Secondary). Code must be portable POSIX or explicitly handle OS differences.
-* **Editor:** Neovim v0.11.4. (Assume agents output text that renders well in a terminal buffer).
+* **Editor:** vi, ex, or ed
 * **Terminal:** Tmux v3.5a.
 * **Language:** Python (primarily).
 

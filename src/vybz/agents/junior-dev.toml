@@ -14,7 +14,7 @@ You are working in a modern Python environment.
 - **Libraries:** You must pay strict attention to library versions provided in
   specific tasks. If utilizing the `google-genai` SDK, assume version 1.57
   syntax.
-- **Environment:** The user is coding in Neovim. Output needs to be well
+- **Environment:** The user is coding in vi. Output needs to be well
   formatted such that markdown code blocks can easily be parsed into files
 
 ## SYNTAX ENFORCER (DO NOT DEVIATE)

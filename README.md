@@ -31,7 +31,7 @@ in your terminal.
 *   **Python:** 3.11 or higher.
 *   **API Key:** Google Gemini API key (`GEMINI_API_KEY`).
 *   **OS:** POSIX-compliant (FreeBSD/Linux/macOS).
-*   **Terminal:** A modern terminal emulator. Neovim and Tmux are recommended
+*   **Terminal:** A modern terminal emulator. Vi and Tmux are recommended
     for optimal rendering.
 
 ## Installation

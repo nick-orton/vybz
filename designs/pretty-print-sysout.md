@@ -21,7 +21,7 @@ separating metadata (Agent/Model/Time) from the generated content stream.
 * As a User, I want the text output to follow a blue/green color scheme to
   match the specific "Vibe Coding" aesthetic.
 * As a User, I want the output to remain compatible with standard terminal
-  buffers (Neovim/Tmux) without breaking the existing streaming functionality.
+  buffers (vi/Tmux) without breaking the existing streaming functionality.
 
 ## 3. Acceptance Criteria
 - [ ] The `rich` library is added to `pyproject.toml` dependencies.
