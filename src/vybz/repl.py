@@ -4,7 +4,7 @@ repl.py
 Handles the Interactive Read-Eval-Print Loop (REPL) for Vybz.
 Leverages prompt_toolkit for multi-line editing and custom keybindings.
 Connects to Google GenAI SDK for stateful chat.
-Supports multi-agent session switching and artifact auto-saving.
+Supports multi-agent session switching, artifact auto-saving, and context hot-reloading.
 """
 
 import sys
@@ -16,7 +16,7 @@ from typing import Optional, Dict, Any, Tuple
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.formatted_text import HTML
-from markdown_it import MarkdownIt  # <--- NEW IMPORT
+from markdown_it import MarkdownIt
 
 from google import genai
 from google.genai import types
@@ -73,15 +73,11 @@ class ReplSession:
             """Submit when Meta+Enter or Esc+Enter is pressed."""
             event.current_buffer.validate_and_handle()
 
-    def _get_or_create_chat(self, agent: Agent) -> Any:
+    def _build_system_instruction(self, agent: Agent) -> str:
         """
-        Retrieves an existing chat session for the agent or creates a new one.
+        Helper to construct the full system prompt for an agent.
+        Combines Role, Date, and current CodeBase snapshot.
         """
-        if agent.name in self.sessions:
-            return self.sessions[agent.name]
-
-        ui.print_system(f"Initializing Chat Session for {agent.name}...")
-
         # 1. Base Agent Role
         sys_instructions = agent.construct_agent_role_profile()
 
@@ -93,7 +89,20 @@ class ReplSession:
         if self.codebase:
             sys_instructions += "\n\n" + self.codebase.render()
 
-        # 4. Create Chat
+        return sys_instructions
+
+    def _get_or_create_chat(self, agent: Agent) -> Any:
+        """
+        Retrieves an existing chat session for the agent or creates a new one.
+        """
+        if agent.id in self.sessions:
+            return self.sessions[agent.id]
+
+        ui.print_system(f"Initializing Chat Session for {agent.name}...")
+
+        sys_instructions = self._build_system_instruction(agent)
+
+        # Create Chat
         try:
             chat = self.client.chats.create(
                 model=self.model_id,
@@ -102,11 +111,81 @@ class ReplSession:
                     temperature=0.7
                 )
             )
-            self.sessions[agent.name] = chat
+            self.sessions[agent.id] = chat
             return chat
         except Exception as e:
             ui.print_error(f"Failed to initialize Chat for {agent.name}: {e}")
             raise e
+
+    def _rebuild_chat_session(self, agent_id: str, old_chat: Any) -> Any:
+        """
+        Recreates a chat session with fresh system instructions (updated context/date)
+        while preserving the conversation history.
+        """
+        # 1. Resolve Agent
+        # Note: We use Squad to get the agent definition.
+        # If the TOML changed on disk, this picks up the new role spec too!
+        agent = Squad.get_agent(agent_id)
+
+        # 2. Build Fresh System Prompt (New Date + New CodeBase)
+        sys_instructions = self._build_system_instruction(agent)
+
+        # 3. Extract History
+        # The unified SDK Chat object maintains a 'history' property (List[Content])
+        try:
+            # Attempt standard method defined in intents/blueprints
+            history = old_chat.get_history()
+        except AttributeError:
+            # Fallback for SDK versions where it might be private
+            history = getattr(old_chat, "_history", [])
+
+        # 4. Create New Chat with the existing history
+        return self.client.chats.create(
+            model=self.model_id,
+            history=history,
+            config=types.GenerateContentConfig(
+                system_instruction=sys_instructions,
+                temperature=0.7
+            )
+        )
+
+    def _refresh_context(self) -> None:
+        """
+        Reloads the CodeBase snapshot and hot-swaps all active chat sessions
+        to inject the new context and current date.
+        """
+        ui.print_system("Refreshing CodeBase snapshot and Session Context...")
+
+        # 1. Reload CodeBase
+        if self.codebase:
+            try:
+                # Re-instantiate to traverse filesystem again
+                self.codebase = CodeBase(self.codebase.root_path)
+                ui.print_system(f"CodeBase re-scanned: {self.codebase.root_path}")
+            except Exception as e:
+                ui.print_error(f"Failed to reload CodeBase: {e}")
+                return
+        else:
+             ui.print_warning("Running in Greenfield mode (No CodeBase to refresh). Updating Date only.")
+
+        # 2. Hot-Swap Sessions
+        # Iterate over all cached sessions and rebuild them
+        count = 0
+        for agent_id, old_chat in list(self.sessions.items()):
+            try:
+                new_chat = self._rebuild_chat_session(agent_id, old_chat)
+                self.sessions[agent_id] = new_chat
+                count += 1
+            except Exception as e:
+                ui.print_error(f"Failed to refresh session for {agent_id}: {e}")
+
+        # 3. Update Active Pointer
+        # Ensure the active_chat reference points to the newly created object
+        if self.active_agent:
+            self.active_chat = self.sessions.get(self.active_agent.name)
+
+        ui.print_success(f"Context refreshed for {count} active sessions.")
+        ui.print_system(f"System Date updated to: {datetime.datetime.now().strftime('%Y-%m-%d')}")
 
     def _switch_to_agent_by_object(self, agent: Agent) -> None:
         """
@@ -209,10 +288,16 @@ class ReplSession:
             )
             return True
 
+        # Update / Hot-Reload Context
+        if cmd == "/update":
+            self._refresh_context()
+            return True
+
         # Help
         if cmd == "/help":
             ui.print_system("--- COMMANDS ---")
             ui.print_system(" /agent [name] : Switch active agent (or list available).")
+            ui.print_system(" /update       : Refresh CodeBase snapshot and System Date.")
             ui.print_system(" /save         : Auto-save the last generated artifact.")
             ui.print_system(" /exit, /quit  : End the session.")
             ui.print_system(" /clear        : Clear the terminal screen.")
@@ -395,3 +480,4 @@ class ReplSession:
                 f.write(text)
         except IOError as e:
             ui.print_error(f"Logging failed: {e}")
+

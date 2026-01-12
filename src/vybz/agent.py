@@ -8,6 +8,7 @@ class Agent:
     Represents an AI Persona with specific role, context, and task definitions.
     Designed to be loaded from configuration files (TOML).
     """
+    id: str
     name: str
     version: str
     role_spec: str
@@ -43,6 +44,7 @@ class Agent:
                 raise KeyError(f"Agent TOML missing required field: '{field}'")
 
         return cls(
+            id=path.stem,
             name=data["name"],
             version=data["version"],
             role_spec=data["role_spec"],
