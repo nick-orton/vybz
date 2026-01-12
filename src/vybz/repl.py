@@ -4,18 +4,19 @@ repl.py
 Handles the Interactive Read-Eval-Print Loop (REPL) for Vybz.
 Leverages prompt_toolkit for multi-line editing and custom keybindings.
 Connects to Google GenAI SDK for stateful chat.
-Supports multi-agent session switching.
+Supports multi-agent session switching and artifact auto-saving.
 """
 
 import sys
 import datetime
+import re
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Tuple
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.formatted_text import HTML
-from rich.markup import escape
+from markdown_it import MarkdownIt  # <--- NEW IMPORT
 
 from google import genai
 from google.genai import types
@@ -48,6 +49,9 @@ class ReplSession:
         self.sessions: Dict[str, Any] = {} # Map agent_name -> ChatSession
         self.active_agent: Optional[Agent] = None
         self.active_chat: Any = None
+
+        # State Tracking for Auto-Save
+        self.last_response: Optional[str] = None
 
         self.kb = KeyBindings()
         self._setup_keybindings()
@@ -209,6 +213,7 @@ class ReplSession:
         if cmd == "/help":
             ui.print_system("--- COMMANDS ---")
             ui.print_system(" /agent [name] : Switch active agent (or list available).")
+            ui.print_system(" /save         : Auto-save the last generated artifact.")
             ui.print_system(" /exit, /quit  : End the session.")
             ui.print_system(" /clear        : Clear the terminal screen.")
             ui.print_system(" /help         : Show this menu.")
@@ -228,6 +233,11 @@ class ReplSession:
             else:
                 target_name = args[0]
                 self._switch_to_agent_by_name(target_name)
+            return True
+
+        # Auto-Save Artifact
+        if cmd == "/save":
+            self._cmd_save()
             return True
 
         return False
@@ -260,14 +270,120 @@ class ReplSession:
             # Print newline after stream ends
             ui.console.print()
 
+            # Capture full response for state tracking (Auto-Save)
+            self.last_response = "".join(full_response)
+
             # Log Model Response
-            combined_response = "".join(full_response)
-            self._log_to_file(f"\n[MODEL ({self.active_agent.name})]: {combined_response}\n")
+            self._log_to_file(f"\n[MODEL ({self.active_agent.name})]: {self.last_response}\n")
             self._log_to_file("-" * 40)
 
         except Exception as e:
             ui.print_error(f"Generation Error: {e}")
             self._log_to_file(f"\n[ERROR]: {e}\n")
+
+    def _parse_artifact(self, text: str) -> Tuple[str, str, str]:
+        """
+        Parses the text using markdown-it-py to locate the first code block
+        containing YAML frontmatter.
+
+        Returns:
+            Tuple[str, str, str]: (content, directory, filename)
+        """
+        # 1. Parse into Tokens
+        md = MarkdownIt()
+        tokens = md.parse(text)
+
+        candidate_content = None
+
+        # 2. Iterate tokens to find a fence block with YAML
+        for token in tokens:
+            if token.type == 'fence':
+                # Check if the inner content starts with a YAML block
+                if token.content.strip().startswith('---'):
+                    candidate_content = token.content
+                    break
+
+        # 3. Fallback: Check if the entire response is the artifact (no code blocks)
+        if not candidate_content and text.strip().startswith('---'):
+            candidate_content = text
+
+        # If nothing found, return empty/default
+        if not candidate_content:
+            return text, "output", "artifact.md"
+
+        # 4. Extract Metadata from the *clean* candidate content
+        # Matches: --- \n ... type: Value ... \n ---
+        # Note: Using case-insensitive (?i) for 'Type' based on bug report
+        yaml_pattern = re.compile(
+            r'^---\s+.*?(?:type|Type)\s*:\s*["\']?(\w+)["\']?.*?---',
+            re.DOTALL | re.MULTILINE
+        )
+
+        artifact_type = "Output"
+        yaml_match = yaml_pattern.search(candidate_content)
+        if yaml_match:
+            artifact_type = yaml_match.group(1)
+
+        # 5. Extract Title for Filename
+        title_match = re.search(r'^#\s+(.+)$', candidate_content, re.MULTILINE)
+        if title_match:
+            raw_title = title_match.group(1).strip()
+            clean_title = raw_title.lower().replace(" ", "-")
+            clean_title = re.sub(r'[^a-z0-9-]', '', clean_title)
+            filename = f"{clean_title}.md"
+        else:
+            ts = datetime.datetime.now().strftime("%H%M%S")
+            filename = f"artifact-{ts}.md"
+
+        # 6. Map Directory
+        dir_map = {
+            "Design": "designs",
+            "Blueprint": "blueprints",
+            "Intent": "intents"
+        }
+        # Normalize case from regex capture
+        directory = dir_map.get(artifact_type.capitalize(), "output")
+
+        return candidate_content, directory, filename
+
+    def _cmd_save(self) -> None:
+        """
+        Executes the save logic for the last response.
+        """
+        if not self.last_response:
+            ui.print_error("Nothing to save. Generate something first.")
+            return
+
+        try:
+            # Parse
+            content, directory, filename = self._parse_artifact(self.last_response)
+
+            # Resolve Path
+            # If codebase is active, save relative to root. Else CWD.
+            root = self.codebase.root_path if self.codebase else Path.cwd()
+            target_dir = root / directory
+            target_file = target_dir / filename
+
+            # Create Directory
+            target_dir.mkdir(parents=True, exist_ok=True)
+
+            # Check existence for UI feedback
+            is_overwrite = target_file.exists()
+
+            # Write File
+            with open(target_file, "w", encoding="utf-8") as f:
+                f.write(content)
+                # Ensure newline at end
+                if not content.endswith("\n"):
+                    f.write("\n")
+
+            if is_overwrite:
+                ui.print_warning(f"Overwrote {directory.rstrip('s')} at {directory}/{filename}")
+            else:
+                ui.print_success(f"Saved {directory.rstrip('s')} to {directory}/{filename}")
+
+        except Exception as e:
+            ui.print_error(f"Save failed: {e}")
 
     def _log_to_file(self, text: str) -> None:
         """Appends text to the interaction log file."""
@@ -279,4 +395,3 @@ class ReplSession:
                 f.write(text)
         except IOError as e:
             ui.print_error(f"Logging failed: {e}")
-

@@ -76,6 +76,8 @@ vybz junior-dev --codebase .
 *   **`/agent [name]`**: Switch active agent (e.g., `/agent pm`). Type without
     arguments to list available agents.
 *   **`/clear`**: Clear the terminal screen (preserves chat history).
+*   **`/save`**: Auto-save the last generated artifact to the appropriate
+    directory based on its metadata.
 *   **`/help`**: Show available commands and keybindings.
 *   **`/exit`**: End the session.
 

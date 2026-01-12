@@ -34,10 +34,11 @@ to its correct directory based on its internal metadata.
 *   **Purpose:** Analyzes text to determine content, filename, and destination.
 *   **Logic:**
     1.  **Extraction:**
-        *   Check for Markdown code blocks (` ```markdown...``` `).
-        *   If present, use the content of the **last** code block.
-        *   If absent, use the **entire** text (assuming the Agent output *is* 
-            the document).
+        *   Check for Markdown code blocks (` ```markdown...``` or ```md ...``` `).
+            *   Likely the Markdown code block will have other code blocks inside of
+                it, so you need to be robust to nested delimeters.
+        *   If more than one markdown block, use the **entire** text (assuming 
+            the Agent output *is* the document).
     2.  **Metadata Parsing (Regex):**
         *   **Type:** `^---\s+.*type:\s*["']?(\w+)["']?.*---` (YAML Frontmatter).
         *   **Title:** `^#\s+(.+)$` (First H1 header).
