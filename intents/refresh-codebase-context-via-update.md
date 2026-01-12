@@ -1,5 +1,5 @@
 ---
-status: "Draft"
+status: "In Progress"
 type: "Intent"
 last_updated: "2026-01-11"
 references: 
