@@ -1,5 +1,5 @@
 ---
-status: "Draft"
+status: "Completed"
 type: "Design"
 last_updated: "2026-01-11"
 references: designs/no-copy-pasting.md
