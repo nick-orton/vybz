@@ -1,5 +1,5 @@
 ---
-status: "Draft"
+status: "Completed"
 type: "Blueprint"
 last_updated: "2026-01-12"
 references: designs/agent-skills-architecture-v1.md, designs/agent-skills-architecture.md
