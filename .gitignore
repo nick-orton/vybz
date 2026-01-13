@@ -5,8 +5,9 @@ __pycache__/
 # using .env convention for api key
 .env
 
-# output log from using the workbench
-out.log
+# output directory for mungy /save(s)
+output
+
 
 # Distribution / packaging
 build/
