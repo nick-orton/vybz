@@ -1,6 +1,8 @@
 import tomllib  # Built-in in Python 3.11+
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import List
+from vybz.skill import Skill
 
 @dataclass
 class Agent:
@@ -14,6 +16,7 @@ class Agent:
     role_spec: str
     operating_context: str
     task_directive: str
+    skills: List[Skill] = field(default_factory=list)
 
     @classmethod
     def from_toml(cls, file_path: str | Path) -> "Agent":
@@ -43,13 +46,24 @@ class Agent:
             if field not in data:
                 raise KeyError(f"Agent TOML missing required field: '{field}'")
 
+        # Load Skills
+        skills_list = []
+        skill_ids = data.get("skills", [])
+        # Skills are located in a 'skills' subdirectory relative to the agent TOML
+        skills_dir = path.parent / "skills"
+
+        for skill_id in skill_ids:
+            skill_path = skills_dir / f"{skill_id}.toml"
+            skills_list.append(Skill.from_toml(skill_path))
+
         return cls(
             id=path.stem,
             name=data["name"],
             version=data["version"],
             role_spec=data["role_spec"],
             operating_context=data["operating_context"],
-            task_directive=data["task_directive"]
+            task_directive=data["task_directive"],
+            skills=skills_list
         )
 
     def get_identity(self) -> str:
@@ -60,8 +74,15 @@ class Agent:
         """
         Composes the system instructions for the model to behave as the agent
         """
-        return (
+        prompt = (
             f"### ROLE SPECIFICATION\n{self.role_spec}\n\n"
             f"### OPERATING CONTEXT\n{self.operating_context}\n\n"
             f"### TASK GUIDELINES\n{self.task_directive}\n\n"
         )
+
+        if self.skills:
+            prompt += "### SKILLS & CAPABILITIES\n"
+            for skill in self.skills:
+                prompt += f"{skill.render()}\n\n"
+
+        return prompt

@@ -31,5 +31,5 @@ vybz-commit = "vybz.tools.autocommit_gen:main"
 vybz-fmt = "vybz.tools.mdformat:main"
 
 [tool.setuptools.package-data]
-vybz = ["agents/*.toml"]
+vybz = ["agents/*.toml", "agents/skills/*.toml"]
 

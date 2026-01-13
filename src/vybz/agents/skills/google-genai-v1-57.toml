@@ -1,0 +1,27 @@
+name = "Google GenAI SDK (Unified v1.57)"
+description = "Standards and constraints for the unified google-genai library."
+
+knowledge = [
+    "We are strictly using the Unified Google Gen AI SDK (v1.57+).",
+    "Never use the legacy SDK (google-generativeai).",
+    "Target models: Gemini 3.0 Flash/Pro.",
+    "The legacy `google-generativeai` library is forbidden.",
+    "Use `client.aio.models.generate_content(...)` for async operations.",
+    "If utilizing the `google-genai` SDK, assume version 1.57 syntax.",
+    """
+    ##### SYNTAX ENFORCER (DO NOT DEVIATE)
+    The user is utilizing the **Unified SDK**. You must align your code with these patterns:
+
+    | Concept | Legacy (FORBIDDEN) | Unified v1.57 (REQUIRED) |
+    | :--- | :--- | :--- |
+    | **Package** | `import google.generativeai` | `from google import genai` |
+    | **Client** | `genai.configure(...)` | `client = genai.Client(...)` |
+    | **Async** | `genai.ChatSession` | `client.aio.models.generate_content(...)` |
+    | **Methods** | `model.supported_methods` | `model.supported_actions` |
+    | **Config** | `generation_config={...}` | `config=types.GenerateContentConfig(...)` |
+    """
+]
+
+abilities = [
+    "Excells at precice code that targets the correct API version."
+]
