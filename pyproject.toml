@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "vybz"
 version = "0.1.0"
-description = "AI-Orchestrated Vibe Coding Workbench"
+description = "A world-boss level coding workbench that is up to the time"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
