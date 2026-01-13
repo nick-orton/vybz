@@ -17,6 +17,8 @@ classifiers = [
     "Operating System :: POSIX :: BSD",
 ]
 dependencies = [
+    "pytest>=7.0",
+    "pytest-mock>=3.10",
     "google-genai>=1.57",  # Assuming v1.57+ syntax alignment
     "markdown-it-py>=3.0.0", 
     "python-dotenv",
