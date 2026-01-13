@@ -19,6 +19,9 @@ in your terminal.
 *   **The Squad:** A modular system of specialized AI agents defined in TOML.
     Agents range from "Junior Developers" (code generation) to "Product
     Managers" (specification) and "Technical Writers" (documentation).
+*   **Agent Skills:** A composable architecture where agents inherit shared
+    knowledge (e.g., SDK versions, OS constraints) from reusable skill modules,
+    ensuring consistency across the squad.
 *   **Context Engine:** A read-only filesystem snapshot tool (`CodeBase`) that
     respects `.gitignore`, excludes binary files, and serializes your source
     tree into Markdown for accurate LLM context.
@@ -113,6 +116,30 @@ right task:
 *   **`tech-writer`:** Generates documentation and commit messages.
 *   **`librarian`:** Organizes documentation and ensures doc metadata is 
     up-to-date
+
+### Composable Skills
+
+Agents are constructed from modular **Skills** defined in
+`src/vybz/agents/skills/`. This ensures that critical constraints—such as
+Python coding standards, OS-specific shell rules, or SDK versions—are defined
+once and shared across the entire Squad.
+
+Skills are defined in atomic TOML files that decouple technical capability from
+agent persona. They consist of two primary components:
+
+*   **Knowledge:** The static facts and constraints the agent must possess. 
+    This includes specific library versions, operating system paths, or 
+    architectural standards (e.g., "We use FreeBSD 15.0" or "Target the 
+    `google-genai` v1.57 SDK").
+*   **Abilities:** The operational instructions that dictate how the agent 
+    applies that knowledge. These are behavioral rules and specific directives 
+    (e.g., "Always implement PEP 484 type hints" or "Prefer piping `grep` into 
+    `awk`").
+
+Example skills include:
+*   **`python-standards`**: PEP 8, Type Hinting, and Docstring rules.
+*   **`freebsd-posix`**: OS-specific constraints (FreeBSD 15.0, `sh` vs `bash`).
+*   **`google-genai-v1-57`**: Strict syntax rules for the unified Gemini SDK.
 
 ## Design Philosophy: Instructions as Code
 
@@ -226,4 +253,3 @@ alias gc="vybz-commit > /tmp/commit; vybz-fmt /tmp/commit | git commit -F - -e"
 ## License
 
 MIT License. See `LICENSE` for details.
-----------------------------------------
