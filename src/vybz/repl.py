@@ -379,6 +379,7 @@ class ReplSession:
         tokens = md.parse(text)
 
         candidate_content = None
+        target_token = None
 
         # 2. Iterate tokens to find a fence block with YAML
         for token in tokens:
@@ -386,7 +387,34 @@ class ReplSession:
                 # Check if the inner content starts with a YAML block
                 if token.content.strip().startswith('---'):
                     candidate_content = token.content
+                    target_token = token
                     break
+
+        if target_token:
+            # Check for nested block truncation (Bug Fix)
+            # Peek at type to see if this is a Document (Design/Blueprint)
+            is_doc = False
+            peek_match = re.search(r'type\s*:\s*["\']?(\w+)["\']?', target_token.content, re.IGNORECASE)
+            if peek_match and peek_match.group(1).capitalize() in ["Design", "Blueprint", "Intent", "Bug"]:
+                is_doc = True
+
+            if is_doc and target_token.map:
+                # Greedy Extraction: Capture until the last fence in the text
+                lines = text.splitlines(keepends=True)
+                start_line = target_token.map[0]
+                last_fence_idx = -1
+                for j in range(len(lines) - 1, start_line, -1):
+                    if lines[j].strip().startswith('```') or lines[j].strip().startswith('~~~'):
+                        last_fence_idx = j
+                        break
+
+                if last_fence_idx > start_line:
+                    candidate_content = "".join(lines[start_line + 1 : last_fence_idx])
+                else:
+                    candidate_content = target_token.content
+            else:
+                candidate_content = target_token.content
+
 
         # 3. Fallback: Check if the entire response is the artifact (no code blocks)
         if not candidate_content and text.strip().startswith('---'):
