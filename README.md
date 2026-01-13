@@ -235,12 +235,12 @@ Add this alias to your shell configuration (e.g., `.bashrc` or `.zshrc`) to
 streamline your commit workflow:
 
 ```bash
-alias gc="vybz-commit > /tmp/commit; vybz-fmt /tmp/commit | git commit -F - -e"
+alias vc="vybz-commit > /tmp/commit; vybz-fmt /tmp/commit | git commit -F - -e"
 ```
 
 **Workflow:**
 1.  `git add .`
-2.  `gc` -> Generates message, formats it, and opens your editor for review.
+2.  `vc` -> Generates message, formats it, and opens your editor for review.
 
 ## Project Structure
 
@@ -249,6 +249,44 @@ alias gc="vybz-commit > /tmp/commit; vybz-fmt /tmp/commit | git commit -F - -e"
 *   `designs/`: High-level specifications and designs.
 *   `blueprints/`: Architectural implementation plans.
 *   `intents/`: Raw user intents (historical).
+
+## Development & Testing
+
+Vybz utilizes `pytest` for the test runner and `pytest-mock` to ensure all unit
+tests are hermetic (no network calls).
+
+### Running the Suite
+
+Ensure your virtual environment is active and development dependencies are
+installed:
+
+```bash
+pip install -e .
+```
+
+Execute the full test suite from the project root:
+
+```bash
+pytest
+```
+
+To run a specific test file or output verbose logs:
+
+```bash
+# Run only the Skill domain tests
+pytest tests/vybz/test_skill.py
+
+# Run with verbose output
+pytest -v
+```
+
+### Testing Standards
+
+*   **Hermetic:** Tests never hit the live Google Gemini API. The client is
+    mocked globally in `tests/conftest.py`.
+*   **Isolation:** File I/O tests use the `tmp_path` fixture. Do not write to
+    the local filesystem during tests.
+*   **Speed:** The suite is designed to execute in sub-second time.
 
 ## License
 
