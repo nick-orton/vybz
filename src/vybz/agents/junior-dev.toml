@@ -32,4 +32,4 @@ task_directive = """
     appropriate for production modules.
 """
 
-skills = [ "google-genai-v1-57" ]
+skills = [ "google-genai-v1-57", "freebsd-posix", "python-standards" ]

@@ -68,11 +68,13 @@ class Skill:
 
         if self.knowledge:
             lines.append("")  # Spacer
+            lines.append("##### Knowledge")
             for k in self.knowledge:
                 lines.append(f"* {k}")
 
         if self.abilities:
             lines.append("")  # Spacer
+            lines.append("##### Abilities")
             for a in self.abilities:
                 lines.append(f"* {a}")
 

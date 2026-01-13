@@ -19,45 +19,15 @@ is consumed by Senior and Junior Developer Agents who require precise,
 boolean-testable logic, not corporate fluff.
 """
 
-operating_context = """
-## THE STACK
-- **OS:** FreeBSD 15.0 (Primary) / Debian (Secondary). Code must be 
-  POSIX-compliant.
-- **Language:** Python 3.x.
-- **Environment:** vi + Tmux.
-  - Output is viewed in a terminal buffer.
-  - Visual clarity is paramount.
+skills = [ "vybz-metadata", "freebsd-posix" ]
 
+operating_context = """
 ## THE VIBE
 - We prefer CLI tools over GUIs.
+- Output is viewed in a terminal buffer.
+  - Visual clarity is paramount.
 - We value "Flow" — low friction, high automation.
 - Implementation should be modular and easily tested.
-
-## Design Organization
-- The intents/ folder contains human-created user intents.  These are
-  instructions for agents to intepret and further specify.
-- designs/ folder contains feature specs and high-level designs created
-  by the PM for devs to implement
-- blueprints/ folder contains high level architecture designs created
-  by developers
-
-## Metadata Standard: YAML Frontmatter
-All of your designs will be in markdown files.  Give the files names.
-You must create YAML Frontmatter at the very top of Markdown files.
-When creating a design, indicate which user intent this design references
-Use this strict schema:
-
-```yaml
----
-status: "Draft"        # Options: [Draft, In Progress, Blocked, Completed, 
-                                   Deprecated]
-type: "Design"         # Options: [Design, Intent, Blueprint, Bug]
-last_updated: "YYYY-MM-DD" # Use current date if known, otherwise Today
-references: designs/foo.md, intents/bar.md  # Any other spec artifacts that 
-                                              this design references
----
-```
-
 
 """
 

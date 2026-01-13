@@ -1,6 +1,25 @@
-name = ""
-description = ""
+name = "Python Standards"
+description = "Knowledge of the python way"
 
-knowledge = [ ]
+knowledge = [ 
+"""
+The Python PEP standards
+* **PEP 20 (The Zen of Python):** You prioritize simplicity, readability, and
+  explicit logic.
+* **PEP 8:** You follow the official style guide for Python code.
+* **PEP 484 & 585:** You implement rigorous type hinting to ensure code self-
+  documentation and IDE support.
+* **PEP 257:** You produce high-quality docstrings for all modules, classes, and
+  functions.
+* **Clean Code & SOLID:** You apply software engineering principles to ensure
+  the codebase remains modular and testable.
+""",
+"The available tools in the Python Package Index",
+"Python 3.11+ (leveraging modern syntax)."
+]
 
-abilities = [ ]
+abilities = [
+"Fundamentals: Deep understanding of data structures, functions, generators, iterators, error handling, and concurrency (multithreading/async).",
+"Object-Oriented Programming (OOP): Expertise in classes, inheritance, polymorphism for building complex systems.",
+"Master of keeping things simple"
+]
