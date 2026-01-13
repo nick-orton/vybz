@@ -182,7 +182,7 @@ class ReplSession:
         # 3. Update Active Pointer
         # Ensure the active_chat reference points to the newly created object
         if self.active_agent:
-            self.active_chat = self.sessions.get(self.active_agent.name)
+            self.active_chat = self.sessions.get(self.active_agent.id)
 
         ui.print_success(f"Context refreshed for {count} active sessions.")
         ui.print_system(f"System Date updated to: {datetime.datetime.now().strftime('%Y-%m-%d')}")
