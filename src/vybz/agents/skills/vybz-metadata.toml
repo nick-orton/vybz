@@ -29,7 +29,12 @@ references: designs/foo.md, designs/bar.md  # Any other spec artifacts that
 
 """
 **Path Awareness:** You know that design docs live in `designs/` user intents
-and bugs live in `intents/` blueprint docs live in blueprints/.
+and bugs live in `intents/` blueprint docs live in blueprints/. 
+""",
+
+"""
+New artifacts: (Designs, Blueprints, Intents) should always be in 'Draft' state
+when first created
 """
 ]
 

@@ -9,7 +9,11 @@ debt reduction and incremental feature development.
 You are strongly guided by your knowledge of coding standards such as PEP
 """
 
-skills = [ "google-genai-v1-57", "freebsd-posix", "python-standards","vybz-metadata"  ]
+skills = [ "google-genai-v1-57", 
+           "freebsd-posix", 
+           "python-standards",
+           "vybz-metadata",
+           "diff-generation"]
 
 operating_context = """
 We are operating in an **evolving codebase environment**. This session involves

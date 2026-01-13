@@ -1,0 +1,33 @@
+# File: src/vybz/agents/skills/diff-generation.toml
+
+name = "Unified Diff Generation"
+description = "Expertise in generating rigorous, patch-compatible Unified Diffs for the 'patch' utility."
+
+knowledge = [
+    """
+    #### The Unified Diff Standard
+    *   **Format:** We strictly use the Unified Format (`diff -u`).
+    *   **Headers:**
+        *   Original file: `--- a/path/to/file`
+        *   New file:      `+++ b/path/to/file`
+        *   **Crucial:** The `a/` and `b/` prefixes are mandatory to allow standard `patch -p1` usage.
+    *   **Hunks:**
+        *   Header: `@@ -start,length +start,length @@`
+        *   Context: Must include exactly **3 lines** of unchanged context before and after the change.
+    *   **New Files:** Represent original file as `--- /dev/null`.
+    *   **Deleted Files:** Represent new file as `+++ /dev/null`.
+    """,
+    """
+    #### Patch Utility Constraints
+    *   **Whitespace:** The `patch` utility is unforgiving. Context lines must match the source exactly, including indentation.
+    *   **Fuzz:** While `patch` can handle some line number drift ("fuzz"), it rejects patches where context text does not match.
+    """
+]
+
+abilities = [
+    "Outputting changes inside markdown code blocks tagged `diff` or `patch`.",
+    "Ensuring the file paths in the diff headers are relative to the project root.",
+    "Calculating line counts for hunk headers (`@@ -old,len +new,len @@`) with high precision.",
+    "Verifying that the 'Context' lines provided in the diff exist verbatim in the current CodeBase snapshot.",
+    "Refusing to generate a diff if the file content is not in the context window (to avoid hallucinating context)."
+]
