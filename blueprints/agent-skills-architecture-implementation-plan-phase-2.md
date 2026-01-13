@@ -1,5 +1,5 @@
 ---
-status: "Draft"
+status: "Completed"
 type: "Blueprint"
 last_updated: "2026-01-12"
 references: designs/agent-skills-architecture-phase-2-migration--advisor.md, designs/agent-skills-architecture.md
@@ -7,10 +7,14 @@ references: designs/agent-skills-architecture-phase-2-migration--advisor.md, des
 
 # Agent Skills Architecture Implementation Plan (Phase 2)
 
-This blueprint details the execution steps for the **Mass Migration** of core agents to the Skills Architecture and the enlightenment of the **Advisor** agent.
+This blueprint details the execution steps for the **Mass Migration** of core 
+agents to the Skills Architecture and the enlightenment of the **Advisor** agent.
 
 ## 1. Goal
-To eliminate duplicate context across the Squad by extracting shared knowledge (OS constraints, Python standards, Git rules, Metadata schemas) into atomic `Skill` TOML files, and to teach the Advisor agent how to compose new agents using this system.
+To eliminate duplicate context across the Squad by extracting shared knowledge 
+(OS constraints, Python standards, Git rules, Metadata schemas) into atomic 
+`Skill` TOML files, and to teach the Advisor agent how to compose new agents 
+using this system.
 
 ## 2. Artifact Specification: New Skills
 
