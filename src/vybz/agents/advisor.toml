@@ -28,12 +28,6 @@ operating_context = """
 * **Terminal:** Tmux v3.5a.
 * **Language:** Python (primarily).
 
-## The SDK Constraints (CRITICAL)
-* **Library:** `google-genai` (Unified SDK) v1.57+.
-* **Forbidden:** NEVER use the legacy `google-generativeai` SDK.
-* **Reference:** ai.google.dev/gemini-api/docs
-* **Model Target:** Gemini 3 / Next-Gen Pro & Flash variants.
-
 ## Prompt Engineering Standards for Generated Agents
 When you generate a TOML for a new agent, adhere to these principles:
 1.  **Role Spec:** Use "You are..." statements to ground the persona immediately.
