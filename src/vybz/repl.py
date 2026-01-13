@@ -9,14 +9,12 @@ Supports multi-agent session switching, artifact auto-saving, and context hot-re
 
 import sys
 import datetime
-import re
 from pathlib import Path
 from typing import Optional, Dict, Any, Tuple
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.formatted_text import HTML
-from markdown_it import MarkdownIt
 
 from google import genai
 from google.genai import types
@@ -24,6 +22,7 @@ from google.genai import types
 from vybz.agent import Agent
 from vybz.context_engine import CodeBase
 from vybz.squad import Squad
+from vybz.artifact import ArtifactProcessor
 from vybz import ui
 
 class ReplSession:
@@ -366,99 +365,6 @@ class ReplSession:
             ui.print_error(f"Generation Error: {e}")
             self._log_to_file(f"\n[ERROR]: {e}\n")
 
-    def _parse_artifact(self, text: str) -> Tuple[str, str, str]:
-        """
-        Parses the text using markdown-it-py to locate the first code block
-        containing YAML frontmatter.
-
-        Returns:
-            Tuple[str, str, str]: (content, directory, filename)
-        """
-        # 1. Parse into Tokens
-        md = MarkdownIt()
-        tokens = md.parse(text)
-
-        candidate_content = None
-        target_token = None
-
-        # 2. Iterate tokens to find a fence block with YAML
-        for token in tokens:
-            if token.type == 'fence':
-                # Check if the inner content starts with a YAML block
-                if token.content.strip().startswith('---'):
-                    candidate_content = token.content
-                    target_token = token
-                    break
-
-        if target_token:
-            # Check for nested block truncation (Bug Fix)
-            # Peek at type to see if this is a Document (Design/Blueprint)
-            is_doc = False
-            peek_match = re.search(r'type\s*:\s*["\']?(\w+)["\']?', target_token.content, re.IGNORECASE)
-            if peek_match and peek_match.group(1).capitalize() in ["Design", "Blueprint", "Intent", "Bug"]:
-                is_doc = True
-
-            if is_doc and target_token.map:
-                # Greedy Extraction: Capture until the last fence in the text
-                lines = text.splitlines(keepends=True)
-                start_line = target_token.map[0]
-                last_fence_idx = -1
-                for j in range(len(lines) - 1, start_line, -1):
-                    if lines[j].strip().startswith('```') or lines[j].strip().startswith('~~~'):
-                        last_fence_idx = j
-                        break
-
-                if last_fence_idx > start_line:
-                    candidate_content = "".join(lines[start_line + 1 : last_fence_idx])
-                else:
-                    candidate_content = target_token.content
-            else:
-                candidate_content = target_token.content
-
-
-        # 3. Fallback: Check if the entire response is the artifact (no code blocks)
-        if not candidate_content and text.strip().startswith('---'):
-            candidate_content = text
-
-        # If nothing found, return empty/default
-        if not candidate_content:
-            return text, "output", "artifact.md"
-
-        # 4. Extract Metadata from the *clean* candidate content
-        # Matches: --- \n ... type: Value ... \n ---
-        # Note: Using case-insensitive (?i) for 'Type' based on bug report
-        yaml_pattern = re.compile(
-            r'^---\s+.*?(?:type|Type)\s*:\s*["\']?(\w+)["\']?.*?---',
-            re.DOTALL | re.MULTILINE
-        )
-
-        artifact_type = "Output"
-        yaml_match = yaml_pattern.search(candidate_content)
-        if yaml_match:
-            artifact_type = yaml_match.group(1)
-
-        # 5. Extract Title for Filename
-        title_match = re.search(r'^#\s+(.+)$', candidate_content, re.MULTILINE)
-        if title_match:
-            raw_title = title_match.group(1).strip()
-            clean_title = raw_title.lower().replace(" ", "-")
-            clean_title = re.sub(r'[^a-z0-9-]', '', clean_title)
-            filename = f"{clean_title}.md"
-        else:
-            ts = datetime.datetime.now().strftime("%H%M%S")
-            filename = f"artifact-{ts}.md"
-
-        # 6. Map Directory
-        dir_map = {
-            "Design": "designs",
-            "Blueprint": "blueprints",
-            "Intent": "intents"
-        }
-        # Normalize case from regex capture
-        directory = dir_map.get(artifact_type.capitalize(), "output")
-
-        return candidate_content, directory, filename
-
     def _cmd_save(self) -> None:
         """
         Executes the save logic for the last response.
@@ -467,33 +373,23 @@ class ReplSession:
             ui.print_error("Nothing to save. Generate something first.")
             return
 
+        processor = ArtifactProcessor()
+
         try:
-            # Parse
-            content, directory, filename = self._parse_artifact(self.last_response)
+            # 1. Parse
+            artifact = processor.parse(self.last_response)
 
-            # Resolve Path
-            # If codebase is active, save relative to root. Else CWD.
+            # 2. Resolve Root
             root = self.codebase.root_path if self.codebase else Path.cwd()
-            target_dir = root / directory
-            target_file = target_dir / filename
 
-            # Create Directory
-            target_dir.mkdir(parents=True, exist_ok=True)
+            # 3. Save
+            msg = processor.save(artifact, root)
 
-            # Check existence for UI feedback
-            is_overwrite = target_file.exists()
-
-            # Write File
-            with open(target_file, "w", encoding="utf-8") as f:
-                f.write(content)
-                # Ensure newline at end
-                if not content.endswith("\n"):
-                    f.write("\n")
-
-            if is_overwrite:
-                ui.print_warning(f"Overwrote {directory.rstrip('s')} at {directory}/{filename}")
+            # 4. Feedback
+            if "Overwrote" in msg:
+                ui.print_warning(msg)
             else:
-                ui.print_success(f"Saved {directory.rstrip('s')} to {directory}/{filename}")
+                ui.print_success(msg)
 
         except Exception as e:
             ui.print_error(f"Save failed: {e}")
