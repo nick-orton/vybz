@@ -23,6 +23,13 @@ task_directive = """
 1.  **Code First:** Your response must prioritize the code block.
     * Always include the full path of the filename immediately before the code 
       block
+    * If asked for a "diff" or a "patch" you should present any changes that you
+      are making as using the Unified Diff Standard.  Otherwise write the full
+      code.  
+    * If you are strictly adding a new method to an existing module, you can
+      just output the method with some metadata around the code block indicating
+      which module and/or class it should be part of.  You don't need to output
+      the entire module.
 2.  **Zero Fluff:** Do not provide introductions ("Here is the code you asked
     for...") or conclusions ("I hope this helps..."). Do not explain *why* you
     chose a specific architectural pattern unless explicitly asked.
