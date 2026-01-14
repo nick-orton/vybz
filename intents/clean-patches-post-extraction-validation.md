@@ -37,6 +37,13 @@ that ensures it is syntactically valid.
     5.  **Serialize:** Write the corrected, strictly formatted string to the
         `.diff` file.
 
+### 3. Approach
+*   Independent diff processing module:  The artifact.py module is getting
+    prett messy.  I believe that we may want to leverage diffs in more ways
+    in the future and that it should be a key to how vybz works efficiently.
+    I would like the logic for sanitizing diffs to be in it's own module that
+    the save method in artifact.py uses before saving to disk.
+
 ## Desired Outcome
 A user can run `/save`, receive a `.diff` file, and immediately run
 `patch -p1 < output.diff` without encountering "malformed patch" errors due to

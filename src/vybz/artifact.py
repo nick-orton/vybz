@@ -128,6 +128,16 @@ class ArtifactProcessor:
         elif target_token and target_token.info.strip() in ['diff', 'patch']:
             artifact_type = "Diff"
 
+        # 5.1. Sanitize Diff Content
+        # If the artifact is a Diff, we attempt to repair common LLM errors
+        # (missing context spaces, bad header math) before saving.
+        if artifact_type == "Diff":
+            try:
+                from vybz.diff_utils import DiffSanitizer
+                candidate_content = DiffSanitizer.sanitize(candidate_content)
+            except ImportError:
+                pass  # Graceful degradation if dependency missing
+
         # 6. Generate Filename
         filename = ""
 
