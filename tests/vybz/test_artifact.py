@@ -124,8 +124,8 @@ End.
         ("Design", "designs"),
         ("Blueprint", "blueprints"),
         ("Intent", "intents"),
-        ("Bug", "output"),    # Fallback for unknown types
-        ("Unknown", "output")
+        ("Bug", "intents"),
+        ("Unknown", "output") # Fallback for unknown types
     ])
     def test_parse_routing(self, processor, yaml_type, expected_dir):
         """Data-Driven Test: Verify routing logic based on YAML type."""
@@ -178,6 +178,31 @@ End.
         artifact = processor.parse(text)
         # Assert
         assert artifact.type == "Design"
+
+    def test_parse_bug_routing(self, processor):
+        """
+        Verify that artifacts with 'type: Bug' are correctly routed to the 'intents/' directory.
+        """
+        # Arrange
+        text = textwrap.dedent("""
+        Here is the bug report:
+        ```markdown
+        ---
+        type: Bug
+        status: Draft
+        ---
+        # UI Crash on Load
+        Description of the crash...
+        ```
+        """)
+
+        # Act
+        artifact = processor.parse(text)
+
+        # Assert
+        assert artifact.type == "Bug"
+        assert artifact.directory == "intents"
+        assert artifact.filename == "ui-crash-on-load.md"
 
 class TestArtifactPersistence:
     """

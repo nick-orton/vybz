@@ -157,6 +157,7 @@ class ArtifactProcessor:
         dir_map = {
             "Design": "designs",
             "Blueprint": "blueprints",
+            "Bug": "intents",
             "Intent": "intents"
         }
         # Normalize case
