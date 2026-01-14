@@ -391,6 +391,10 @@ class ReplSession:
             else:
                 ui.print_success(msg)
 
+            # 5. Auto-Update Context
+            if self.codebase:
+                self._refresh_context()
+
         except Exception as e:
             ui.print_error(f"Save failed: {e}")
 
