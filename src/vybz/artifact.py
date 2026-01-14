@@ -53,7 +53,8 @@ class ArtifactProcessor:
         for token in tokens:
             if token.type == 'fence':
                 # Check if the inner content starts with a YAML block
-                if token.content.strip().startswith('---'):
+                # We check for 'type:' to distinguish from diffs that start with '--- a/...'
+                if token.content.strip().startswith('---') and re.search(r'\b[Tt]ype\s*:', token.content):
                     candidate_content = token.content
                     target_token = token
                     break
@@ -90,7 +91,15 @@ class ArtifactProcessor:
             else:
                 candidate_content = target_token.content
 
-        # 3. Fallback: Check if the entire response is the artifact (no code blocks)
+        # 3. Priority 2: Check for Diff/Patch blocks if no Document found
+        if not candidate_content:
+            for token in tokens:
+                if token.type == 'fence' and token.info.strip() in ['diff', 'patch']:
+                    candidate_content = token.content
+                    target_token = token
+                    break
+
+        # 4. Priority 3: Fallback - Check if the entire response is the artifact
         if not candidate_content and text.strip().startswith('---'):
             candidate_content = text
 
@@ -103,7 +112,7 @@ class ArtifactProcessor:
                 type="Output"
             )
 
-        # 4. Extract Metadata
+        # 5. Extract Metadata
         # Matches: --- \n ... type: Value ... \n ---
         yaml_pattern = re.compile(
             r'^---\s+.*?(?:type|Type)\s*:\s*["\']?(\w+)["\']?.*?---',
@@ -115,18 +124,36 @@ class ArtifactProcessor:
         if yaml_match:
             artifact_type = yaml_match.group(1)
 
-        # 5. Extract Title for Filename
-        title_match = re.search(r'^#\s+(.+)$', candidate_content, re.MULTILINE)
-        if title_match:
-            raw_title = title_match.group(1).strip()
-            clean_title = raw_title.lower().replace(" ", "-")
-            clean_title = re.sub(r'[^a-z0-9-]', '', clean_title)
-            filename = f"{clean_title}.md"
-        else:
-            ts = datetime.datetime.now().strftime("%H%M%S")
-            filename = f"artifact-{ts}.md"
+        # Check for Diff if not a Document
+        elif target_token and target_token.info.strip() in ['diff', 'patch']:
+            artifact_type = "Diff"
 
-        # 6. Map Directory
+        # 6. Generate Filename
+        filename = ""
+
+        if artifact_type == "Diff":
+            # Extract filename from "+++ b/path/to/file"
+            # Regex looks for the standard unified diff header
+            diff_match = re.search(r'^\+\+\+ b/(.+)$', candidate_content, re.MULTILINE)
+            if diff_match:
+                raw_path = diff_match.group(1).strip()
+                # Flatten path: src/vybz/repl.py -> src-vybz-repl.py.diff
+                filename = raw_path.replace("/", "-") + ".diff"
+            else:
+                filename = f"patch-{datetime.datetime.now().strftime('%H%M%S')}.diff"
+        else:
+            # Document / Output Strategy
+            title_match = re.search(r'^#\s+(.+)$', candidate_content, re.MULTILINE)
+            if title_match:
+                raw_title = title_match.group(1).strip()
+                clean_title = raw_title.lower().replace(" ", "-")
+                clean_title = re.sub(r'[^a-z0-9-]', '', clean_title)
+                filename = f"{clean_title}.md"
+            else:
+                ts = datetime.datetime.now().strftime("%H%M%S")
+                filename = f"artifact-{ts}.md"
+
+        # 7. Map Directory
         dir_map = {
             "Design": "designs",
             "Blueprint": "blueprints",

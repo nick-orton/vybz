@@ -132,7 +132,52 @@ End.
         text = f"```\n---\ntype: {yaml_type}\n---\n# Title\n```"
         artifact = processor.parse(text)
         assert artifact.directory == expected_dir
+    def test_parse_diff_block(self, processor):
+        """Verify parsing of code blocks tagged as 'diff'."""
+        # Arrange
+        text = textwrap.dedent("""
+        Here is the patch:
+        ```diff
+        --- a/src/vybz/ui.py
+        +++ b/src/vybz/ui.py
+        @@ -10,1 +10,1 @@
+        - old
+        + new
+        ```
+        """)
 
+        # Act
+        artifact = processor.parse(text)
+
+        # Assert
+        assert artifact.type == "Diff"
+        assert artifact.filename == "src-vybz-ui.py.diff"
+        assert artifact.directory == "output"
+        assert "+++ b/src/vybz/ui.py" in artifact.content
+
+    def test_parse_priority_yaml_over_diff(self, processor):
+        """
+        Verify that if a response contains both a Design and a Diff,
+        the Design (Priority 1) is selected.
+        """
+        # Arrange
+        text = textwrap.dedent("""
+        Here is the design:
+        ```markdown
+        ---
+        type: Design
+        ---
+        # My Feature
+        ```
+        And the code:
+        ```diff
+        +++ b/file.py
+        ```
+        """)
+        # Act
+        artifact = processor.parse(text)
+        # Assert
+        assert artifact.type == "Design"
 
 class TestArtifactPersistence:
     """
