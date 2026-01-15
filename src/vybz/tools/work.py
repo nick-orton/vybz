@@ -64,10 +64,18 @@ def main() -> None:
         default="emacs",
         help="Input editing mode (default: emacs)"
     )
+    parser.add_argument(
+        "--theme",
+        default="default",
+        help="UI Color Theme (default: default)"
+    )
 
     args = parser.parse_args()
 
     try:
+        # 0. Configure UI Theme
+        ui.set_theme(args.theme)
+
         # 1. Initialize the Google GenAI Client
         client = vibez.configure_genai_client()
 

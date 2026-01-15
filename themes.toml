@@ -1,0 +1,41 @@
+# Configuration file for Vybz REPL Themes.
+# Keys correspond to rich.style.Style definitions.
+
+[default]
+# The standard "Cyber/Oceanic" aesthetic
+info = "cyan"
+warning = "bold yellow"
+error = "bold red"
+success = "bold spring_green1"
+"header.label" = "bold cyan"
+"header.value" = "spring_green1"
+content = "white"
+"panel.border" = "blue"
+"session.border" = "spring_green1"
+timestamp = "dim white"
+
+[matrix]
+# High-contrast Green/Black aesthetic
+info = "bold green"
+warning = "bold yellow"
+error = "bold red"
+success = "bold green"
+"header.label" = "bold green"
+"header.value" = "green"
+content = "green"
+"panel.border" = "green"
+"session.border" = "bold green"
+timestamp = "dim green"
+
+[dracula]
+# A port of the popular Dracula theme
+info = "#bd93f9"            # Purple
+warning = "#ffb86c"         # Orange
+error = "#ff5555"           # Red
+success = "#50fa7b"         # Green
+"header.label" = "#ff79c6"  # Pink
+"header.value" = "#8be9fd"  # Cyan
+content = "#f8f8f2"         # White
+"panel.border" = "#6272a4"  # Comment/Blueish
+"session.border" = "#bd93f9"# Purple
+timestamp = "#6272a4"       # Comment

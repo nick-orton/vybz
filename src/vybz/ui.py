@@ -2,44 +2,60 @@
 ui.py
 
 Handles the visual presentation of the Vybz CLI using the 'rich' library.
-Implements a "Cyber/Oceanic" theme for terminal output while ensuring
-separation between displayed content and logged content.
+Manages global Console instances and supports dynamic theming via ThemeLoader.
 """
 
 from datetime import datetime
 from rich.console import Console
-from rich.theme import Theme
 from rich.panel import Panel
 from rich.table import Table
 from rich.box import ROUNDED
 from rich.markup import escape
 
+from vybz.theme import ThemeLoader
+
 # -----------------------------------------------------------------------------
-# Theme Configuration
+# Global Console Instances
 # -----------------------------------------------------------------------------
 
-# "Cyber/Oceanic" Palette
-VYBZ_THEME = Theme({
-    "info": "cyan",
-    "warning": "bold yellow",
-    "error": "bold red",
-    "success": "bold spring_green1",
-    "header.label": "bold cyan",
-    "header.value": "spring_green1",
-    "content": "white",
-    "panel.border": "blue",
-    "session.border": "spring_green1",
-    "timestamp": "dim white",
-})
+# Initialize with default theme immediately
+# ThemeLoader handles fallback to internal defaults if config is missing
+_initial_theme = ThemeLoader.load("default")
 
-# Global Console Instance
 # force_terminal=None allows rich to auto-detect if we are piping output
-console = Console(theme=VYBZ_THEME)
+console = Console(theme=_initial_theme)
 
 # Standard Error Console (for System Logs/Status)
 # We use a separate console for logs so users can pipe stdout (generated code)
 # to a file without capturing "Spinning up..." messages.
-error_console = Console(theme=VYBZ_THEME, stderr=True)
+error_console = Console(theme=_initial_theme, stderr=True)
+
+
+def set_theme(theme_name: str) -> bool:
+    """
+    Hot-swaps the active color theme for the UI.
+
+    Args:
+        theme_name: The key of the theme in themes.toml (e.g., 'matrix').
+
+    Returns:
+        True if successful, False if theme not found.
+    """
+    global console, error_console
+
+    try:
+        new_theme = ThemeLoader.load(theme_name)
+        
+        # Re-instantiate global consoles with new theme
+        console = Console(theme=new_theme)
+        error_console = Console(theme=new_theme, stderr=True)
+        return True
+
+    except ValueError as e:
+        # Report failure using the current error console
+        # The exception message from ThemeLoader already lists available themes
+        print_error(str(e))
+        return False
 
 # -----------------------------------------------------------------------------
 # Rendering Functions
