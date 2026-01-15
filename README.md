@@ -69,8 +69,8 @@ for refactoring.
 
 **Command:**
 ```bash
-# Syntax: vybz <agent> [-c path/to/codebase]
-vybz junior-dev --codebase .
+# Syntax: vybz <agent> [-c path/to/codebase] [--mode vi|emacs]
+vybz junior-dev --codebase . --mode vi
 ```
 
 **Keybindings & Commands:**
@@ -81,6 +81,7 @@ vybz junior-dev --codebase .
 *   **`/clear`**: Clear the terminal screen (preserves chat history).
 *   **`/save`**: Auto-save the last generated artifact to the appropriate
     directory based on its metadata.
+*   **`/set <mode>`**: Set input mode (`vi` or `emacs`).
 *   **`/help`**: Show available commands and keybindings.
 *   **`/exit`**: End the session.
 
