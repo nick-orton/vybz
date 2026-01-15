@@ -7,7 +7,11 @@ professional, Conventional Commit messages.
 
 Usage:
     export GEMINI_API_KEY="your_key"
-    python bin/autocommit_gen.py [--log-file path/to/log.txt]
+    # Generates message and opens git commit editor
+    vybz-commit
+    
+    # Just prints message to stdout
+    vybz-commit --dry-run
 """
 
 import argparse
@@ -21,6 +25,9 @@ from dotenv import load_dotenv
 # -----------------------------------------------------------------------------
 # Path Setup (Allow imports from project root)
 # -----------------------------------------------------------------------------
+# Ensure we can import vybz modules even if running as a script
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+
 from google import genai
 from google.genai import types
 from vybz.squad import Squad
@@ -103,6 +110,26 @@ class GitService:
         except subprocess.CalledProcessError as e:
             raise GitOperationError(f"Failed to get git diff: {e.stderr}")
 
+    @staticmethod
+    def commit(message: str) -> None:
+        """
+        Starts the git commit process with the given message.
+        Uses -e to force the editor to open for user review.
+
+        Args:
+            message: The AI-generated commit message.
+        """
+        try:
+            # We use subprocess.run without capture_output so it inherits
+            # stdin/stdout/stderr, allowing the interactive editor (vim/nano) to work.
+            subprocess.run(
+                ["git", "commit", "-e", "-m", message],
+                check=True
+            )
+        except subprocess.CalledProcessError:
+            # User aborted the commit (e.g., via empty message or :cq in vim)
+            print("\nCommit operation aborted by user.", file=sys.stderr)
+
 
 class GeminiCommitAgent:
     """Wrapper for the Google Gen AI SDK (v1.57+)."""
@@ -183,6 +210,11 @@ def main() -> None:
         type=Path,
         help="Path to an agent interaction log file for context."
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the message to stdout instead of opening git commit."
+    )
 
     args = parser.parse_args()
 
@@ -216,7 +248,10 @@ def main() -> None:
         print("Analyzing changes...", file=sys.stderr)
         commit_message = agent.generate_message(diff_text, context_content)
 
-        print(commit_message)
+        if args.dry_run:
+            print(commit_message)
+        else:
+            GitService.commit(commit_message)
 
     except (GitOperationError, GenAIConfigurationError) as e:
         print(f"Error: {e}", file=sys.stderr)
