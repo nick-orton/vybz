@@ -1,5 +1,5 @@
 ---
-status: "Draft"
+status: "Completed"
 type: "Blueprint"
 last_updated: "2026-01-14"
 references: designs/diff-sanitization--validation-specification.md, intents/clean-patches-post-extraction-validation.md

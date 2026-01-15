@@ -1,7 +1,7 @@
 ---
-status: "Draft"
+status: "Completed"
 type: "Intent"
-last_updated: "2026-01-12"
+last_updated: "2026-01-14"
 references: src/vybz/repl.py, src/vybz/tools/work.py
 ---
 

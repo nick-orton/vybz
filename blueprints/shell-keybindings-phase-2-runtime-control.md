@@ -1,5 +1,5 @@
 ---
-status: "Draft"
+status: "Completed"
 type: "Blueprint"
 last_updated: "2026-01-14"
 references: blueprints/shell-keybindings-architecture--implementation-strategy.md, designs/shell-keybindings-configuration-specification.md
