@@ -307,6 +307,7 @@ class ReplSession:
             ui.print_system(" /update       : Refresh CodeBase snapshot and System Date.")
             ui.print_system(" /save         : Auto-save the last generated artifact.")
             ui.print_system(" /set <mode>   : Set input mode (vi | emacs).")
+            ui.print_system(" /theme <name> : Set UI color theme.")
             ui.print_system(" /exit, /quit  : End the session.")
             ui.print_system(" /clear        : Clear the terminal screen.")
             ui.print_system(" /help         : Show this menu.")
@@ -349,6 +350,16 @@ class ReplSession:
             new_mode_enum = EDITING_MODE_MAP[target_mode]
             self.session.editing_mode = new_mode_enum
             ui.print_success(f"Input mode set to {target_mode.upper()}")
+            return True
+
+        # Set UI Theme
+        if cmd == "/theme":
+            if not args:
+                ui.print_error("Usage: /theme <name>")
+                return True
+
+            if ui.set_theme(args[0]):
+                ui.print_success(f"Theme set to '{args[0]}'")
             return True
 
         return False
