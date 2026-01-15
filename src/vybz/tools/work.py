@@ -58,6 +58,12 @@ def main() -> None:
             "If omitted, runs in 'Greenfield' mode (no code context)."
         )
     )
+    parser.add_argument(
+        "--mode",
+        choices=["vi", "emacs"],
+        default="emacs",
+        help="Input editing mode (default: emacs)"
+    )
 
     args = parser.parse_args()
 
@@ -104,7 +110,8 @@ def main() -> None:
                 agent=agent,
                 model_id=args.model,
                 codebase=codebase,
-                log_file=Path(args.log_file)
+                log_file=Path(args.log_file),
+                mode=args.mode
             )
             session.start()
 

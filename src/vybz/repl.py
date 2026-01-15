@@ -15,6 +15,7 @@ from typing import Optional, Dict, Any, Tuple
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.formatted_text import HTML
+from prompt_toolkit.enums import EditingMode
 
 from google import genai
 from google.genai import types
@@ -24,6 +25,11 @@ from vybz.context_engine import CodeBase
 from vybz.squad import Squad
 from vybz.artifact import ArtifactProcessor
 from vybz import ui
+
+EDITING_MODE_MAP = {
+    "vi": EditingMode.VI,
+    "emacs": EditingMode.EMACS
+}
 
 class ReplSession:
     """
@@ -37,7 +43,8 @@ class ReplSession:
         agent: Agent,
         model_id: str,
         codebase: Optional[CodeBase] = None,
-        log_file: Optional[Path] = None
+        log_file: Optional[Path] = None,
+        mode: str = "emacs"
     ):
         self.client = client
         self.model_id = model_id
@@ -56,7 +63,8 @@ class ReplSession:
         self._setup_keybindings()
 
         # Initialize PromptSession with our bindings
-        self.session = PromptSession(key_bindings=self.kb)
+        self.editing_mode = EDITING_MODE_MAP.get(mode.lower(), EditingMode.EMACS)
+        self.session = PromptSession(key_bindings=self.kb, editing_mode=self.editing_mode)
 
         # Initialize the starting agent
         self._switch_to_agent_by_object(agent)
