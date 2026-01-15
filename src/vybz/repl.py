@@ -306,6 +306,7 @@ class ReplSession:
             ui.print_system(" /agent [name] : Switch active agent (or list available).")
             ui.print_system(" /update       : Refresh CodeBase snapshot and System Date.")
             ui.print_system(" /save         : Auto-save the last generated artifact.")
+            ui.print_system(" /set <mode>   : Set input mode (vi | emacs).")
             ui.print_system(" /exit, /quit  : End the session.")
             ui.print_system(" /clear        : Clear the terminal screen.")
             ui.print_system(" /help         : Show this menu.")
@@ -330,6 +331,24 @@ class ReplSession:
         # Auto-Save Artifact
         if cmd == "/save":
             self._cmd_save()
+            return True
+
+        # Set Editing Mode
+        if cmd == "/set":
+            if not args:
+                ui.print_error("Usage: /set <mode> (vi | emacs)")
+                return True
+
+            target_mode = args[0].lower()
+            if target_mode not in EDITING_MODE_MAP:
+                valid_modes = ", ".join(EDITING_MODE_MAP.keys())
+                ui.print_error(f"Invalid mode '{target_mode}'. Options: {valid_modes}")
+                return True
+
+            # Apply the change
+            new_mode_enum = EDITING_MODE_MAP[target_mode]
+            self.session.editing_mode = new_mode_enum
+            ui.print_success(f"Input mode set to {target_mode.upper()}")
             return True
 
         return False
