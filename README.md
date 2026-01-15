@@ -231,21 +231,10 @@ vybz-fmt README.md > README.md.tmp && mv README.md.tmp README.md
 vybz-fmt docs/spec.md -w 100
 ```
 
-### Recommended Workflow Alias
-Add this alias to your shell configuration (e.g., `.bashrc` or `.zshrc`) to
-streamline your commit workflow:
-
-```bash
-alias vc="vybz-commit > /tmp/commit; vybz-fmt /tmp/commit | git commit -F - -e"
-```
-
-**Workflow:**
-1.  `git add .`
-2.  `vc` -> Generates message, formats it, and opens your editor for review.
-
 ## Project Structure
 
 *   `src/vybz/`: Core source code.
+*   `src/vybz/tools`: CLI utilities
 *   `src/vybz/agents/`: TOML definitions for AI personas.
 *   `designs/`: High-level specifications and designs.
 *   `blueprints/`: Architectural implementation plans.
