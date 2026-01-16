@@ -249,12 +249,61 @@ class ReplSession:
             ("class:meta", f"{mode_str} | {ctx_str}"),
         ]
 
-    def _get_style(self) -> Style:
-        """Defines the color mapping for custom classes."""
+    #TODO Refactor this into UI
+    def _resolve_style_color(self, rich_style: Any, default: str) -> str:
+        """
+        Safely extracts a color from a Rich style object for Prompt Toolkit compatibility.
+        Converts named colors (like 'spring_green1') to Hex to avoid format errors.
+        """
+        if not rich_style or not rich_style.color:
+            return default
+
+        try:
+            # Attempt to retrieve the Hex code from the Rich color triplet.
+            # This handles standard ANSI, 256-color, and TrueColor definitions.
+            # rich.color.Color objects generally have a .triplet property.
+            if hasattr(rich_style.color, 'triplet') and rich_style.color.triplet:
+                return rich_style.color.triplet.hex
+
+            # 2. If no triplet, check if it's a safe ANSI name supported by prompt_toolkit.
+            # Common names: 'green', 'red', 'cyan', 'black', 'white', 'yellow', 'magenta', 'blue'
+            # (and their 'bright' variants sometimes, but basic is safer).
+            name = str(rich_style.color.name).lower()
+            safe_ansi = {
+                'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white',
+                'bright_black', 'bright_red', 'bright_green', 'bright_yellow',
+                'bright_blue', 'bright_magenta', 'bright_cyan', 'bright_white'
+            }
+
+            if name in safe_ansi:
+                return name
+
+            # 3. If it's a weird name (like 'spring_green1') and we couldn't get a Hex,
+            # fallback to default to prevent crash.
+            return default
+        except Exception:
+            # If conversion fails, return the default to prevent crash
+            return default
+
+    # self refactor into UI
+    def _get_dynamic_style(self) -> Style:
+        """
+        Dynamically derives PTK styles from the active Rich theme.
+        """
+        # Get Rich styles
+        s_info = ui.console.get_style("info")
+        s_success = ui.console.get_style("success")
+        s_time = ui.console.get_style("timestamp")
+
+       # Extract colors safely using helper to convert extended names to Hex
+        c_agent = self._resolve_style_color(s_info, "cyan")
+        c_sep = self._resolve_style_color(s_success, "green")
+        c_meta = self._resolve_style_color(s_time, "gray")
+
         return Style.from_dict({
-            "agent": "bold cyan",
-            "separator": "bold green",
-            "meta": "dim white",
+            "agent": f"bold {c_agent}",
+            "separator": f"bold {c_sep}",
+            "meta": c_meta,
         })
 
     def start(self) -> None:
@@ -272,7 +321,7 @@ class ReplSession:
                 user_input = self.session.prompt(
                     self._get_prompt_tokens,
                     rprompt=self._get_rprompt_tokens,
-                    style=self._get_style(),
+                    style=self._get_dynamic_style(),
                     multiline=True
                 )
 
