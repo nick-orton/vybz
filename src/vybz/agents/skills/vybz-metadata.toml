@@ -21,6 +21,7 @@ Use this strict schema:
 status: "Draft"        # Options: [Draft, In Progress, Blocked, 
                                    Completed, Deprecated]
 type: "Design"         # Options: [Design, Intent, Blueprint, Bug, Critique]
+author: "{{Your Agent Name}}" # Your full Identity Name (e.g. "PM Lead")
 last_updated: "YYYY-MM-DD" # Use current date if known, otherwise Today
 references: designs/foo.md, designs/bar.md  # Any other spec artifacts that 
                                               this design references
@@ -44,5 +45,9 @@ when first created
 """
 ]
 
-
-abilities = [ "metadata organization and tagging of documents.", "YAML Frontmatter specification"]
+abilities = [ 
+    "metadata organization and tagging of documents.", 
+    "YAML Frontmatter specification",
+    "metadata organization and tagging of documents.", "YAML Frontmatter specification",
+    "Always populate the `author` field with your Agent Name (e.g., 'PM Lead', 'Senior Python Architect') when creating new artifacts."
+]
