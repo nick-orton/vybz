@@ -43,13 +43,26 @@ timestamp = "dim green"
 
 [dracula]
 # A port of the popular Dracula theme
-info = "#bd93f9"            # Purple
-warning = "#ffb86c"         # Orange
-error = "#ff5555"           # Red
-success = "#50fa7b"         # Green
-"header.label" = "#ff79c6"  # Pink
-"header.value" = "#8be9fd"  # Cyan
-content = "#f8f8f2"         # White
-"panel.border" = "#6272a4"  # Comment/Blueish
-"session.border" = "#bd93f9"# Purple
-timestamp = "#6272a4"       # Comment
+info = "#bd93f9"             # Purple
+warning = "#ffb86c"          # Orange
+error = "#ff5555"            # Red
+success = "#50fa7b"          # Green
+"header.label" = "#ff79c6"   # Pink
+"header.value" = "#8be9fd"   # Cyan
+content = "#f8f8f2"          # White
+"panel.border" = "#6272a4"   # Comment/Blueish
+"session.border" = "#bd93f9" # Purple
+timestamp = "#6272a4"        # Comment
+
+[crimson]
+# High-contrast Red aesthetic
+info = "bold red"
+warning = "bold yellow"
+error = "bold white on red"
+success = "bold red"
+"header.label" = "bold red"
+"header.value" = "bright_red"
+content = "bright_red"
+"panel.border" = "red"
+"session.border" = "bold red"
+timestamp = "dim red"
