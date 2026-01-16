@@ -5,12 +5,14 @@ Handles the visual presentation of the Vybz CLI using the 'rich' library.
 Manages global Console instances and supports dynamic theming via ThemeLoader.
 """
 
+from typing import Any
 from datetime import datetime
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.box import ROUNDED
 from rich.markup import escape
+from prompt_toolkit.styles import Style as PtkStyle
 
 from vybz.theme import ThemeLoader
 
@@ -56,6 +58,66 @@ def set_theme(theme_name: str) -> bool:
         # The exception message from ThemeLoader already lists available themes
         print_error(str(e))
         return False
+
+# -----------------------------------------------------------------------------
+# Style Bridging (Rich -> Prompt Toolkit)
+# -----------------------------------------------------------------------------
+
+def _resolve_style_color(rich_style: Any, default: str) -> str:
+    """
+    Safely extracts a color from a Rich style object for Prompt Toolkit compatibility.
+    Converts named colors (like 'spring_green1') to Hex to avoid format errors.
+    """
+    if not rich_style or not rich_style.color:
+        return default
+
+    try:
+        # Attempt to retrieve the Hex code from the Rich color triplet.
+        # This handles standard ANSI, 256-color, and TrueColor definitions.
+        # rich.color.Color objects generally have a .triplet property.
+        if hasattr(rich_style.color, 'triplet') and rich_style.color.triplet:
+            return rich_style.color.triplet.hex
+
+        # 2. If no triplet, check if it's a safe ANSI name supported by prompt_toolkit.
+        # Common names: 'green', 'red', 'cyan', 'black', 'white', 'yellow', 'magenta', 'blue'
+        # (and their 'bright' variants sometimes, but basic is safer).
+        name = str(rich_style.color.name).lower()
+        safe_ansi = {
+            'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white',
+            'bright_black', 'bright_red', 'bright_green', 'bright_yellow',
+            'bright_blue', 'bright_magenta', 'bright_cyan', 'bright_white'
+        }
+
+        if name in safe_ansi:
+            return name
+
+        # 3. If it's a weird name (like 'spring_green1') and we couldn't get a Hex,
+        # fallback to default to prevent crash.
+        return default
+    except Exception:
+        # If conversion fails, return the default to prevent crash
+        return default
+
+def get_ptk_style() -> PtkStyle:
+    """
+    Dynamically derives Prompt Toolkit styles from the active Rich theme.
+    Used by the REPL to match the prompt color to the output color.
+    """
+    # Get Rich styles from the global console
+    s_info = console.get_style("info")
+    s_success = console.get_style("success")
+    s_time = console.get_style("timestamp")
+
+    # Extract colors safely using helper to convert extended names to Hex
+    c_agent = _resolve_style_color(s_info, "cyan")
+    c_sep = _resolve_style_color(s_success, "green")
+    c_meta = _resolve_style_color(s_time, "gray")
+
+    return PtkStyle.from_dict({
+        "agent": f"bold {c_agent}",
+        "separator": f"bold {c_sep}",
+        "meta": c_meta,
+    })
 
 # -----------------------------------------------------------------------------
 # Rendering Functions
