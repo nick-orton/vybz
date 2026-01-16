@@ -10,12 +10,13 @@ Supports multi-agent session switching, artifact auto-saving, and context hot-re
 import sys
 import datetime
 from pathlib import Path
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Dict, Any, Tuple, List
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.enums import EditingMode
+from prompt_toolkit.styles import Style
 
 from google import genai
 from google.genai import types
@@ -232,6 +233,30 @@ class ReplSession:
             ui.print_error(f"Error switching agent: {e}")
             return False
 
+    def _get_prompt_tokens(self) -> List[Tuple[str, str]]:
+        """Generates the left-side prompt tokens."""
+        label = self.active_agent.id if self.active_agent else "vybz"
+        return [
+            ("class:agent", f"{label} "),
+            ("class:separator", "❯ "),
+        ]
+
+    def _get_rprompt_tokens(self) -> List[Tuple[str, str]]:
+        """Generates the right-side status prompt tokens."""
+        mode_str = "VI" if self.session.editing_mode == EditingMode.VI else "EMACS"
+        ctx_str = "CTX" if self.codebase else "NO-CTX"
+        return [
+            ("class:meta", f"{mode_str} | {ctx_str}"),
+        ]
+
+    def _get_style(self) -> Style:
+        """Defines the color mapping for custom classes."""
+        return Style.from_dict({
+            "agent": "bold cyan",
+            "separator": "bold green",
+            "meta": "dim white",
+        })
+
     def start(self) -> None:
         """
         Starts the interactive loop.
@@ -242,13 +267,14 @@ class ReplSession:
         self._log_to_file(f"\n{'='*40}\nSESSION START: {datetime.datetime.now()}\n{'='*40}\n")
 
         while True:
-            # Dynamic Prompt Styling based on Active Agent
-            agent_label = self.active_agent.name if self.active_agent else "Unknown"
-            prompt_text = HTML(f"<b><style fg='cyan'>[{agent_label}]</style></b> >> ")
-
             try:
                 # 1. READ
-                user_input = self.session.prompt(prompt_text, multiline=True)
+                user_input = self.session.prompt(
+                    self._get_prompt_tokens,
+                    rprompt=self._get_rprompt_tokens,
+                    style=self._get_style(),
+                    multiline=True
+                )
 
                 if not user_input.strip():
                     continue
