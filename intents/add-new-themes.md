@@ -1,8 +1,74 @@
+---
+status: "Completed"
+type: "Intent"
+author: "Principal TUI Designer"
+last_updated: "2026-01-16"
+references: src/vybz/theme.py, themes.toml
+---
+
+# Add New Themes
+
+## Context
+The current `themes.toml` only provides a handful of defaults. To truly embrace "Vibe Coding," we need a diverse palette that respects different lighting conditions, aesthetic preferences, and nostalgia factors of our users.
+
+## High-Level Intent
+I want to inject 10 professionally curated color schemes into the Vybz ecosystem. These themes should range from high-contrast accessibility options to popular community standards (Nord, Gruvbox) and retro aesthetics (Amber CRT).
+
+## Requirements
+1.  **Variety:** The pack must include Dark Mode, Light Mode, Retro, and Modern styles.
+2.  **Consistency:** All themes must map correctly to the semantic keys (`info`, `warning`, `header.label`, etc.).
+3.  **Readability:** Ensure strictly that `content` colors contrast well against standard terminal backgrounds.
+
+```
+
+### designs/theme-pack-v1.md
+```md
+---
+status: "Completed"
+type: "Design"
+author: "Principal TUI Designer"
+last_updated: "2026-01-16"
+references: intents/add-new-themes.md
+---
+
+# Theme Pack V1 Specification
+
+## 1. High-Level Intent
+Expand the visual vocabulary of the Vybz Workbench by implementing 10 new `rich` themes. These themes are designed to reduce eye strain during long coding sessions and allow users to match their CLI tools to their IDE/OS aesthetics.
+
+## 2. Theme Roster
+
+### The Classics
+1.  **Monokai:** The high-contrast, vivid standard for coding.
+2.  **Solarized:** Precision engineering palette. Low contrast, earthy.
+3.  **Gruvbox:** Warm, retro, reddish-brown tones. Easy on the eyes at night.
+
+### The Moderns
+4.  **Nord:** Arctic, north-bluish, pastel. Very flat and clean.
+5.  **Tokyo Night:** Deep blue/purple storm vibes. Very popular in the Neovim community.
+6.  **Catppuccin:** Soft, pastel, low-saturation. "Soothing" vibe.
+
+### The Retros
+7.  **Amber:** Monochrome CRT monitor style. Fallout/Mainframe vibes.
+8.  **Synthwave:** Neon pinks, purples, and electric cyans. 80s Retrowave.
+9.  **DOS:** Classic VGA. Grey text, blue backgrounds (simulated via borders), heavy blockiness.
+
+### The Minimalist
+10. **Zen:** High-contrast Greyscale. No colors except for semantic state (Red/Green). Distraction-free.
+
+## 3. Implementation Details
+We will append these definitions to `themes.toml`. We use Hex codes to ensure consistency across different terminal emulators, rather than relying on the user's potentially broken ANSI color map.
+
+```
+
+### themes.toml
+```toml
 # Configuration file for Vybz REPL Themes.
 # Keys correspond to rich.style.Style definitions.
 
+# --- EXISTING ---
+
 [default]
-# The standard "Cyber/Oceanic" aesthetic
 info = "cyan"
 warning = "bold yellow"
 error = "bold red"
@@ -13,23 +79,8 @@ content = "white"
 "panel.border" = "blue"
 "session.border" = "spring_green1"
 timestamp = "dim white"
-
-[cyber]
-# The standard "Cyber/Oceanic" aesthetic
-info = "cyan"
-warning = "bold yellow"
-error = "bold red"
-success = "bold spring_green1"
-"header.label" = "bold cyan"
-"header.value" = "spring_green1"
-content = "white"
-"panel.border" = "blue"
-"session.border" = "spring_green1"
-timestamp = "dim white"
-
 
 [matrix]
-# High-contrast Green/Black aesthetic
 info = "bold green"
 warning = "bold yellow"
 error = "bold red"
@@ -42,7 +93,6 @@ content = "green"
 timestamp = "dim green"
 
 [dracula]
-# A port of the popular Dracula theme
 info = "#bd93f9"             # Purple
 warning = "#ffb86c"          # Orange
 error = "#ff5555"            # Red
@@ -54,22 +104,10 @@ content = "#f8f8f2"          # White
 "session.border" = "#bd93f9" # Purple
 timestamp = "#6272a4"        # Comment
 
-[crimson]
-# High-contrast Red aesthetic
-info = "bold red"
-warning = "bold yellow"
-error = "bold white on red"
-success = "bold red"
-"header.label" = "bold red"
-"header.value" = "bright_red"
-content = "bright_red"
-"panel.border" = "red"
-"session.border" = "bold red"
-timestamp = "dim red"
+# --- THEME PACK V1 ---
 
 [monokai]
 # The classic text editor aesthetic. High contrast, vivid colors.
-# Best for: Coding in low light.
 info = "#66d9ef"             # Cyan
 warning = "bold #fd971f"     # Orange
 error = "bold #f92672"       # Pink/Red
@@ -83,7 +121,6 @@ timestamp = "#75715e"        # Grey
 
 [nord]
 # An arctic, north-bluish color palette. Flat and pastel.
-# Best for: Long sessions, reduces eye strain.
 info = "bold #88c0d0"        # Frost Blue
 warning = "bold #ebcb8b"     # Yellow
 error = "bold #bf616a"       # Red
@@ -97,7 +134,6 @@ timestamp = "#4c566a"        # Polar Night
 
 [amber]
 # Retro monochrome CRT monitor style.
-# Best for: Hacking the mainframe / Fallout roleplay.
 info = "bold #ffd54f"        # Lighter Amber
 warning = "bold #ff6f00"     # Dark Orange
 error = "bold #d50000"       # Red (High contrast against amber)
@@ -111,7 +147,6 @@ timestamp = "dim #ff6f00"    # Dim Orange
 
 [synthwave]
 # 80s Retro-futurism. Neon pinks, cyans, and purples.
-# Best for: Vibe coding at 2 AM with music.
 info = "bold #00ffff"        # Electric Cyan
 warning = "bold #ffbd44"     # Sunny
 error = "bold #ff5555"       # Red
@@ -125,7 +160,6 @@ timestamp = "#6272a4"        # Blue Grey
 
 [solarized]
 # Precision engineering palette. Low contrast, earthy tones.
-# Best for: High ambient light environments.
 info = "bold #268bd2"        # Blue
 warning = "bold #b58900"     # Yellow
 error = "bold #dc322f"       # Red
