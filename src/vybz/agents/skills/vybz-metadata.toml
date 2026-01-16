@@ -6,6 +6,7 @@ knowledge = [ """
 - The intents/ folder contains human-created user intents.  These are
   instructions for agents to intepret and further specify. 
   - Bug reports belong in the intents/ folder
+  - Critiques below in the intents/ folder
 - designs/ folder contains feature specs and high-level designs created
   by the PM for devs to implement
 - blueprints/ folder contains high level architecture designs created
@@ -19,12 +20,17 @@ Use this strict schema:
 ---
 status: "Draft"        # Options: [Draft, In Progress, Blocked, 
                                    Completed, Deprecated]
-type: "Design"         # Options: [Design, Intent, Blueprint, Bug]
+type: "Design"         # Options: [Design, Intent, Blueprint, Bug, Critique]
 last_updated: "YYYY-MM-DD" # Use current date if known, otherwise Today
 references: designs/foo.md, designs/bar.md  # Any other spec artifacts that 
                                               this design references
 ---
 ```
+""",
+"""
+Critiques are reviews which can be created by ux-designers, pms or developers (or anyone really) that
+evaluate the current design and implementation of the system and offer remedies.  A PM can take a critique
+and turn the remediation into a design.
 """,
 
 """
