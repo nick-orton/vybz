@@ -198,6 +198,30 @@ references: designs/feature-spec.md  # Comma-separated list of upstream docs
 ---
 ```
 
+## User Configuration
+
+To persist your preferred workflow settings (like Vi keybindings or UI themes),
+you can create a configuration file. Vybz looks for this file at startup.
+
+**File Locations:**
+1. `~/.vybzrc`
+2. `~/.config/vybz.config`
+
+**Format:** TOML
+
+**Example:**
+```toml
+# ~/.vybzrc
+mode = "vi"               # Options: vi, emacs
+theme = "matrix"          # Options: default, matrix, dracula
+model = "gemini-3-pro-preview"
+```
+
+**Precedence:**
+CLI Arguments (e.g., `--mode emacs`) override Config File settings, which
+override System Defaults.
+
+
 ## CLI Utilities
 
 Vybz Kartel includes standalone tools to automate routine maintenance tasks.

@@ -14,6 +14,20 @@ content = "white"
 "session.border" = "spring_green1"
 timestamp = "dim white"
 
+[cyber]
+# The standard "Cyber/Oceanic" aesthetic
+info = "cyan"
+warning = "bold yellow"
+error = "bold red"
+success = "bold spring_green1"
+"header.label" = "bold cyan"
+"header.value" = "spring_green1"
+content = "white"
+"panel.border" = "blue"
+"session.border" = "spring_green1"
+timestamp = "dim white"
+
+
 [matrix]
 # High-contrast Green/Black aesthetic
 info = "bold green"

@@ -1,0 +1,20 @@
+# Vybz User Configuration
+# Place this file at ~/.vybzrc or ~/.config/vybz.config
+
+# UI Appearance
+# Options: default, matrix, dracula (or custom defined in themes.toml)
+theme = "matrix"
+
+# Input Editing Mode
+# Options: vi, emacs
+mode = "vi"
+
+# Default Gemini Model
+model = "gemini-3-pro-preview"
+
+# Default Log File Path
+log_file = "/tmp/vybz-session.log"
+
+# Default Codebase Path
+# If set, vybz will always load this context unless overridden with -c
+# codebase = "/home/user/projects/my-app"

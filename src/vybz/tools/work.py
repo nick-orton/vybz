@@ -13,6 +13,7 @@ from typing import Optional
 import vybz.vibez as vibez
 import vybz.ui as ui
 import vybz.repl as repl
+import vybz.config as config
 from vybz.context_engine import CodeBase
 from vybz.squad import Squad
 
@@ -69,6 +70,11 @@ def main() -> None:
         default="default",
         help="UI Color Theme (default: default)"
     )
+
+    # Load User Config
+    user_defaults = config.ConfigLoader.load()
+    if user_defaults:
+        parser.set_defaults(**user_defaults)
 
     args = parser.parse_args()
 
