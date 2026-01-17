@@ -1,6 +1,7 @@
 ---
 status: "Draft"
 type: "Critique"
+author: "Principal TUI Designer"
 last_updated: "2026-01-15"
 references: 
 ---

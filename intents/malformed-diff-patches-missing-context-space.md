@@ -1,6 +1,7 @@
 ---
 status: "Completed"
 type: "Bug"
+author: "Principal QA Engineer"
 last_updated: "2026-01-13"
 references: src/vybz/agents/skills/diff-generation.toml, src/vybz/artifact.py
 ---

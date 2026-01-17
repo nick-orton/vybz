@@ -1,6 +1,7 @@
 ---
 status: "Completed"
 type: "Design"
+author: "PM Lead"
 last_updated: "2026-01-14"
 references: intents/configure-ui-options-shell-keybindings.md
 ---

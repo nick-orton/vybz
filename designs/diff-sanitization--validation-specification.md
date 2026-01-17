@@ -1,6 +1,7 @@
 ---
 status: "Draft"
 type: "Design"
+author: "PM Lead"
 last_updated: "2026-01-14"
 references: intents/clean-patches-post-extraction-validation.md, blueprints/save-diffs--patches-implementation-plan.md
 ---

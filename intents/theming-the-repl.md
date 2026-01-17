@@ -1,6 +1,7 @@
 ---
 status: "Draft"
 type: "Intent"
+author: "Lead Technical Writer"
 last_updated: "2026-01-15"
 references: src/vybz/ui.py, src/vybz/repl.py, src/vybz/tools/work.py
 ---

@@ -1,6 +1,7 @@
 ---
 status: "Completed" 
 type: "Design" 
+author: "PM Lead"
 last_updated: "2026-01-11" 
 references: intents/switch-agents.md, designs/multi-round-chat.md 
 ---

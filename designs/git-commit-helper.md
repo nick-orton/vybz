@@ -1,6 +1,7 @@
 ---
 status: "Completed"
 type: "Design"
+author: "Nick Orton"
 last_updated: "2026-01-10"
 references: 
 ---

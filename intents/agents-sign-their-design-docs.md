@@ -1,7 +1,7 @@
 ---
 status: "Draft"
 type: "Intent"
-author: "tech-writer"
+author: "Lead Technical Writer"
 last_updated: "2026-01-16"
 references: src/vybz/agents/skills/vybz-metadata.toml
 ---

@@ -1,6 +1,7 @@
 ---
 status: "Draft"
 type: "Design"
+author: "PM Lead"
 last_updated: "2026-01-15"
 references: intents/rc-config-file.md
 ---

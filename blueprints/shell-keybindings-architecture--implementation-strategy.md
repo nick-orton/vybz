@@ -1,6 +1,7 @@
 ---
 status: "Completed"
 type: "Blueprint"
+author: "Senior Python Architect"
 last_updated: "2026-01-14"
 references: designs/shell-keybindings-configuration-specification.md
 ---

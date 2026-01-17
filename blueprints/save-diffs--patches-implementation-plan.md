@@ -1,6 +1,7 @@
 ---
 status: "Completed"
 type: "Blueprint"
+author: "Senior Python Architect"
 last_updated: "2026-01-14"
 references: blueprints/refactor-extract-artifact-manager.md, intents/save-code-from-agent-interactions.md
 ---

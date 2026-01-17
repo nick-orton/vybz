@@ -1,6 +1,7 @@
 ---
 status: "Completed"
 type: "Intent"
+author: "Nick Orton"
 last_updated: "2026-01-14"
 references: intents/modular-agent-skills-architecture.md
 ---

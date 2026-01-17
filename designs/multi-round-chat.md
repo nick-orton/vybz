@@ -1,6 +1,7 @@
 ---
 status: "Completed"
 type: "Design"
+author: "PM Lead"
 last_updated: "2026-01-11"
 references: intents/multi-round-chat.md, designs/pretty-print-sysout.md
 ---

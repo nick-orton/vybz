@@ -1,6 +1,7 @@
 ---
 status: "Completed"
 type: "Blueprint"
+author: "Senior Python Architect"
 last_updated: "2026-01-16"
 references: designs/metadata-attribution-specification.md
 ---

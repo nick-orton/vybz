@@ -1,6 +1,7 @@
 ---
 status: "Completed"
 type: "Blueprint"
+author: "Senior Python Architect"
 last_updated: "2026-01-12"
 references: designs/no-copy-pasting.md, intents/refresh-blueprint-for-save.md
 ---

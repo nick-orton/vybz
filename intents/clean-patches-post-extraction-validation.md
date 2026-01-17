@@ -1,6 +1,7 @@
 ---
 status: "Completed"
 type: "Intent"
+author: "Lead Technical Writer"
 last_updated: "2026-01-14"
 references: src/vybz/artifact.py, intents/malformed-diff-patches-missing-context-space.md
 ---

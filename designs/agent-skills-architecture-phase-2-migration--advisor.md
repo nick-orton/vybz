@@ -1,6 +1,7 @@
 ---
 status: "Completed"
 type: "Design"
+author: "PM Lead"
 last_updated: "2026-01-14"
 references: designs/agent-skills-architecture.md, intents/modular-agent-skills-architecture.md
 ---

@@ -1,6 +1,7 @@
 ---
 status: "Draft"
 type: "Blueprint"
+author: "Senior Python Architect"
 last_updated: "2026-01-15"
 references: designs/theming-the-repl-specification.md
 ---

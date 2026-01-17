@@ -1,6 +1,7 @@
 ---
 status: "Completed"
 type: "Blueprint"
+author: "Senior Python Architect"
 last_updated: "2026-01-12"
 references: designs/agent-skills-architecture-phase-2-migration--advisor.md, designs/agent-skills-architecture.md
 ---

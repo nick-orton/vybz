@@ -1,6 +1,7 @@
 ---
 status: "Fixed"
 type: "Bug"
+author: "Nick Orton"
 last_updated: "date"
 references: 
 ---

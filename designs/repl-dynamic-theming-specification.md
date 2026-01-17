@@ -1,6 +1,7 @@
 ---
 status: "Draft"
 type: "Design"
+author: "PM Lead"
 last_updated: "2026-01-16"
 references: intents/ux-critique.md, designs/theming-the-repl-specification.md
 ---
