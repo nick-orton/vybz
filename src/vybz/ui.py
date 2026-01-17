@@ -47,7 +47,7 @@ def set_theme(theme_name: str) -> bool:
 
     try:
         new_theme = ThemeLoader.load(theme_name)
-        
+
         # Re-instantiate global consoles with new theme
         console = Console(theme=new_theme)
         error_console = Console(theme=new_theme, stderr=True)
@@ -229,6 +229,17 @@ def print_warning(message: str) -> None:
 def print_system(message: str) -> None:
     """Prints a system/info message."""
     error_console.print(f"[info]>> {escape(message)}[/info]")
+
+def print_from_template(template: str, **kwargs) -> None:
+    """
+    Prints a multi-line string as individual system messages.
+    Supports optional interpolation via .format() if kwargs are supplied.
+    """
+    if kwargs:
+        template = template.format(**kwargs)
+    for line in template.strip().splitlines():
+        if line.strip():
+            print_system(line)
 
 def print_success(message: str) -> None:
     """Prints a success message to stderr."""

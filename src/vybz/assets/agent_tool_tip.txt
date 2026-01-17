@@ -1,0 +1,3 @@
+Current Agent: {agent_name}
+Available Agents: {agent_list}
+Usage: /agent <name>

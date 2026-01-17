@@ -340,9 +340,12 @@ class ReplSession:
             if not args:
                 # List agents
                 agents = Squad.list_agents()
-                ui.print_system(f"Current Agent: {self.active_agent.name}")
-                ui.print_system(f"Available Agents: {', '.join(agents)}")
-                ui.print_system("Usage: /agent <name>")
+                template = self._load_asset("agent_tool_tip.txt")
+                ui.print_from_template(
+                    template,
+                    agent_name=self.active_agent.name,
+                    agent_list=', '.join(agents)
+                )
             else:
                 target_name = args[0]
                 self._switch_to_agent_by_name(target_name)
