@@ -1,0 +1,13 @@
+--- COMMANDS ---
+ /agent \[name]  : Switch active agent (or list available).
+ /update        : Refresh CodeBase snapshot and System Date.
+ /save          : Auto-save the last generated artifact.
+ /set <mode>    : Set input mode (vi | emacs).
+ /theme <name>  : Set UI color theme.
+ /exit, /quit   : End the session.
+ /clear         : Clear the terminal screen.
+ /helpd         : Show this menu.
+
+--- KEYBINDINGS ---
+ Alt+Enter     : Submit input.
+ Enter         : Insert newline.

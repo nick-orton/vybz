@@ -248,6 +248,18 @@ class ReplSession:
             ("class:meta", f"{mode_str} | {ctx_str}"),
         ]
 
+    def _load_asset(self, filename: str) -> str:
+        """
+        Robustly loads text content from the assets directory.
+        """
+        try:
+            asset_path = Path(__file__).parent / "assets" / filename
+            if not asset_path.exists():
+                return f"Asset not found: {filename}"
+            return asset_path.read_text(encoding="utf-8")
+        except Exception as e:
+            return f"Failed to load asset: {e}"
+
     def start(self) -> None:
         """
         Starts the interactive loop.
@@ -319,18 +331,8 @@ class ReplSession:
 
         # Help
         if cmd == "/help":
-            ui.print_system("--- COMMANDS ---")
-            ui.print_system(" /agent [name] : Switch active agent (or list available).")
-            ui.print_system(" /update       : Refresh CodeBase snapshot and System Date.")
-            ui.print_system(" /save         : Auto-save the last generated artifact.")
-            ui.print_system(" /set <mode>   : Set input mode (vi | emacs).")
-            ui.print_system(" /theme <name> : Set UI color theme.")
-            ui.print_system(" /exit, /quit  : End the session.")
-            ui.print_system(" /clear        : Clear the terminal screen.")
-            ui.print_system(" /help         : Show this menu.")
-            ui.print_system("--- KEYBINDINGS ---")
-            ui.print_system(" Alt+Enter     : Submit input.")
-            ui.print_system(" Enter         : Insert newline.")
+            content = self._load_asset("repl_help.txt")
+            ui.print_panel(content, title="Help Menu")
             return True
 
         # Agent Switching

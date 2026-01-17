@@ -233,3 +233,20 @@ def print_system(message: str) -> None:
 def print_success(message: str) -> None:
     """Prints a success message to stderr."""
     error_console.print(f"[success]✓[/success] {escape(message)}")
+
+def print_panel(content: str, title: str = "") -> None:
+    """
+    Renders a generic block of text inside a styled Rich Panel.
+
+    Args:
+        content: The text content to display.
+        title: Optional title for the panel.
+    """
+    panel = Panel(
+        content,
+        title=title,
+        border_style="panel.border",
+        box=ROUNDED,
+        padding=(1, 2),
+    )
+    console.print(panel)
