@@ -1,13 +1,12 @@
 """
 tests/vybz/test_repl.py
 
-Comprehensive unit tests for the ReplSession.
-Focuses on State Management, Agent Switching, and Artifact Parsing/Persistence.
+Unit tests for the ReplSession (Presentation Layer).
+Verifies Command Parsing and Delegation to SessionManager.
 """
 import pytest
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch
 from pathlib import Path
-import datetime
 
 from vybz.repl import ReplSession
 from vybz.agent import Agent
@@ -19,195 +18,131 @@ from vybz.context_engine import CodeBase
 
 @pytest.fixture
 def mock_agent():
-    """Returns a standard Agent object."""
-    return Agent(
-        id="test-agent",
-        name="Test Agent",
-        version="1",
-        role_spec="You are a test agent.",
-        operating_context="Testing context.",
-        task_directive="Do tests."
-    )
+    """Returns a mock Agent object."""
+    agent = MagicMock(spec=Agent)
+    agent.id = "test-agent"
+    agent.name = "Test Agent"
+    agent.get_identity.return_value = "Test Agent (v1)"
+    return agent
 
 @pytest.fixture
-def mock_codebase(tmp_path):
-    """Returns a mock CodeBase object."""
-    cb = MagicMock(spec=CodeBase)
-    cb.root_path = tmp_path / "project_root"
-    cb.render.return_value = "# Mock CodeBase\n\n## Structure"
-    return cb
+def mock_session_manager():
+    """Returns a mock SessionManager."""
+    sm = MagicMock()
+    sm.active_agent.id = "test-agent"
+    sm.active_agent.name = "Test Agent"
+    sm.model_id = "gemini-test"
+    sm.codebase = None
+    return sm
 
 @pytest.fixture
-def repl(mock_genai_client, mock_agent, mock_codebase, tmp_path):
+def repl(mock_agent, mock_session_manager, tmp_path):
     """
     Returns an initialized ReplSession with dependencies mocked.
-    Patches PromptSession to avoid TUI startup.
+    Patches PromptSession and SessionManager.
     """
-    with patch("vybz.repl.PromptSession"):
+    with patch("vybz.repl.PromptSession"), \
+         patch("vybz.repl.SessionManager", return_value=mock_session_manager):
+
         session = ReplSession(
-            client=mock_genai_client,
+            client=MagicMock(),
             agent=mock_agent,
-            model_id="gemini-3-test",
-            codebase=mock_codebase,
+            model_id="gemini-test",
             log_file=tmp_path / "vybz.log"
         )
     return session
 
 # -----------------------------------------------------------------------------
-# Initialization & System Prompt Tests
+# Initialization Tests
 # -----------------------------------------------------------------------------
 
-def test_repl_init(repl, mock_agent):
-    """Verify session initializes with the correct active agent and chat."""
-    assert repl.active_agent == mock_agent
-    assert repl.active_agent.id in repl.sessions
-    assert repl.active_chat is not None
-    assert repl.sessions[mock_agent.id] == repl.active_chat
-
-def test_build_system_instruction(repl, mock_agent):
-    """Verify system instruction includes Role, Date, and CodeBase."""
-    # Act
-    sys_prompt = repl._build_system_instruction(mock_agent)
-
-    # Assert
-    assert "### ROLE SPECIFICATION" in sys_prompt
-    assert mock_agent.role_spec in sys_prompt
-    assert "### SYSTEM METADATA" in sys_prompt
-    assert "Current Date:" in sys_prompt
-    assert "# Mock CodeBase" in sys_prompt
-
-# -----------------------------------------------------------------------------
-# Agent Switching Tests
-# -----------------------------------------------------------------------------
-
-def test_switch_agent_by_name_success(repl, mock_genai_client):
-    """Verify switching to a valid agent updates state and UI."""
-    # Arrange
-    new_agent = Agent(
-        id="pm", name="PM Lead", version="1",
-        role_spec="PM", operating_context="", task_directive=""
-    )
-
-    with patch("vybz.repl.Squad") as mock_squad, \
-         patch("vybz.repl.ui") as mock_ui:
-
-        mock_squad.get_agent.return_value = new_agent
-
-        # Act
-        result = repl._switch_to_agent_by_name("pm")
-
-        # Assert
-        assert result is True
-        assert repl.active_agent.id == "pm"
-        assert "pm" in repl.sessions
-        # Verify a new chat was created for the PM
-        assert mock_genai_client.chats.create.call_count == 2
-        mock_ui.render_session_header.assert_called()
-
-def test_switch_agent_invalid(repl):
-    """Verify robust handling of invalid agent names."""
-    with patch("vybz.repl.Squad") as mock_squad, \
-         patch("vybz.repl.ui") as mock_ui:
-
-        mock_squad.get_agent.side_effect = ValueError("Agent not found")
-        mock_squad.list_agents.return_value = ["junior-dev", "pm"]
-
-        # Act
-        result = repl._switch_to_agent_by_name("ghost-agent")
-
-        # Assert
-        assert result is False
-        assert repl.active_agent.id == "test-agent" # Should not have changed
-        mock_ui.print_error.assert_called()
-
-# -----------------------------------------------------------------------------
-# Context Refresh Tests (/update)
-# -----------------------------------------------------------------------------
-
-def test_refresh_context(repl, mock_codebase):
-    """Verify /update reloads codebase and rebuilds chat sessions."""
-    # Arrange
-    # Mock the CodeBase constructor to simulate a reload
-    with patch("vybz.repl.CodeBase", return_value=mock_codebase) as MockCBClass, \
-         patch("vybz.repl.ui"), \
-         patch("vybz.repl.Squad") as mock_squad:
-
-        mock_squad.get_agent.return_value = repl.active_agent
-        # Act
-        repl._refresh_context()
-
-        # Assert
-        # 1. CodeBase re-instantiated
-        MockCBClass.assert_called_with(mock_codebase.root_path)
-
-        # 2. Chat Session Rebuilt (client.chats.create called again)
-        # Init called once, Update calls it again for the active agent
-        assert repl.client.chats.create.call_count == 2
-
-        # 3. Active Chat pointer updated
-        assert repl.active_chat == repl.sessions[repl.active_agent.id]
-
-# -----------------------------------------------------------------------------
-# Save Command Tests (/save)
-# -----------------------------------------------------------------------------
-
-def test_cmd_save_success(repl, tmp_path):
-    """Verify /save writes content to the correct location."""
-    # Arrange
-    repl.last_response = "```\n---\ntype: Design\n---\n# Save Test\nContent\n```"
-    repl.codebase.root_path = tmp_path # Root is temp dir
-
-    # Act
-    with patch("vybz.repl.ui") as mock_ui:
-        repl._cmd_save()
-
-        # Assert
-        expected_file = tmp_path / "designs" / "save-test.md"
-        assert expected_file.exists()
-        assert expected_file.read_text(encoding="utf-8").strip() == "---\ntype: Design\n---\n# Save Test\nContent"
-        mock_ui.print_success.assert_called()
-
-def test_cmd_save_overwrite_warning(repl, tmp_path):
-    """Verify warning UI when overwriting existing file."""
-    # Arrange
-    repl.last_response = "```\n---\ntype: Intent\n---\n# Overwrite Test\n```"
-    repl.codebase.root_path = tmp_path
-
-    # Pre-create file
-    target = tmp_path / "intents" / "overwrite-test.md"
-    target.parent.mkdir()
-    target.write_text("Old content")
-
-    # Act
-    with patch("vybz.repl.ui") as mock_ui:
-        repl._cmd_save()
-
-        # Assert
-        assert target.read_text(encoding="utf-8").strip() == "---\ntype: Intent\n---\n# Overwrite Test"
-        mock_ui.print_warning.assert_called()
-
-def test_cmd_save_no_response(repl):
-    """Verify handling when there is nothing to save."""
-    repl.last_response = None
-    with patch("vybz.repl.ui") as mock_ui:
-        repl._cmd_save()
-        mock_ui.print_error.assert_called_with("Nothing to save. Generate something first.")
+def test_repl_init_delegates_to_manager(repl, mock_session_manager):
+    """Verify ReplSession initializes SessionManager correctly."""
+    assert repl.session_manager == mock_session_manager
 
 # -----------------------------------------------------------------------------
 # Command Handler Tests
 # -----------------------------------------------------------------------------
 
-@pytest.mark.parametrize("command, expected_method", [
-    ("/update", "_refresh_context"),
-    ("/save", "_cmd_save"),
-])
-def test_handle_commands(repl, command, expected_method):
-    """Verify slash commands trigger correct methods."""
-    with patch.object(repl, expected_method) as mock_method:
-        assert repl._handle_command(command) is True
-        mock_method.assert_called_once()
-
 def test_handle_command_exit(repl):
     """Verify exit commands raise EOFError."""
     with pytest.raises(EOFError):
         repl._handle_command("/exit")
+
+def test_handle_command_clear(repl, mock_session_manager):
+    """Verify /clear calls UI clear and re-renders header."""
+    with patch("vybz.repl.ui") as mock_ui:
+        assert repl._handle_command("/clear") is True
+        mock_ui.console.clear.assert_called_once()
+        mock_ui.render_session_header.assert_called_once()
+
+def test_handle_command_update(repl, mock_session_manager):
+    """Verify /update delegates to SessionManager.refresh_context."""
+    # Arrange
+    mock_session_manager.refresh_context.return_value = 1
+
+    # Act
+    with patch("vybz.repl.ui"):
+        assert repl._handle_command("/update") is True
+
+    # Assert
+    mock_session_manager.refresh_context.assert_called_once()
+
+def test_handle_command_agent_switch_success(repl, mock_session_manager):
+    """Verify /agent <name> delegates to SessionManager.switch_agent."""
+    # Arrange
+    new_agent = MagicMock(spec=Agent)
+    new_agent.get_identity.return_value = "New Agent"
+    mock_session_manager.switch_agent.return_value = new_agent
+
+    # Act
+    with patch("vybz.repl.ui"):
+        assert repl._handle_command("/agent pm") is True
+
+    # Assert
+    mock_session_manager.switch_agent.assert_called_with("pm")
+
+def test_handle_command_agent_switch_fail(repl, mock_session_manager):
+    """Verify /agent handles ValueError from SessionManager."""
+    # Arrange
+    mock_session_manager.switch_agent.side_effect = ValueError("Not found")
+
+    # Act
+    with patch("vybz.repl.ui") as mock_ui, \
+         patch("vybz.repl.Squad") as mock_squad:
+        mock_squad.list_agents.return_value = ["a", "b"]
+
+        assert repl._handle_command("/agent ghost") is True # Handled, so returns True
+
+    # Assert
+    mock_ui.print_error.assert_called()
+
+# -----------------------------------------------------------------------------
+# Input Handler Tests
+# -----------------------------------------------------------------------------
+
+def test_handle_input_delegates_to_chat(repl, mock_session_manager):
+    """Verify user input is sent to the active chat stream."""
+    # Arrange
+    mock_chat = MagicMock()
+    mock_session_manager.active_chat = mock_chat
+    mock_chat.send_message_stream.return_value = [] # Empty stream
+
+    # Act
+    with patch("vybz.repl.ui"):
+        repl._handle_input("Hello")
+
+    # Assert
+    mock_chat.send_message_stream.assert_called_with("Hello")
+
+def test_handle_input_no_active_chat(repl, mock_session_manager):
+    """Verify robust handling when no chat is active."""
+    # Arrange
+    mock_session_manager.active_chat = None
+
+    # Act
+    with patch("vybz.repl.ui") as mock_ui:
+        repl._handle_input("Hello")
+
+    # Assert
+    mock_ui.print_error.assert_called_with("No active chat session.")
