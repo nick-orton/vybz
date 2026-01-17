@@ -168,6 +168,7 @@ class ArtifactProcessor:
             "Design": "designs",
             "Blueprint": "blueprints",
             "Bug": "intents",
+            "Critique": "intents",
             "Intent": "intents"
         }
         # Normalize case
