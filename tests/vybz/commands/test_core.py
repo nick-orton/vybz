@@ -5,7 +5,7 @@ Unit tests for individual Command implementations.
 Verifies that commands correctly manipulate the ReplSession and SessionManager.
 """
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, ANY
 from pathlib import Path
 
 from vybz.repl import ReplSession
@@ -128,13 +128,33 @@ def test_save_command_success(mock_session):
          patch("vybz.commands.core.ui") as mock_ui:
 
         processor_instance = MockProcessor.return_value
+        mock_artifact = MagicMock()
+        processor_instance.parse.return_value = [mock_artifact]
         processor_instance.save.return_value = "Saved successfully"
 
         assert cmd.execute(mock_session, []) is True
 
         processor_instance.parse.assert_called_with("Some content")
-        processor_instance.save.assert_called()
+        processor_instance.save.assert_called_with(mock_artifact, ANY)
         mock_ui.print_success.assert_called_with("Saved successfully")
+
+def test_save_command_multiple(mock_session):
+    """Verify /save handles multiple artifacts."""
+    cmd = SaveCommand()
+    mock_session.last_response = "Multi content"
+    mock_session.session_manager.codebase = None
+
+    with patch("vybz.commands.core.ArtifactProcessor") as MockProcessor, \
+         patch("vybz.commands.core.ui") as mock_ui:
+
+        processor_instance = MockProcessor.return_value
+        processor_instance.parse.return_value = [MagicMock(), MagicMock()]
+        processor_instance.save.side_effect = ["Saved A", "Saved B"]
+
+        assert cmd.execute(mock_session, []) is True
+
+        assert processor_instance.save.call_count == 2
+        mock_ui.print_success.assert_called_with("Batch Save: Processed 2 artifacts.")
 
 # -----------------------------------------------------------------------------
 # Config Commands
