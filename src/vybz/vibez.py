@@ -4,6 +4,7 @@ import datetime
 from vybz.agent import Agent
 from vybz.context_engine import CodeBase
 import vybz.ui as ui
+from vybz.services.context import ContextAssembler
 from pathlib import Path
 from dotenv import load_dotenv
 from google import genai
@@ -80,17 +81,9 @@ def generate_and_continuous_log(
     log_path = Path(log_file_path)
     timestamp_iso = datetime.datetime.now().isoformat()
     timestamp_display = datetime.datetime.now().strftime("%H:%M:%S")
-    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
-    # Construct the full system prompt internally
-    sys_instructions = agent.construct_agent_role_profile()
-
-    # Inject Date Knowledge
-    sys_instructions += f"\n\n### SYSTEM METADATA\nCurrent Date: {current_date}\n"
-
-    # Inject codebase if provided. Do NOT include in log header.
-    if codebase:
-        sys_instructions += "\n\n" + codebase.render()
+    # Delegate System Prompt construction to Shared Service
+    sys_instructions = ContextAssembler.build_system_instruction(agent, codebase)
 
     # Render UI Header (Visual Only)
     ui.render_header(
