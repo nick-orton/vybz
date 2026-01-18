@@ -40,16 +40,13 @@ class ReplSession:
 
     def __init__(
         self,
-        client: genai.Client,
-        agent: Agent,
-        model_id: str,
-        codebase: Optional[CodeBase] = None,
+        session_manager: SessionManager,
         log_file: Optional[Path] = None,
         mode: str = "emacs"
     ):
         self.log_file = log_file or Path("/tmp/vybz.log")
         #TODO import SessionManager rather than all the arguments
-        self.session_manager = SessionManager(client, model_id, agent, codebase)
+        self.session_manager = session_manager
 
         # State Tracking for Auto-Save
         self.last_response: Optional[str] = None

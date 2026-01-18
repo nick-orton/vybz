@@ -16,6 +16,7 @@ import vybz.repl as repl
 import vybz.config as config
 from vybz.context_engine import CodeBase
 from vybz.squad import Squad
+from vybz.services.session import SessionManager
 
 
 def main() -> None:
@@ -119,11 +120,9 @@ def main() -> None:
             )
         else:
             # ---> INTERACTIVE MODE (Phase 2)
+            session_manager = SessionManager(client=client, model_id=args.model, initial_agent=agent, codebase=codebase)
             session = repl.ReplSession(
-                client=client,
-                agent=agent,
-                model_id=args.model,
-                codebase=codebase,
+                session_manager,
                 log_file=Path(args.log_file),
                 mode=args.mode
             )

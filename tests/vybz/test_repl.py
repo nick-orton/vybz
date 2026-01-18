@@ -45,9 +45,7 @@ def repl(mock_agent, mock_session_manager, tmp_path):
          patch("vybz.repl.SessionManager", return_value=mock_session_manager):
 
         session = ReplSession(
-            client=MagicMock(),
-            agent=mock_agent,
-            model_id="gemini-test",
+            mock_session_manager,
             log_file=tmp_path / "vybz.log"
         )
     return session
