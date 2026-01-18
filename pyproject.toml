@@ -35,3 +35,7 @@ vybz-fmt = "vybz.tools.mdformat:main"
 [tool.setuptools.package-data]
 vybz = ["agents/*.toml", "agents/skills/*.toml", "assets/*.txt"]
 
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore"
+]
