@@ -25,12 +25,8 @@ from vybz.context_engine import CodeBase
 from vybz.squad import Squad
 from vybz.artifact import ArtifactProcessor
 from vybz.services.session import SessionManager
+from vybz.commands.registry import CommandRegistry
 from vybz import ui
-
-EDITING_MODE_MAP = {
-    "vi": EditingMode.VI,
-    "emacs": EditingMode.EMACS
-}
 
 class ReplSession:
     """
@@ -54,9 +50,27 @@ class ReplSession:
         self.kb = KeyBindings()
         self._setup_keybindings()
 
+        # Command Registry
+        self.registry = CommandRegistry()
+        self.registry.initialize()
+
+        # Editing Mode
+        editing_mode = ReplSession._parse_editing_mode(mode)
+
         # Initialize PromptSession with our bindings
-        self.editing_mode = EDITING_MODE_MAP.get(mode.lower(), EditingMode.EMACS)
-        self.session = PromptSession(key_bindings=self.kb, editing_mode=self.editing_mode)
+        self.session = PromptSession(key_bindings=self.kb, editing_mode=editing_mode)
+
+    def _parse_editing_mode(mode_str: str):
+        try:
+            # Direct lookup against the Enum type
+            mode = EditingMode[mode_str.upper()]
+            return mode
+
+        except KeyError:
+            # Dynamically generate list of valid options from the Enum
+            valid_options = ", ".join([m.name.lower() for m in EditingMode])
+            ui.print_error(f"Invalid mode '{mode_str}'. Options: {valid_options}")
+
 
     def _setup_keybindings(self) -> None:
         """
@@ -68,44 +82,6 @@ class ReplSession:
         def _(event):
             """Submit when Meta+Enter or Esc+Enter is pressed."""
             event.current_buffer.validate_and_handle()
-
-    def _refresh_context(self) -> None:
-        """
-        Reloads the CodeBase snapshot and hot-swaps all active chat sessions
-        to inject the new context and current date.
-        """
-        ui.print_system("Refreshing CodeBase snapshot and Session Context...")
-        count = self.session_manager.refresh_context()
-        ui.print_success(f"Context refreshed for {count} active sessions.")
-        ui.print_system(f"System Date updated to: {datetime.datetime.now().strftime('%Y-%m-%d')}")
-
-    def _switch_to_agent_by_name(self, name: str) -> bool:
-        """
-        Resolves agent name via Squad and switches.
-        Returns True if successful.
-        """
-        try:
-            agent = self.session_manager.switch_agent(name)
-
-            # Log the switch
-            self._log_to_file(f"\n{'='*40}\nSWITCHED AGENT: {agent.get_identity()}\n{'='*40}\n")
-
-            # Update UI
-            codebase = self.session_manager.codebase
-            cb_root = str(codebase.root_path) if codebase else None
-            ui.render_session_header(
-                agent_name=agent.get_identity(),
-                model_id=self.session_manager.model_id,
-                codebase_root=cb_root
-            )
-            return True
-        except ValueError:
-            ui.print_error(f"Agent '{name}' not found.")
-            ui.print_system(f"Available: {', '.join(Squad.list_agents())}")
-            return False
-        except Exception as e:
-            ui.print_error(f"Error switching agent: {e}")
-            return False
 
     def _get_prompt_tokens(self) -> List[Tuple[str, str]]:
         """Generates the left-side prompt tokens."""
@@ -175,93 +151,28 @@ class ReplSession:
 
     def _handle_command(self, text: str) -> bool:
         """
-        Intercepts slash commands.
+        Intercepts slash commands using the CommandRegistry.
         Returns True if a command was handled (skipping LLM inference).
         """
         parts = text.strip().split()
         if not parts:
             return False
 
-        cmd = parts[0].lower()
+        cmd_name = parts[0].lower()
         args = parts[1:]
 
-        # Exit Commands
-        if cmd in ["/exit", "/quit", "exit", "quit"]:
-            raise EOFError
+        # Check if it looks like a command
+        if not cmd_name.startswith("/"):
+            return False
 
-        # Clear Screen
-        if cmd == "/clear":
-            ui.console.clear()
-            codebase = self.session_manager.codebase
-            cb_root = str(codebase.root_path) if codebase else None
-            ui.render_session_header(
-                agent_name=self.session_manager.active_agent.get_identity(),
-                model_id=self.session_manager.model_id,
-                codebase_root=cb_root
-            )
-            return True
+        # Lookup
+        command = self.registry.get_command(cmd_name)
+        if command:
+            return command.execute(self, args)
 
-        # Update / Hot-Reload Context
-        if cmd == "/update":
-            self._refresh_context()
-            return True
-
-        # Help
-        if cmd == "/help":
-            content = self._load_asset("repl_help.txt")
-            ui.print_panel(content, title="Help Menu")
-            return True
-
-        # Agent Switching
-        if cmd == "/agent":
-            if not args:
-                # List agents
-                agents = Squad.list_agents()
-                template = self._load_asset("agent_tool_tip.txt")
-                ui.print_from_template(
-                    template,
-                    agent_name=self.session_manager.active_agent.name,
-                    agent_list=', '.join(agents)
-                )
-            else:
-                target_name = args[0]
-                self._switch_to_agent_by_name(target_name)
-            return True
-
-        # Auto-Save Artifact
-        if cmd == "/save":
-            self._cmd_save()
-            return True
-
-        # Set Editing Mode
-        if cmd == "/set":
-            if not args:
-                ui.print_error("Usage: /set <mode> (vi | emacs)")
-                return True
-
-            target_mode = args[0].lower()
-            if target_mode not in EDITING_MODE_MAP:
-                valid_modes = ", ".join(EDITING_MODE_MAP.keys())
-                ui.print_error(f"Invalid mode '{target_mode}'. Options: {valid_modes}")
-                return True
-
-            # Apply the change
-            new_mode_enum = EDITING_MODE_MAP[target_mode]
-            self.session.editing_mode = new_mode_enum
-            ui.print_success(f"Input mode set to {target_mode.upper()}")
-            return True
-
-        # Set UI Theme
-        if cmd == "/theme":
-            if not args:
-                ui.print_error("Usage: /theme <name>")
-                return True
-
-            if ui.set_theme(args[0]):
-                ui.print_success(f"Theme set to '{args[0]}'")
-            return True
-
-        return False
+        # Unknown command but starts with /
+        ui.print_error(f"Unknown command '{cmd_name}'. Type /help for list.")
+        return True
 
     def _handle_input(self, text: str) -> None:
         """
@@ -304,40 +215,6 @@ class ReplSession:
         except Exception as e:
             ui.print_error(f"Generation Error: {e}")
             self._log_to_file(f"\n[ERROR]: {e}\n")
-
-    def _cmd_save(self) -> None:
-        """
-        Executes the save logic for the last response.
-        """
-        if not self.last_response:
-            ui.print_error("Nothing to save. Generate something first.")
-            return
-
-        processor = ArtifactProcessor()
-
-        try:
-            # 1. Parse
-            artifact = processor.parse(self.last_response)
-
-            # 2. Resolve Root
-            codebase = self.session_manager.codebase
-            root = codebase.root_path if codebase else Path.cwd()
-
-            # 3. Save
-            msg = processor.save(artifact, root)
-
-            # 4. Feedback
-            if "Overwrote" in msg:
-                ui.print_warning(msg)
-            else:
-                ui.print_success(msg)
-
-            # 5. Auto-Update Context
-            if codebase:
-                self._refresh_context()
-
-        except Exception as e:
-            ui.print_error(f"Save failed: {e}")
 
     def _log_to_file(self, text: str) -> None:
         """Appends text to the interaction log file."""

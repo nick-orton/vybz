@@ -22,7 +22,6 @@ ALLOWED_KEYS: Final[Set[str]] = {
     "codebase"
 }
 
-
 class ConfigLoader:
     """
     Stateless service responsible for discovering, parsing, and sanitizing
