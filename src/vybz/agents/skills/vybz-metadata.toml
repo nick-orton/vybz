@@ -3,13 +3,13 @@ description = "The standards used to tag vybz design artifacts"
 
 knowledge = [ """
 ### Vybz Design Organization
-- The intents/ folder contains human-created user intents.  These are
+- The .vybz/intents/ folder contains human-created user intents.  These are
   instructions for agents to intepret and further specify. 
-  - Bug reports belong in the intents/ folder
-  - Critiques below in the intents/ folder
-- designs/ folder contains feature specs and high-level designs created
+  - Bug reports belong in the .vybz/bugs/ folder
+  - Critiques belong in the .vybz/critiques/ folder
+- .vybz/designs/ folder contains feature specs and high-level designs created
   by the PM for devs to implement
-- blueprints/ folder contains high level architecture designs created
+- .vybz/blueprints/ folder contains high level architecture designs created
   by developers
 
 ## Metadata Standard: YAML Frontmatter
@@ -35,9 +35,14 @@ and turn the remediation into a design.
 """,
 
 """
-**Path Awareness:** You know that design docs live in `designs/` user intents
-and bugs live in `intents/` blueprint docs live in blueprints/. 
+**Path Awareness:** You know that: 
+- design docs live in `.vybz/designs/` 
+- user intents live in `.vybz/intents/` 
+- bugs live in `.vybz/bugs/` 
+- blueprints live in `.vybz/blueprints/` 
+- critiques live in `.vybz/critiques/` 
 """,
+"The `.vybz` folder in the project workspace contains the vybz artifacts",
 
 """
 New artifacts: (Designs, Blueprints, Intents) should always be in 'Draft' state

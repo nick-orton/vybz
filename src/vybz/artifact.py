@@ -58,12 +58,13 @@ class DocumentHandler(ArtifactHandler):
     Handles Documents with YAML Frontmatter (Designs, Blueprints, Intents, Bugs).
     """
 
+    NAMESPACE = ".vybz"
     # Mapping of YAML 'type' to filesystem directory
     DIR_MAP: Dict[str, str] = {
         "Design": "designs",
         "Blueprint": "blueprints",
-        "Bug": "intents",
-        "Critique": "intents",
+        "Bug": "bugs",
+        "Critique": "critiques",
         "Intent": "intents"
     }
 
@@ -133,7 +134,8 @@ class DocumentHandler(ArtifactHandler):
 
         # 4. Map Directory
         lookup_key = artifact_type.capitalize()
-        directory = self.DIR_MAP.get(lookup_key, "output")
+        subdir = self.DIR_MAP.get(lookup_key, "output")
+        directory = f"{self.NAMESPACE}/{subdir}"
 
         return Artifact(
             content=candidate_content,
@@ -187,7 +189,7 @@ class DiffHandler(ArtifactHandler):
         return Artifact(
             content=content,
             filename=filename,
-            directory="output",
+            directory=".vybz/output",
             type="Diff"
         )
 
@@ -243,7 +245,7 @@ class CodeFileHandler(ArtifactHandler):
         # Default fallback
         ts = datetime.datetime.now().strftime("%H%M%S")
         filename = f"{ts}-snippet.txt"
-        directory = "output"
+        directory = ".vybz/output"
 
         if match:
             raw_path = match.group(1).strip()
@@ -317,7 +319,7 @@ class ArtifactProcessor:
             return [Artifact(
                 content=text,
                 filename=f"artifact-{ts}.md",
-                directory="output",
+                directory=".vybz/output",
                 type="Output"
             )]
 

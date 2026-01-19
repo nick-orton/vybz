@@ -43,7 +43,7 @@ class TestArtifactParsing:
         assert len(artifacts) == 1
         artifact = artifacts[0]
         assert artifact.type == "Design"
-        assert artifact.directory == "designs"
+        assert artifact.directory == ".vybz/designs"
         assert artifact.filename == "login-system.md"
         assert "The content." in artifact.content
 
@@ -64,7 +64,7 @@ Just raw text.
         artifact = artifacts[0]
         assert artifact.content == raw_text
         assert artifact.type == "Intent"
-        assert artifact.directory == "intents"
+        assert artifact.directory == ".vybz/intents"
         assert artifact.filename == "raw-intent.md"
 
     def test_parse_nested_blocks_bug(self, processor):
@@ -126,12 +126,12 @@ End.
         assert artifacts[0].filename.endswith(".md")
 
     @pytest.mark.parametrize("yaml_type, expected_dir", [
-        ("Design", "designs"),
-        ("Blueprint", "blueprints"),
-        ("Intent", "intents"),
-        ("Bug", "intents"),
-        ("Critique", "intents"),
-        ("Unknown", "output") # Fallback for unknown types
+        ("Design", ".vybz/designs"),
+        ("Blueprint", ".vybz/blueprints"),
+        ("Intent", ".vybz/intents"),
+        ("Bug", ".vybz/bugs"),
+        ("Critique", ".vybz/critiques"),
+        ("Unknown", ".vybz/output") # Fallback for unknown types
     ])
     def test_parse_routing(self, processor, yaml_type, expected_dir):
         """Data-Driven Test: Verify routing logic based on YAML type."""
@@ -161,7 +161,7 @@ End.
         artifact = artifacts[0]
         assert artifact.type == "Diff"
         assert artifact.filename == "src-vybz-ui.py.diff"
-        assert artifact.directory == "output"
+        assert artifact.directory == ".vybz/output"
         assert "+++ b/src/vybz/ui.py" in artifact.content
 
     def test_parse_extracts_multiple_artifacts(self, processor):
@@ -233,7 +233,7 @@ End.
 
         # Assert
         assert artifacts[0].type == "Bug"
-        assert artifacts[0].directory == "intents"
+        assert artifacts[0].directory == ".vybz/bugs"
         assert artifacts[0].filename == "ui-crash-on-load.md"
 
 

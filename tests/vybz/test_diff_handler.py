@@ -61,7 +61,7 @@ class TestDiffHandler:
 
         # Assert
         assert artifact.type == "Diff"
-        assert artifact.directory == "output"
+        assert artifact.directory == ".vybz/output"
         # Verify path flattening: / -> -
         assert artifact.filename == "src-vybz-agent.py.diff"
         assert artifact.content == "Sanitized Content"

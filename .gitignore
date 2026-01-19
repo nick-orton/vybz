@@ -6,7 +6,7 @@ __pycache__/
 .env
 
 # output directory for mungy /save(s)
-output
+.vybz/output
 
 
 # Distribution / packaging

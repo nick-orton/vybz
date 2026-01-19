@@ -78,17 +78,17 @@ class TestDocumentHandler:
 
         # Assert
         assert artifact.type == "Design"
-        assert artifact.directory == "designs"
+        assert artifact.directory == ".vybz/designs"
         assert artifact.filename == "my-feature.md"
         assert artifact.content == content
 
     @pytest.mark.parametrize("yaml_type, expected_dir", [
-        ("Design", "designs"),
-        ("Blueprint", "blueprints"),
-        ("Intent", "intents"),
-        ("Bug", "intents"),
-        ("Critique", "intents"),
-        ("UnknownType", "output") # Fallback
+        ("Design", ".vybz/designs"),
+        ("Blueprint", ".vybz/blueprints"),
+        ("Intent", ".vybz/intents"),
+        ("Bug", ".vybz/bugs"),
+        ("Critique", ".vybz/critiques"),
+        ("UnknownType", ".vybz/output") # Fallback
     ])
     def test_extract_routing(self, handler, yaml_type, expected_dir):
         """Verify the routing table logic."""
