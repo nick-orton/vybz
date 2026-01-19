@@ -2,7 +2,7 @@
 tests/vybz/test_artifact.py
 
 Unit test suite for the ArtifactProcessor and Artifact domain model.
-Validates parsing strategies, routing logic, and filesystem persistence.
+Validates polymorphic parsing strategies, routing logic, and filesystem persistence.
 """
 import pytest
 import textwrap
@@ -19,7 +19,7 @@ def processor():
 class TestArtifactParsing:
     """
     Validates the 'parse' contract: transforming raw LLM text into
-    structured Artifact objects.
+    a LIST of structured Artifact objects.
     """
 
     def test_parse_valid_design_block(self, processor):
@@ -37,9 +37,11 @@ class TestArtifactParsing:
         """)
 
         # Act
-        artifact = processor.parse(llm_output)
+        artifacts = processor.parse(llm_output)
 
         # Assert
+        assert len(artifacts) == 1
+        artifact = artifacts[0]
         assert artifact.type == "Design"
         assert artifact.directory == "designs"
         assert artifact.filename == "login-system.md"
@@ -55,9 +57,11 @@ type: Intent
 Just raw text.
 """
         # Act
-        artifact = processor.parse(raw_text)
+        artifacts = processor.parse(raw_text)
 
         # Assert
+        assert len(artifacts) == 1
+        artifact = artifacts[0]
         assert artifact.content == raw_text
         assert artifact.type == "Intent"
         assert artifact.directory == "intents"
@@ -66,7 +70,6 @@ Just raw text.
     def test_parse_nested_blocks_bug(self, processor):
         """
         Regression Test: Ensure nested code blocks don't truncate the outer block.
-        Reference: tests/vybz/test_repl_save_bug.py
         """
         # Arrange
         llm_output = """
@@ -91,9 +94,11 @@ End.
 ```
 """
         # Act
-        artifact = processor.parse(llm_output)
+        artifacts = processor.parse(llm_output)
 
         # Assert
+        assert len(artifacts) == 1
+        artifact = artifacts[0]
         assert "def hello():" in artifact.content
         assert "## Section 3" in artifact.content, "Artifact truncated after inner block"
 
@@ -103,10 +108,10 @@ End.
         text = "```\n---\ntype: Design\n---\n# My Cool Feature! (v2)\n```"
 
         # Act
-        artifact = processor.parse(text)
+        artifacts = processor.parse(text)
 
         # Assert
-        assert artifact.filename == "my-cool-feature-v2.md"
+        assert artifacts[0].filename == "my-cool-feature-v2.md"
 
     def test_parse_default_filename_timestamp(self, processor):
         """Verify fallback filename generation when H1 is missing."""
@@ -114,24 +119,26 @@ End.
         text = "```\n---\ntype: Design\n---\nNo header here.\n```"
 
         # Act
-        artifact = processor.parse(text)
+        artifacts = processor.parse(text)
 
         # Assert
-        assert artifact.filename.startswith("artifact-")
-        assert artifact.filename.endswith(".md")
+        assert artifacts[0].filename.startswith("artifact-")
+        assert artifacts[0].filename.endswith(".md")
 
     @pytest.mark.parametrize("yaml_type, expected_dir", [
         ("Design", "designs"),
         ("Blueprint", "blueprints"),
         ("Intent", "intents"),
         ("Bug", "intents"),
+        ("Critique", "intents"),
         ("Unknown", "output") # Fallback for unknown types
     ])
     def test_parse_routing(self, processor, yaml_type, expected_dir):
         """Data-Driven Test: Verify routing logic based on YAML type."""
         text = f"```\n---\ntype: {yaml_type}\n---\n# Title\n```"
-        artifact = processor.parse(text)
-        assert artifact.directory == expected_dir
+        artifacts = processor.parse(text)
+        assert artifacts[0].directory == expected_dir
+
     def test_parse_diff_block(self, processor):
         """Verify parsing of code blocks tagged as 'diff'."""
         # Arrange
@@ -147,18 +154,20 @@ End.
         """)
 
         # Act
-        artifact = processor.parse(text)
+        artifacts = processor.parse(text)
 
         # Assert
+        assert len(artifacts) == 1
+        artifact = artifacts[0]
         assert artifact.type == "Diff"
         assert artifact.filename == "src-vybz-ui.py.diff"
         assert artifact.directory == "output"
         assert "+++ b/src/vybz/ui.py" in artifact.content
 
-    def test_parse_priority_yaml_over_diff(self, processor):
+    def test_parse_extracts_multiple_artifacts(self, processor):
         """
-        Verify that if a response contains both a Design and a Diff,
-        the Design (Priority 1) is selected.
+        Verify that if a response contains multiple artifacts (Design, Diff, Code),
+        ALL are extracted.
         """
         # Arrange
         text = textwrap.dedent("""
@@ -171,13 +180,36 @@ End.
         ```
         And the code:
         ```diff
+        --- a/file.py
         +++ b/file.py
+        @@ -1,1 +1,1 @@
+        -a
+        +b
+        ```
+        And a script:
+        ```python
+        # filename: script.py
+        print("hi")
         ```
         """)
+
         # Act
-        artifact = processor.parse(text)
+        artifacts = processor.parse(text)
+
         # Assert
-        assert artifact.type == "Design"
+        assert len(artifacts) == 3
+
+        # Verify Types
+        types = [a.type for a in artifacts]
+        assert "Design" in types
+        assert "Diff" in types
+        assert "Code" in types
+
+        # Verify Filenames
+        filenames = [a.filename for a in artifacts]
+        assert "my-feature.md" in filenames
+        assert "file.py.diff" in filenames
+        assert "script.py" in filenames
 
     def test_parse_bug_routing(self, processor):
         """
@@ -197,12 +229,13 @@ End.
         """)
 
         # Act
-        artifact = processor.parse(text)
+        artifacts = processor.parse(text)
 
         # Assert
-        assert artifact.type == "Bug"
-        assert artifact.directory == "intents"
-        assert artifact.filename == "ui-crash-on-load.md"
+        assert artifacts[0].type == "Bug"
+        assert artifacts[0].directory == "intents"
+        assert artifacts[0].filename == "ui-crash-on-load.md"
+
 
 class TestArtifactPersistence:
     """

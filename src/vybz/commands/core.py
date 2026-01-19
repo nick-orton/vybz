@@ -112,7 +112,7 @@ class AgentCommand(Command):
 
 class SaveCommand(Command):
     name = "/save"
-    description = "Auto-save the last generated artifact."
+    description = "Auto-save the last generated artifact(s)."
 
     def execute(self, session, args: List[str]) -> bool:
         if not session.last_response:
@@ -121,24 +121,35 @@ class SaveCommand(Command):
 
         processor = ArtifactProcessor()
         try:
-            # 1. Parse
-            artifact = processor.parse(session.last_response)
+            # 1. Parse (Returns List[Artifact])
+            artifacts = processor.parse(session.last_response)
 
             # 2. Resolve Root
             codebase = session.session_manager.codebase
             root = codebase.root_path if codebase else Path.cwd()
 
-            # 3. Save
-            msg = processor.save(artifact, root)
+            # 3. Save Loop
+            messages = []
+            for artifact in artifacts:
+                msg = processor.save(artifact, root)
+                messages.append(msg)
 
             # 4. Feedback
-            if "Overwrote" in msg:
-                ui.print_warning(msg)
-            else:
-                ui.print_success(msg)
+            if len(messages) == 1:
+                # Single file UX (Legacy feel)
+                msg = messages[0]
+                if "Overwrote" in msg:
+                    ui.print_warning(msg)
+                else:
+                    ui.print_success(msg)
+            elif len(messages) > 1:
+                # Multi-file UX
+                ui.print_success(f"Batch Save: Processed {len(messages)} artifacts.")
+                for msg in messages:
+                    ui.print_system(f"  • {msg}")
 
             # 5. Auto-Update Context if we are in a codebase
-            if codebase:
+            if codebase and messages:
                 session.session_manager.refresh_context()
 
         except Exception as e:
