@@ -33,8 +33,9 @@ class ThemeLoader:
 
     @staticmethod
     def _get_config_path() -> Path:
-        """Returns the expected path of the themes configuration file."""
-        return Path.cwd() / "themes.toml"
+        """Returns the path of the packaged themes configuration file."""
+        # Fix: Resolve relative to the installed package, not CWD
+        return Path(__file__).parent / "themes.toml"
 
     @classmethod
     def load(cls, name: str) -> Theme:

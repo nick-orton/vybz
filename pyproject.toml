@@ -33,7 +33,7 @@ vybz-commit = "vybz.tools.autocommit_gen:main"
 vybz-fmt = "vybz.tools.mdformat:main"
 
 [tool.setuptools.package-data]
-vybz = ["agents/*.toml", "agents/skills/*.toml", "assets/*.txt"]
+vybz = ["agents/*.toml", "agents/skills/*.toml", "assets/*.txt", "themes.toml"]
 
 [tool.pytest.ini_options]
 filterwarnings = [
