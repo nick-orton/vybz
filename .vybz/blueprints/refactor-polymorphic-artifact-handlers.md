@@ -3,7 +3,7 @@ status: "Completed"
 type: "Blueprint"
 author: "Senior Python Architect"
 last_updated: "2026-01-18"
-references: intents/critique-artifact-parser-structural-refactor.md, src/vybz/artifact.py
+references: critiques/critique-artifact-parser-structural-refactor.md, src/vybz/artifact.py
 ---
 
 # Refactor: Polymorphic Artifact Handlers

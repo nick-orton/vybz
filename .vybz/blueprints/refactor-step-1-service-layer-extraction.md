@@ -3,7 +3,7 @@ status: "Complete"
 type: "Blueprint"
 author: "Senior Python Architect"
 last_updated: "2026-01-17"
-references: intents/codebase-quality--structural-critique.md
+references: critiques/codebase-quality--structural-critique.md
 ---
 
 # Refactor Step 1: Service Layer Extraction

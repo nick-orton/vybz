@@ -3,7 +3,7 @@ status: "Completed"
 type: "Design"
 author: "PM Lead"
 last_updated: "2026-01-16"
-references: intents/ux-critique.md
+references: critiques/ux-critique.md
 ---
 
 # REPL Prompt Conciseness Refactor
