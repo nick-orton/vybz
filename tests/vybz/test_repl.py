@@ -207,28 +207,3 @@ def test_handle_input_api_error(repl, mock_session_manager):
         # Assert
         mock_ui.print_error.assert_called()
         assert "API 500" in str(mock_ui.print_error.call_args)
-
-# -----------------------------------------------------------------------------
-# Asset Loading Tests
-# -----------------------------------------------------------------------------
-
-def test_load_asset_success(repl):
-    """Verify asset loading reads from the correct path."""
-    # We need to patch Path to simulate file existence relative to the module
-    with patch("vybz.repl.Path") as MockPath:
-        mock_file = MockPath.return_value.parent.__truediv__.return_value.__truediv__.return_value
-        mock_file.exists.return_value = True
-        mock_file.read_text.return_value = "Asset Content"
-
-        content = repl._load_asset("help.txt")
-        assert content == "Asset Content"
-
-def test_load_asset_missing(repl):
-    """Verify asset loading handles missing files gracefully."""
-    with patch("vybz.repl.Path") as MockPath:
-        mock_file = MockPath.return_value.parent.__truediv__.return_value.__truediv__.return_value
-        mock_file.exists.return_value = False
-
-        content = repl._load_asset("ghost.txt")
-        assert "Asset not found" in content
-

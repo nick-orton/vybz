@@ -14,6 +14,7 @@ from vybz.commands.core import (
     ExitCommand,
     ClearCommand,
     UpdateCommand,
+    HelpCommand,
     AgentCommand,
     SaveCommand,
     SetModeCommand,
@@ -32,9 +33,6 @@ def mock_session():
     session.session_manager = MagicMock()
     session.session = MagicMock() # PromptSession
     session.last_response = None
-
-    # Mock asset loader
-    session._load_asset.return_value = "Template Content"
 
     return session
 
@@ -63,6 +61,17 @@ def test_update_command(mock_session):
         mock_ui.print_success.assert_called()
         mock_session.session_manager.refresh_context.assert_called_once()
 
+def test_help_command(mock_session):
+    cmd = HelpCommand()
+    with patch("vybz.commands.core.AssetLoader") as mock_loader, \
+         patch("vybz.commands.core.ui") as mock_ui:
+
+        mock_loader.load_text.return_value = "Help Content"
+
+        assert cmd.execute(mock_session, []) is True
+        mock_loader.load_text.assert_called_with("repl_help.txt")
+        mock_ui.print_panel.assert_called_with("Help Content", title="Help Menu")
+
 # -----------------------------------------------------------------------------
 # Agent Command
 # -----------------------------------------------------------------------------
@@ -71,9 +80,11 @@ def test_agent_command_list(mock_session):
     """Verify /agent without args lists available agents."""
     cmd = AgentCommand()
     with patch("vybz.commands.core.Squad") as mock_squad, \
-         patch("vybz.commands.core.ui") as mock_ui:
+         patch("vybz.commands.core.ui") as mock_ui, \
+         patch("vybz.commands.core.AssetLoader") as mock_loader:
 
         mock_squad.list_agents.return_value = ["pm", "dev"]
+        mock_loader.load_text.return_value = "Template"
 
         assert cmd.execute(mock_session, []) is True
         mock_ui.print_from_template.assert_called()

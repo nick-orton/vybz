@@ -100,18 +100,6 @@ class ReplSession:
             ("class:meta", f"{mode_str} | {ctx_str}"),
         ]
 
-    def _load_asset(self, filename: str) -> str:
-        """
-        Robustly loads text content from the assets directory.
-        """
-        try:
-            asset_path = Path(__file__).parent / "assets" / filename
-            if not asset_path.exists():
-                return f"Asset not found: {filename}"
-            return asset_path.read_text(encoding="utf-8")
-        except Exception as e:
-            return f"Failed to load asset: {e}"
-
     def start(self) -> None:
         """
         Starts the interactive loop.

@@ -12,6 +12,7 @@ from vybz.commands.base import Command
 from vybz import ui
 from vybz.squad import Squad
 from vybz.artifact import ArtifactProcessor
+from vybz.assets.loader import AssetLoader
 
 
 class ExitCommand(Command):
@@ -63,7 +64,7 @@ class HelpCommand(Command):
     description = "Show the help menu."
 
     def execute(self, session, args: List[str]) -> bool:
-        content = session._load_asset("repl_help.txt")
+        content = AssetLoader.load_text("repl_help.txt")
         ui.print_panel(content, title="Help Menu")
         return True
 
@@ -76,7 +77,7 @@ class AgentCommand(Command):
         if not args:
             # List agents
             agents = Squad.list_agents()
-            template = session._load_asset("agent_tool_tip.txt")
+            template = AssetLoader.load_text("agent_tool_tip.txt")
             ui.print_from_template(
                 template,
                 agent_name=session.session_manager.active_agent.name,
