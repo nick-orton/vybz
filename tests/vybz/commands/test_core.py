@@ -33,6 +33,7 @@ def mock_session():
     session.session_manager = MagicMock()
     session.session = MagicMock() # PromptSession
     session.last_response = None
+    session.logger = MagicMock()
 
     return session
 

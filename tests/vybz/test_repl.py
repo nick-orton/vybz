@@ -44,7 +44,8 @@ def repl(mock_session_manager, tmp_path):
     """
     with patch("vybz.repl.PromptSession"), \
          patch("vybz.repl.CommandRegistry") as MockRegistry, \
-         patch("vybz.repl.ui"): # Silence UI side effects during init
+         patch("vybz.repl.ui"), \
+         patch("vybz.repl.InteractionLogger"): # Mock logger dependencies
 
         session = ReplSession(
             mock_session_manager,

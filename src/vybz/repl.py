@@ -26,6 +26,8 @@ from vybz.squad import Squad
 from vybz.artifact import ArtifactProcessor
 from vybz.services.session import SessionManager
 from vybz.commands.registry import CommandRegistry
+from vybz.services.logger import InteractionLogger
+from vybz.config import parse_editing_mode
 from vybz import ui
 
 class ReplSession:
@@ -40,7 +42,8 @@ class ReplSession:
         log_file: Optional[Path] = None,
         mode: str = "emacs"
     ):
-        self.log_file = log_file or Path("/tmp/vybz.log")
+        log_path = log_file or Path("/tmp/vybz.log")
+        self.logger = InteractionLogger(log_path)
         #TODO import SessionManager rather than all the arguments
         self.session_manager = session_manager
 
@@ -55,21 +58,10 @@ class ReplSession:
         self.registry.initialize()
 
         # Editing Mode
-        editing_mode = ReplSession._parse_editing_mode(mode)
+        editing_mode = parse_editing_mode(mode)
 
         # Initialize PromptSession with our bindings
         self.session = PromptSession(key_bindings=self.kb, editing_mode=editing_mode)
-
-    def _parse_editing_mode(mode_str: str):
-        try:
-            # Direct lookup against the Enum type
-            mode = EditingMode[mode_str.upper()]
-            return mode
-
-        except KeyError:
-            # Dynamically generate list of valid options from the Enum
-            valid_options = ", ".join([m.name.lower() for m in EditingMode])
-            ui.print_error(f"Invalid mode '{mode_str}'. Options: {valid_options}")
 
 
     def _setup_keybindings(self) -> None:
@@ -107,7 +99,7 @@ class ReplSession:
         ui.print_system("Tip: Press 'Alt+Enter' (or Esc+Enter) to submit. Type '/help' for commands.")
 
         # Log Session Start
-        self._log_to_file(f"\n{'='*40}\nSESSION START: {datetime.datetime.now()}\n{'='*40}\n")
+        self.logger.log_session_start()
 
         while True:
             try:
@@ -170,7 +162,7 @@ class ReplSession:
         chat = self.session_manager.active_chat
 
         # Log User Input
-        self._log_to_file(f"\n[USER ({agent.name})]: {text}\n")
+        self.logger.log_user_input(agent.name, text)
 
         # Visual separator
         ui.console.print()
@@ -197,21 +189,9 @@ class ReplSession:
             self.last_response = "".join(full_response)
 
             # Log Model Response
-            self._log_to_file(f"\n[MODEL ({agent.name})]: {self.last_response}\n")
-            self._log_to_file("-" * 40)
+            self.logger.log_model_response(agent.name, self.last_response)
 
         except Exception as e:
             ui.print_error(f"Generation Error: {e}")
-            self._log_to_file(f"\n[ERROR]: {e}\n")
-
-    def _log_to_file(self, text: str) -> None:
-        """Appends text to the interaction log file."""
-        if not self.log_file.parent.exists():
-            self.log_file.parent.mkdir(parents=True, exist_ok=True)
-
-        try:
-            with open(self.log_file, "a", encoding="utf-8") as f:
-                f.write(text)
-        except IOError as e:
-            ui.print_error(f"Logging failed: {e}")
+            self.logger.log_error(str(e))
 

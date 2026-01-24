@@ -90,8 +90,7 @@ class AgentCommand(Command):
             agent = session.session_manager.switch_agent(target_name)
 
             # Log switch
-            log_msg = f"\n{'='*40}\nSWITCHED AGENT: {agent.get_identity()}\n{'='*40}\n"
-            session._log_to_file(log_msg)
+            session.logger.log_event(f"SWITCHED AGENT: {agent.get_identity()}")
 
             # Update UI
             codebase = session.session_manager.codebase

@@ -9,6 +9,7 @@ import os
 import tomllib
 from pathlib import Path
 from typing import Dict, Any, List, Set, Final
+from prompt_toolkit.enums import EditingMode
 
 from vybz import ui
 
@@ -92,3 +93,15 @@ class ConfigLoader:
                     return {}
 
         return config_data
+
+def parse_editing_mode(mode_str: str) -> EditingMode:
+    """
+    Parses a string into a prompt_toolkit EditingMode enum.
+    Defaults to EMACS if invalid.
+    """
+    try:
+        return EditingMode[mode_str.upper()]
+    except KeyError:
+        valid_options = ", ".join([m.name.lower() for m in EditingMode])
+        ui.print_error(f"Invalid mode '{mode_str}'. Options: {valid_options}. Defaulting to emacs.")
+        return EditingMode.EMACS
