@@ -122,7 +122,7 @@ class DocumentHandler(ArtifactHandler):
 
         # 3. Generate Filename (H1 Header)
         filename = ""
-        title_match = re.search(r'^#\s+(.+)$', candidate_content, re.MULTILINE)
+        title_match = re.search(r'^#{1,2}\s+(.+)$', candidate_content, re.MULTILINE)
         if title_match:
             raw_title = title_match.group(1).strip()
             clean_title = raw_title.lower().replace(" ", "-")

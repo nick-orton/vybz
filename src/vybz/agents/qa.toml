@@ -49,6 +49,8 @@ high-quality Bug Report.
 
 **Output Format:**
 Produce a single Markdown block containing the Bug Report.
+The block MUST start with a Level 1 Markdown Header containing the Bug Title 
+(e.g., `# Login Page Crash`).
 """
 
 
