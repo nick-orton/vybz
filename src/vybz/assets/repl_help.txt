@@ -1,12 +1,13 @@
 --- COMMANDS ---
  /agent \[name]  : Switch active agent (or list available).
- /update        : Refresh CodeBase snapshot and System Date.
+ /clear         : Clear the terminal screen.
+ /exit, /quit   : End the session.
+ /help          : Show this menu.
+ /load <file>   : Load a file into context.
  /save          : Auto-save the last generated artifact.
  /set <mode>    : Set input mode (vi | emacs).
  /theme <name>  : Set UI color theme.
- /exit, /quit   : End the session.
- /clear         : Clear the terminal screen.
- /helpd         : Show this menu.
+ /update        : Refresh CodeBase snapshot and System Date.
 
 --- KEYBINDINGS ---
  Alt+Enter     : Submit input.
