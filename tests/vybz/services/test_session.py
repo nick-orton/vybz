@@ -168,3 +168,38 @@ class TestSessionManager:
         # Assert
         assert count == 0 # No sessions successfully refreshed
         mock_ui.print_error.assert_called() # Error logged
+
+    def test_load_file_success(self, manager, tmp_path):
+        """Verify load_file reads content and updates manual_context."""
+        # Arrange
+        target_file = tmp_path / "secrets.txt"
+        target_file.write_text("Secret Data", encoding="utf-8")
+
+        # Act
+        result = manager.load_file(str(target_file))
+
+        # Assert
+        assert result == str(target_file)
+        assert str(target_file) in manager.manual_context
+        assert manager.manual_context[str(target_file)] == "Secret Data"
+
+    def test_load_file_not_found(self, manager):
+        """Verify load_file raises FileNotFoundError for missing files."""
+        with pytest.raises(FileNotFoundError):
+            manager.load_file("/non/existent/path")
+
+    def test_create_chat_passes_manual_context(self, manager, mock_agent_a):
+        """Verify that manual context is passed to the prompt assembler."""
+        # Arrange
+        manager.manual_context = {"/path/to/file": "content"}
+        
+        with patch("vybz.services.session.ContextAssembler") as mock_assembler:
+            # Act
+            manager._create_chat(mock_agent_a)
+            
+            # Assert
+            mock_assembler.build_system_instruction.assert_called_with(
+                mock_agent_a, 
+                manager.codebase, 
+                manager.manual_context
+            )

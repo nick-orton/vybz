@@ -75,3 +75,24 @@ class TestContextAssembler:
         # We check that the string effectively ends after the metadata section.
         assert "# CodeBase Snapshot" not in result
         assert result.strip().endswith("Current Date: 2099-01-01")
+
+    def test_build_system_instruction_with_manual_context(self, mock_agent, mocker):
+        """
+        Verify that manually loaded files are injected into the system instruction.
+        """
+        # Arrange
+        mocker.patch("vybz.services.context.datetime").datetime.now.return_value.strftime.return_value = "2099-01-01"
+        
+        manual_files = {
+            "/path/to/extra.py": "print('extra')",
+            "notes.txt": "Remember this."
+        }
+
+        # Act
+        result = ContextAssembler.build_system_instruction(mock_agent, None, manual_context=manual_files)
+
+        # Assert
+        assert "### MANUAL CONTEXT" in result
+        assert "#### File: /path/to/extra.py" in result
+        assert "print('extra')" in result
+        assert "#### File: notes.txt" in result

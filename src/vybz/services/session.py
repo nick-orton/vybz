@@ -5,6 +5,7 @@ Manages the lifecycle of GenAI Chat Sessions, Agent switching, and Context refre
 Decoupled from the UI/REPL loop.
 """
 
+from pathlib import Path
 from typing import Dict, Any, Optional
 from google import genai
 from google.genai import types
@@ -32,6 +33,7 @@ class SessionManager:
         self.client = client
         self.model_id = model_id
         self.codebase = codebase
+        self.manual_context: Dict[str, str] = {}  # Filename -> Content
 
         self.sessions: Dict[str, Any] = {}  # agent_id -> ChatSession
         self.active_agent: Agent = initial_agent
@@ -49,7 +51,7 @@ class SessionManager:
 
     def _create_chat(self, agent: Agent, history: list = None) -> Any:
         """Creates a new GenAI chat object with current context."""
-        sys_instructions = ContextAssembler.build_system_instruction(agent, self.codebase)
+        sys_instructions = ContextAssembler.build_system_instruction(agent, self.codebase, self.manual_context)
 
         return self.client.chats.create(
             model=self.model_id,
@@ -68,6 +70,27 @@ class SessionManager:
         agent = Squad.get_agent(agent_name)
         self._activate_session(agent)
         return agent
+
+    def load_file(self, path_str: str) -> str:
+        """
+        Reads a file and stores it in manual context.
+        
+        Args:
+            path_str: The filesystem path string.
+            
+        Returns:
+            str: The resolved path string for feedback.
+            
+        Raises:
+            FileNotFoundError: If file not found.
+            IOError: If read fails.
+        """
+        path = Path(path_str).resolve()
+        if not path.is_file():
+            raise FileNotFoundError(f"File not found: {path}")
+            
+        self.manual_context[str(path)] = path.read_text(encoding="utf-8")
+        return str(path)
 
     def refresh_context(self) -> int:
         """

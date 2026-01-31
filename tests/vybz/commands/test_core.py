@@ -17,6 +17,7 @@ from vybz.commands.core import (
     HelpCommand,
     AgentCommand,
     SaveCommand,
+    LoadCommand,
     SetModeCommand,
     ThemeCommand
 )
@@ -167,6 +168,37 @@ def test_save_command_multiple(mock_session):
 
         assert processor_instance.save.call_count == 2
         mock_ui.print_success.assert_called_with("Batch Save: Processed 2 artifacts.")
+
+# -----------------------------------------------------------------------------
+# Load Command
+# -----------------------------------------------------------------------------
+
+def test_load_command_success(mock_session):
+    """Verify /load calls session manager and refreshes context."""
+    cmd = LoadCommand()
+    mock_session.session_manager.load_file.return_value = "/path/to/file.txt"
+
+    with patch("vybz.commands.core.ui") as mock_ui:
+        assert cmd.execute(mock_session, ["file.txt"]) is True
+        
+        mock_session.session_manager.load_file.assert_called_with("file.txt")
+        mock_session.session_manager.refresh_context.assert_called_once()
+        mock_ui.print_success.assert_called()
+
+def test_load_command_missing_args(mock_session):
+    cmd = LoadCommand()
+    with patch("vybz.commands.core.ui") as mock_ui:
+        assert cmd.execute(mock_session, []) is True
+        mock_ui.print_error.assert_called()
+
+def test_load_command_error(mock_session):
+    cmd = LoadCommand()
+    mock_session.session_manager.load_file.side_effect = FileNotFoundError("Missing")
+    
+    with patch("vybz.commands.core.ui") as mock_ui:
+        assert cmd.execute(mock_session, ["bad.txt"]) is True
+        mock_ui.print_error.assert_called()
+        mock_session.session_manager.refresh_context.assert_not_called()
 
 # -----------------------------------------------------------------------------
 # Config Commands

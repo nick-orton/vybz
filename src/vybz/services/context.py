@@ -6,6 +6,7 @@ Centralizes the logic for combining Persona, Time, and Codebase.
 """
 
 import datetime
+from typing import Dict, Optional
 from vybz.agent import Agent
 from vybz.context_engine import CodeBase
 
@@ -16,13 +17,18 @@ class ContextAssembler:
     """
 
     @staticmethod
-    def build_system_instruction(agent: Agent, codebase: CodeBase | None) -> str:
+    def build_system_instruction(
+        agent: Agent, 
+        codebase: CodeBase | None,
+        manual_context: Dict[str, str] | None = None
+    ) -> str:
         """
         Constructs the full system prompt.
 
         Args:
             agent: The active Agent persona.
             codebase: The optional filesystem snapshot.
+            manual_context: Dictionary of {filename: content} for manually loaded files.
 
         Returns:
             str: The fully formatted system instruction.
@@ -37,5 +43,11 @@ class ContextAssembler:
         # 3. CodeBase Injection
         if codebase:
             sys_instructions += "\n\n" + codebase.render()
+
+        # 4. Manual Context Injection
+        if manual_context:
+            sys_instructions += "\n\n### MANUAL CONTEXT\n"
+            for filename, content in manual_context.items():
+                sys_instructions += f"#### File: {filename}\n```\n{content}\n```\n"
 
         return sys_instructions

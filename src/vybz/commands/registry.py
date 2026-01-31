@@ -12,6 +12,7 @@ from vybz.commands.core import (
     ExitCommand,
     HelpCommand,
     SaveCommand,
+    LoadCommand,
     SetModeCommand,
     ThemeCommand,
     UpdateCommand
@@ -53,6 +54,7 @@ class CommandRegistry:
         self.register(ExitCommand())
         self.register(HelpCommand())
         self.register(SaveCommand())
+        self.register(LoadCommand())
         self.register(SetModeCommand())
         self.register(ThemeCommand())
         self.register(UpdateCommand())

@@ -15,6 +15,7 @@ from vybz.artifact import ArtifactProcessor
 from vybz.assets.loader import AssetLoader
 
 
+
 class ExitCommand(Command):
     name = "/exit"
     aliases = ["/quit", "exit", "quit"]
@@ -157,6 +158,24 @@ class SaveCommand(Command):
 
         return True
 
+
+class LoadCommand(Command):
+    name = "/load"
+    description = "Load a file into context."
+
+    def execute(self, session, args: List[str]) -> bool:
+        if not args:
+            ui.print_error("Usage: /load <path>")
+            return True
+
+        try:
+            path = session.session_manager.load_file(args[0])
+            session.session_manager.refresh_context()
+            ui.print_success(f"Loaded {path} into context.")
+        except Exception as e:
+            ui.print_error(f"Failed to load file: {e}")
+        
+        return True
 
 class SetModeCommand(Command):
     name = "/set"

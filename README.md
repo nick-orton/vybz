@@ -79,9 +79,12 @@ vybz junior-dev --codebase . --mode vi
 *   **`/agent [name]`**: Switch active agent (e.g., `/agent pm`). Type without
     arguments to list available agents.
 *   **`/clear`**: Clear the terminal screen (preserves chat history).
+*   **`/load <file>`**: Load a specific file into the active context.
 *   **`/save`**: Auto-save the last generated artifact to the appropriate
     directory based on its metadata.
 *   **`/set <mode>`**: Set input mode (`vi` or `emacs`).
+*   **`/theme <name>`**: Set UI color theme (e.g., `/theme matrix`).
+*   **`/update`**: Refresh CodeBase snapshot and System Date.
 *   **`/help`**: Show available commands and keybindings.
 *   **`/exit`**: End the session.
 
