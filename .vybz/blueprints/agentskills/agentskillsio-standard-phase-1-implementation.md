@@ -26,7 +26,10 @@ We extend the `Skill` class to support the new format's data shape.
 
 *   **New Attributes:**
     *   `instructions: Optional[str]`: Holds the raw Markdown body from 
-        `SKILL.md`.
+        `SKILL.md` as well as the content from all other markdown files in the
+        skill directory or subdirectories. `SKILL.md` should be the top of the
+        string and all the subdirectory content should be appended below with
+        markdown structure that represents the directory tree of of the content.
     *   `path: Optional[Path]`: Stores the root directory of the skill (crucial
         for resource discovery).
 *   **Legacy Compatibility:** `knowledge` and `abilities` remain but default to
@@ -43,19 +46,11 @@ We extend the `Skill` class to support the new format's data shape.
     *   Use `yaml.safe_load` for metadata.
 *   **Instantiation:** Return `Skill` with `id=dir_path.name`, 
     `instructions=body`, and `path=dir_path`.
-
-### 2.3 Refactor: `render(self) -> str`
-We implement a priority rendering logic.
-
-*   **Logic:**
-    1.  **Check New Format:** If `self.instructions` is present:
-        *   Start with the Markdown body.
-        *   **Resource Discovery:** Check `self.path` for `scripts/` and 
-            `references/` subdirectories.
-        *   If found, append a generated "Available Resources" section to the 
-            prompt (Progressive Disclosure).
-    2.  **Fallback Legacy:** If `self.instructions` is None, use the existing 
-        loop over `knowledge` and `abilities`.
+*   **subdirectories**
+     - it's important that all subdirectories under the skill be integrated, 
+       not just references and scripts 
+     - there can be an arbitrary number of subdirectories that can have 
+       subdirectories in them 
 
 ## 3. Module Specification: `src/vybz/agent.py`
 
