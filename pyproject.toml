@@ -24,7 +24,8 @@ dependencies = [
     "python-dotenv",
     "pathspec>=0.11.0",
     "prompt_toolkit>=3.0.0", 
-    "rich>=13.0"
+    "rich>=13.0",
+    "PyYAML>=6.0"
 ]
 
 [project.scripts]
