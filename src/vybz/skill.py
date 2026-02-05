@@ -7,11 +7,10 @@ that can be composed into an Agent's persona.
 Supports both legacy TOML configuration and AgentSkills.io directory format.
 """
 
-import tomllib
 import yaml  # Requires PyYAML
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 
 @dataclass
@@ -23,19 +22,13 @@ class Skill:
         id: Unique identifier (filename stem or directory name).
         name: Human-readable name.
         description: Brief summary of the skill.
-        knowledge: (Legacy) List of facts.
-        abilities: (Legacy) List of instructions.
-        instructions: (Standard) Aggregated Markdown content from SKILL.md and subdirectories.
-        path: (Standard) Root directory of the skill.
+        instructions: Aggregated Markdown content from SKILL.md and subdirectories.
+        path: Root directory of the skill.
     """
     id: str
     name: str
     description: str
-    knowledge: List[str] = field(default_factory=list)
-    abilities: List[str] = field(default_factory=list)
-    
-    # AgentSkills.io Standard (v2)
-    instructions: Optional[str] = None
+    instructions: str
     path: Optional[Path] = None
 
     @classmethod
@@ -96,9 +89,6 @@ class Skill:
             description=data.get("description", ""),
             path=dir_path,
             instructions=full_instructions,
-            # Legacy fields default to empty for v2 skills
-            knowledge=[],
-            abilities=[]
         )
 
     @staticmethod
@@ -133,66 +123,21 @@ class Skill:
             
         return "\n\n".join(buffer)
 
-    @classmethod
-    def from_toml(cls, file_path: str | Path) -> "Skill":
-        """
-        Factory method to create a Skill from a legacy TOML file.
-        """
-        path = Path(file_path)
-        if not path.exists():
-            raise FileNotFoundError(f"Skill definition not found at: {path}")
-
-        with open(path, "rb") as f:
-            data = tomllib.load(f)
-
-        if "name" not in data:
-            raise KeyError(f"Skill TOML at {path} missing required field: 'name'")
-
-        return cls(
-            id=path.stem,
-            name=data.get("name", "Unknown Skill"),
-            description=data.get("description", ""),
-            knowledge=data.get("knowledge", []),
-            abilities=data.get("abilities", [])
-        )
-
     def render(self) -> str:
         """
         Formats the skill into Markdown for injection into the system prompt.
         """
-        # 1. New Format (AgentSkills.io)
-        if self.instructions:
-            output = f"#### {self.name}\n_{self.description}_\n\n{self.instructions}"
-            
-            # Progressive Disclosure: List Scripts/Refs even if their content was aggregated
-            # This provides a quick index at the bottom of the skill block
-            if self.path:
-                scripts_dir = self.path / "scripts"
-                if scripts_dir.exists():
-                    scripts = [f.name for f in scripts_dir.iterdir() if f.is_file()]
-                    if scripts:
-                        output += "\n\n**Available Scripts:**\n"
-                        for s in scripts:
-                            output += f"* `{s}`\n"
-            
-            return output
-
-        # 2. Legacy Format (TOML Lists)
-        lines = [f"#### {self.name}"]
-
-        if self.description:
-            lines.append(f"_{self.description}_")
-
-        if self.knowledge:
-            lines.append("")
-            lines.append("##### Knowledge")
-            for k in self.knowledge:
-                lines.append(f"* {k}")
-
-        if self.abilities:
-            lines.append("")
-            lines.append("##### Abilities")
-            for a in self.abilities:
-                lines.append(f"* {a}")
-
-        return "\n".join(lines)
+        output = f"#### {self.name}\n_{self.description}_\n\n{self.instructions}"
+        
+        # Progressive Disclosure: List Scripts/Refs even if their content was aggregated
+        # This provides a quick index at the bottom of the skill block
+        if self.path:
+            scripts_dir = self.path / "scripts"
+            if scripts_dir.exists():
+                scripts = [f.name for f in scripts_dir.iterdir() if f.is_file()]
+                if scripts:
+                    output += "\n\n**Available Scripts:**\n"
+                    for s in scripts:
+                        output += f"* `{s}`\n"
+        
+        return output

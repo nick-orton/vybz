@@ -50,24 +50,13 @@ class Agent:
         skills_list = []
         skill_ids = data.get("skills", [])
 
-        # Lookup Logic: Dual-Path (Standard v2 > Legacy v1)
-        standard_root = Path(__file__).parent / "skills"
-        legacy_root = path.parent / "skills"
+        skills_root = Path(__file__).parent / "skills"
 
         for skill_id in skill_ids:
-            # 1. Standard (Directory)
-            candidate_dir = standard_root / skill_id
-            if candidate_dir.is_dir():
-                skills_list.append(Skill.from_directory(candidate_dir))
-                continue
-
-            # 2. Legacy (TOML)
-            candidate_toml = legacy_root / f"{skill_id}.toml"
-            if candidate_toml.is_file():
-                skills_list.append(Skill.from_toml(candidate_toml))
-                continue
-
-            raise FileNotFoundError(f"Skill '{skill_id}' not found in {standard_root} or {legacy_root}")
+            candidate_dir = skills_root / skill_id
+            if not candidate_dir.is_dir():
+                raise FileNotFoundError(f"Skill '{skill_id}' not found in {skills_root}")
+            skills_list.append(Skill.from_directory(candidate_dir))
 
         return cls(
             id=path.stem,

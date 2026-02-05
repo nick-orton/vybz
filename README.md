@@ -141,8 +141,8 @@ agent persona. They consist of two primary components:
     `awk`").
 
 Example skills include:
-*   **`python-standards`**: PEP 8, Type Hinting, and Docstring rules.
-*   **`freebsd-posix`**: OS-specific constraints (FreeBSD 15.0, `sh` vs `bash`).
+*   **`modern-python-standards`**: PEP 8, Type Hinting, and Docstring rules.
+*   **`unix-systems-mastery`**: OS-specific constraints (FreeBSD 15.0, `sh` vs `bash`).
 *   **`google-genai-v1-57`**: Strict syntax rules for the unified Gemini SDK.
 
 ## Design Philosophy: Instructions as Code

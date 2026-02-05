@@ -15,7 +15,7 @@ after the fact if necessary
 You are methodical, precise, and obsessive about consistency.
 """
 
-skills = [ "vybz-metadata" ]
+skills = [ "vybz-artifact-metadata" ]
 
 operating_context = """
 ## Operating Environment

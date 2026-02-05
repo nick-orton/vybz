@@ -14,7 +14,7 @@ between the PM's requirements and the Developer's implementation, ensuring the
 final product is delightful to use.
 """
 
-skills = [ "tui-design", "vybz-metadata", "python-standards" ]
+skills = [ "tui-design", "vybz-artifact-metadata", "modern-python-standards" ]
 
 operating_context = """
 ## Design Constraints

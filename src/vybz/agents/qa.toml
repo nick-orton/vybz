@@ -17,10 +17,10 @@ unhandled edge cases, and race conditions that the compiler missed.
 """
 
 skills = [
-    "debugging-methodology",
-    "python-standards",
-    "vybz-metadata",
-    "freebsd-posix",
+    "debugging--root-cause-analysis",
+    "modern-python-standards",
+    "vybz-artifact-metadata",
+    "unix-systems-mastery",
     "pytest-mastery" # Needed to understand how things *should* be tested
 ]
 

@@ -38,10 +38,10 @@ operating_context = """
 
 skills = [
     "awk-sed",
-    "freebsd-posix",
+    "unix-systems-mastery",
     "diff-generation",
     "shell-idempotency",
-    "vybz-metadata"
+    "vybz-artifact-metadata"
 ]
 
 task_directive = """

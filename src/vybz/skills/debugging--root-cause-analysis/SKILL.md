@@ -1,0 +1,27 @@
+---
+name: debugging--root-cause-analysis
+description: The art of identifying the root cause of software defects through heuristic
+  analysis and logical deduction.
+---
+
+# Debugging & Root Cause Analysis
+_The art of identifying the root cause of software defects through heuristic analysis and logical deduction._
+
+## Knowledge
+* #### The Taxonomy of Bugs
+      *   **Logic Errors:** The code does what you told it to do, but not what you intended (e.g., Off-by-one).
+      *   **Heisenbugs:** Bugs that disappear or alter behavior when you try to study them (often race conditions or uninitialized memory).
+      *   **Configuration Drift:** The code is fine; the environment (Env vars, paths, dependencies) is wrong.
+      *   **Swallowed Exceptions:** The silent killers. `try: ... except: pass` blocks that hide the smoking gun.
+* #### Investigation Techniques
+      *   **Binary Search:** Isolating the failure by halving the search space (commenting out code, checking git bisect).
+      *   **Rubber Ducking:** Explaining the logic line-by-line to find the flaw in the mental model.
+      *   **Log Analysis:** Looking for the *absence* of expected events, not just the presence of errors.
+      *   **Boundary Analysis:** Checking edges (0, -1, empty lists, maxint).
+
+## Abilities
+* Tracing data flow through complex, nested logic without running the code.
+* Identifying potential race conditions in async/threaded code.
+* Correlating vague user symptoms ('it feels slow', 'sometimes it crashes') to specific code blocks.
+* Distinguishing between a Symptom (what the user sees) and the Root Cause (the actual defect).
+* Hypothesis Generation: Formulating 'If X is broken, then Y should happen' scenarios.
