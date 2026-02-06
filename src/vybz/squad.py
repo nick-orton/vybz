@@ -1,7 +1,9 @@
 import sys
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 from vybz.agent import Agent
+from vybz.biblos import Library
+from vybz.config import ConfigLoader
 import vybz.ui as ui
 
 
@@ -10,11 +12,32 @@ class Squad:
     A helper class to manage a collection (Squad) of AI Agents.
 
     This class implements a Lazy Loading pattern. It does NOT load all agents
-    at startup. Instead, it scans the filesystem only when listing agents,
-    and parses/instantiates Agent objects only when specifically requested.
+    at startup. Instead, it delegates discovery to the Library service.
     """
     _agents: Dict[str, Agent] = {}  # Cache of loaded agent instances
-    _source_dir: Path = Path(__file__).parent / "agents"
+    _library: Optional[Library] = None
+
+    @classmethod
+    def _get_library(cls) -> Library:
+        """
+        Retrieves or initializes the Library instance.
+        """
+        if cls._library is None:
+            # Check for 'library' in user config if not initialized via CLI
+            config = ConfigLoader.load()
+            lib_path = config.get("library")
+            custom_root = Path(lib_path) if lib_path else None
+            cls._library = Library(custom_root=custom_root)
+        return cls._library
+
+    @classmethod
+    def initialize(cls, custom_library_root: Optional[Path] = None) -> None:
+        """
+        Explicitly initializes the Squad with a specific library root.
+        This is typically called by the CLI if --library is provided.
+        """
+        cls._library = Library(custom_root=custom_library_root)
+        cls._agents.clear() # Invalidate cache if library changes
 
     @classmethod
     def get_agent(cls, name: str) -> Agent:
@@ -36,16 +59,19 @@ class Squad:
         if name in cls._agents:
             return cls._agents[name]
 
-        # 2. Check Filesystem
-        target_file = cls._source_dir / f"{name}.toml"
-        if not target_file.exists():
-            # Only scan for available agents if we hit a missing agent error
+        library = cls._get_library()
+
+        # 2. Resolve Path via Library
+        try:
+            target_file = library.get_agent_path(name)
+        except FileNotFoundError:
             available = cls.list_agents()
             raise ValueError(f"Agent '{name}' not found. Available: {available}")
 
         # 3. Load & Cache
         try:
-            agent = Agent.from_toml(target_file)
+            # Dependency Injection: Pass library to Agent so it can resolve skills
+            agent = Agent.from_toml(target_file, library=library)
             cls._agents[name] = agent
             # We log to system (stderr) so we don't pollute stdout for tools
             ui.print_system(f"Loaded Agent: {agent.get_identity()}")
@@ -56,22 +82,10 @@ class Squad:
     @classmethod
     def list_agents(cls) -> List[str]:
         """
-        Scans the agents directory for valid configuration files.
-        Does NOT instantiate Agent objects.
+        Delegates to Library to list available agents.
 
         Returns:
             List[str]: A sorted list of available agent identifiers.
         """
-        if not cls._source_dir.exists():
-            ui.print_warning(f"Agents directory '{cls._source_dir}' not found.")
-            return []
-
-        agent_names = []
-        for entry in cls._source_dir.glob("*.toml"):
-            # Explicitly ignore template files
-            if entry.name.endswith(".template"):
-                continue
-            agent_names.append(entry.stem)
-
-        return sorted(agent_names)
+        return cls._get_library().list_agents()
 
