@@ -41,6 +41,16 @@ Process:
 
 Output Format (Strict Markdown, Max Line Length: 79 chars):
 
+```yaml
+---
+status: "Draft"
+type: "Design"
+author: "PM Lead"
+last_updated: "{{DATE}}"
+references: {{INTENT_FILE}}
+---
+```
+
 # [Project Name] Specification
 
 ## 1. High-Level Intent
