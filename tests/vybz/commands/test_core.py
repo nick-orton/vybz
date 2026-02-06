@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, patch, ANY
 from pathlib import Path
 
 from vybz.repl import ReplSession
+from vybz.skill import Skill
 from vybz.agent import Agent
 from vybz.commands.core import (
     ExitCommand,
@@ -19,7 +20,10 @@ from vybz.commands.core import (
     SaveCommand,
     LoadCommand,
     SetModeCommand,
-    ThemeCommand
+    ThemeCommand,
+    SkillsCommand,
+    UplevelCommand,
+    DownlevelCommand
 )
 from prompt_toolkit.enums import EditingMode
 
@@ -225,4 +229,60 @@ def test_theme_command(mock_session):
         assert cmd.execute(mock_session, ["matrix"]) is True
         mock_ui.set_theme.assert_called_with("matrix")
         mock_ui.print_success.assert_called()
+
+# -----------------------------------------------------------------------------
+# Dynamic Skill Commands (Phase 3)
+# -----------------------------------------------------------------------------
+
+def test_skills_command_renders_table(mock_session):
+    """Verify /skills retrieves active agent skills and prints to console."""
+    cmd = SkillsCommand()
+    mock_agent = mock_session.session_manager.active_agent
+    mock_agent.skills = [Skill(id="test-skill", name="Test", description="Desc", instructions="")]
+
+    with patch("vybz.commands.core.ui") as mock_ui:
+        assert cmd.execute(mock_session, []) is True
+        # Verify that ui.console.print was called (to show the Table)
+        mock_ui.console.print.assert_called_once()
+
+def test_uplevel_command_success(mock_session, tmp_path):
+    """Verify /uplevel loads a directory, adds it to agent, and refreshes context."""
+    cmd = UplevelCommand()
+    skill_dir = tmp_path / "new-capability"
+    skill_dir.mkdir()
+    (skill_dir / "SKILL.md").write_text("---\nname: new-capability\n---", encoding="utf-8")
+
+    with patch("vybz.commands.core.Skill") as MockSkill, \
+         patch("vybz.commands.core.ui") as mock_ui:
+        
+        mock_skill_obj = MagicMock()
+        mock_skill_obj.name = "New Capability"
+        MockSkill.from_directory.return_value = mock_skill_obj
+
+        assert cmd.execute(mock_session, [str(skill_dir)]) is True
+
+        MockSkill.from_directory.assert_called_once()
+        mock_session.session_manager.active_agent.add_skill.assert_called_with(mock_skill_obj)
+        mock_session.session_manager.refresh_context.assert_called_once()
+        mock_ui.print_success.assert_called()
+
+def test_downlevel_command_success(mock_session):
+    """Verify /downlevel removes skill and refreshes context on success."""
+    cmd = DownlevelCommand()
+    mock_session.session_manager.active_agent.remove_skill.return_value = True
+
+    with patch("vybz.commands.core.ui") as mock_ui:
+        assert cmd.execute(mock_session, ["unwanted-skill"]) is True
+        mock_session.session_manager.active_agent.remove_skill.assert_called_with("unwanted-skill")
+        mock_session.session_manager.refresh_context.assert_called_once()
+        mock_ui.print_success.assert_called()
+
+def test_downlevel_command_not_found(mock_session):
+    """Verify /downlevel reports error if skill ID is invalid."""
+    cmd = DownlevelCommand()
+    mock_session.session_manager.active_agent.remove_skill.return_value = False
+
+    with patch("vybz.commands.core.ui") as mock_ui:
+        assert cmd.execute(mock_session, ["ghost-skill"]) is True
+        mock_ui.print_error.assert_called_with("Skill 'ghost-skill' not found on active agent.")
 

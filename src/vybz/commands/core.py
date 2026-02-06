@@ -13,6 +13,7 @@ from vybz import ui
 from vybz.squad import Squad
 from vybz.artifact import ArtifactProcessor
 from vybz.assets.loader import AssetLoader
+from vybz.skill import Skill
 
 
 
@@ -215,5 +216,67 @@ class ThemeCommand(Command):
 
         if ui.set_theme(args[0]):
             ui.print_success(f"Theme set to '{args[0]}'")
+        return True
+
+
+class SkillsCommand(Command):
+    name = "/skills"
+    description = "Visualize the active agent's capabilities."
+
+    def execute(self, session, args: List[str]) -> bool:
+        from rich.table import Table
+        agent = session.session_manager.active_agent
+
+        table = Table(title=f"Skills for {agent.name}", box=ui.ROUNDED)
+        table.add_column("ID", style="header.label")
+        table.add_column("Name", style="header.value")
+        table.add_column("Description")
+
+        for skill in agent.skills:
+            table.add_row(skill.id, skill.name, skill.description)
+
+        ui.console.print(table)
+        return True
+
+
+class UplevelCommand(Command):
+    name = "/uplevel"
+    description = "Inject a local skill directory into the active agent."
+
+    def execute(self, session, args: List[str]) -> bool:
+        if not args:
+            ui.print_error("Usage: /uplevel <path>")
+            return True
+
+        try:
+            path = Path(args[0]).resolve()
+            skill = Skill.from_directory(path)
+
+            session.session_manager.active_agent.add_skill(skill)
+            session.session_manager.refresh_context()
+
+            ui.print_success(f"Skill '{skill.name}' injected and context refreshed.")
+        except Exception as e:
+            ui.print_error(f"Failed to uplevel skill: {e}")
+
+        return True
+
+
+class DownlevelCommand(Command):
+    name = "/downlevel"
+    description = "Remove a skill from the active agent."
+
+    def execute(self, session, args: List[str]) -> bool:
+        if not args:
+            ui.print_error("Usage: /downlevel <id>")
+            return True
+
+        skill_id = args[0]
+        if session.session_manager.active_agent.remove_skill(skill_id):
+            session.session_manager.refresh_context()
+            ui.print_success(f"Skill '{skill_id}' removed.")
+        else:
+            ui.print_error(f"Skill '{skill_id}' not found on active agent.")
+
         return True
 

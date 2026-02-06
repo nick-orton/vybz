@@ -15,7 +15,10 @@ from vybz.commands.core import (
     LoadCommand,
     SetModeCommand,
     ThemeCommand,
-    UpdateCommand
+    UpdateCommand,
+    SkillsCommand,
+    UplevelCommand,
+    DownlevelCommand
 )
 
 class CommandRegistry:
@@ -58,4 +61,7 @@ class CommandRegistry:
         self.register(SetModeCommand())
         self.register(ThemeCommand())
         self.register(UpdateCommand())
+        self.register(SkillsCommand())
+        self.register(UplevelCommand())
+        self.register(DownlevelCommand())
 

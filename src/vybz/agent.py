@@ -88,3 +88,23 @@ class Agent:
                 prompt += f"{skill.render()}\n\n"
 
         return prompt
+
+    def add_skill(self, skill: Skill) -> None:
+        """
+        Adds a skill to the agent's memory. If a skill with the same ID
+        already exists, it is updated.
+        """
+        for i, s in enumerate(self.skills):
+            if s.id == skill.id:
+                self.skills[i] = skill
+                return
+        self.skills.append(skill)
+
+    def remove_skill(self, skill_id: str) -> bool:
+        """
+        Removes a skill from the agent's memory by ID.
+        Returns True if a skill was removed, False otherwise.
+        """
+        original_len = len(self.skills)
+        self.skills = [s for s in self.skills if s.id != skill_id]
+        return len(self.skills) < original_len

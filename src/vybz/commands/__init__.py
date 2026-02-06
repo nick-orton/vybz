@@ -8,7 +8,10 @@ from .core import (
     SaveCommand,
     SetModeCommand,
     ThemeCommand,
-    UpdateCommand
+    UpdateCommand,
+    SkillsCommand,
+    UplevelCommand,
+    DownlevelCommand
 )
 
 __all__ = [
@@ -22,5 +25,8 @@ __all__ = [
     "SetModeCommand",
     "ThemeCommand",
     "UpdateCommand",
+    "SkillsCommand",
+    "UplevelCommand",
+    "DownlevelCommand",
 ]
 

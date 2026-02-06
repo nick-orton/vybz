@@ -7,6 +7,7 @@ Verifies loading logic, specifically the dual-path skill resolution strategy.
 import pytest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
+from vybz.skill import Skill
 import vybz.agent
 from vybz.agent import Agent
 
@@ -131,3 +132,40 @@ def test_agent_load_missing_skill(agent_env, mock_skill_class):
             Agent.from_toml(agent_file)
 
     assert "Skill 'target-skill' not found" in str(exc.value)
+
+def test_agent_add_skill_lifecycle():
+    """Verify adding and updating skills on an Agent instance."""
+    # Arrange
+    agent = Agent(
+        id="test-agent", name="Tester", version="1",
+        role_spec="", operating_context="", task_directive=""
+    )
+    skill_v1 = Skill(id="python", name="Python", description="v1", instructions="print(1)")
+    skill_v2 = Skill(id="python", name="Python", description="v2", instructions="print(2)")
+
+    # Act: Add new skill
+    agent.add_skill(skill_v1)
+
+    # Assert
+    assert len(agent.skills) == 1
+    assert agent.skills[0].description == "v1"
+
+    # Act: Update existing skill (ID match)
+    agent.add_skill(skill_v2)
+
+    # Assert: Should not duplicate, should update content
+    assert len(agent.skills) == 1
+    assert agent.skills[0].description == "v2"
+
+def test_agent_remove_skill_lifecycle():
+    """Verify removing skills from an Agent instance and boolean feedback."""
+    # Arrange
+    s1 = Skill(id="s1", name="S1", description="", instructions="")
+    agent = Agent(id="test", name="T", version="1", role_spec="", operating_context="", task_directive="", skills=[s1])
+
+    # Act & Assert
+    assert agent.remove_skill("s1") is True
+    assert len(agent.skills) == 0
+
+    # Act & Assert: Remove non-existent
+    assert agent.remove_skill("ghost") is False

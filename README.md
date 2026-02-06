@@ -79,12 +79,15 @@ vybz junior-dev --codebase . --mode vi
 *   **`/agent [name]`**: Switch active agent (e.g., `/agent pm`). Type without
     arguments to list available agents.
 *   **`/clear`**: Clear the terminal screen (preserves chat history).
+*   **`/downlevel <id>`**: Remove a skill from the active session.
 *   **`/load <file>`**: Load a specific file into the active context.
 *   **`/save`**: Auto-save the last generated artifact to the appropriate
     directory based on its metadata.
 *   **`/set <mode>`**: Set input mode (`vi` or `emacs`).
+*   **`/skills`**: Visualize the active agent's capabilities in a table.
 *   **`/theme <name>`**: Set UI color theme (e.g., `/theme matrix`).
 *   **`/update`**: Refresh CodeBase snapshot and System Date.
+*   **`/uplevel <path>`**: Inject a local skill directory at runtime.
 *   **`/help`**: Show available commands and keybindings.
 *   **`/exit`**: End the session.
 
@@ -124,18 +127,21 @@ right task:
 ### Composable Skills
 
 Agents are constructed from modular **Skills** defined in
-`src/vybz/agents/skills/`. This ensures that critical constraints—such as
-Python coding standards, OS-specific shell rules, or SDK versions—are defined
-once and shared across the entire Squad.
+`src/vybz/skills/`. Vybz adheres to the [AgentSkills.io](https://agentskills.io)
+standard, which promotes portable, directory-based capabilities. Each skill is
+a self-contained unit comprising a `SKILL.md` file with YAML Frontmatter and
+Markdown instructions.
 
-Skills are defined in atomic TOML files that decouple technical capability from
-agent persona. They consist of two primary components:
+This architecture ensures that critical constraints—such as Python coding
+standards, OS-specific shell rules, or SDK versions—are defined once and
+shared across the entire Squad.
 
-*   **Knowledge:** The static facts and constraints the agent must possess. 
-    This includes specific library versions, operating system paths, or 
-    architectural standards (e.g., "We use FreeBSD 15.0" or "Target the 
-    `google-genai` v1.57 SDK").
-*   **Abilities:** The operational instructions that dictate how the agent 
+A standard skill includes:
+
+*   **Metadata:** Defined in YAML Frontmatter, specifying the `name` and
+    `description` used for [Resource Discovery](https://agentskills.io
+    /specification).
+*   **Instructions:** The Markdown body providing the facts and rules the agent
     applies that knowledge. These are behavioral rules and specific directives 
     (e.g., "Always implement PEP 484 type hints" or "Prefer piping `grep` into 
     `awk`").
