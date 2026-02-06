@@ -6,10 +6,13 @@ The primary CLI entry point for Vybz Kartel.
 """
 
 import argparse
+import os
+import shutil
 import sys
 from pathlib import Path
 from typing import Optional
 
+import vybz
 import vybz.vibez as vibez
 import vybz.ui as ui
 import vybz.repl as repl
@@ -17,6 +20,49 @@ import vybz.config as config
 from vybz.context_engine import CodeBase
 from vybz.squad import Squad
 from vybz.services.session import SessionManager
+
+
+def _init_user_library() -> None:
+    """Copies system default library to user config directory."""
+    package_root = Path(vybz.__file__).parent
+    system_lib = package_root / "library"
+
+    xdg_root = os.getenv("XDG_CONFIG_HOME")
+    if xdg_root:
+        user_lib = Path(xdg_root) / "vybz" / "library"
+    else:
+        user_lib = Path.home() / ".config" / "vybz" / "library"
+
+    if not system_lib.exists():
+        ui.print_error(f"System library not found at {system_lib}")
+        return
+
+    ui.print_system(f"Initializing user library at {user_lib}...")
+
+    count = 0
+    for src_file in system_lib.rglob("*"):
+        if not src_file.is_file():
+            continue
+
+        # Filter out Python package artifacts and hidden system files
+        if src_file.name == "__init__.py" or src_file.suffix == ".pyc":
+            continue
+        if "__pycache__" in src_file.parts or src_file.name.startswith("."):
+            continue
+
+        rel_path = src_file.relative_to(system_lib)
+        dest_file = user_lib / rel_path
+
+        if not dest_file.exists():
+            dest_file.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src_file, dest_file)
+            ui.print_system(f"  Created: {rel_path}")
+            count += 1
+
+    if count > 0:
+        ui.print_success(f"Initialized {count} files.")
+    else:
+        ui.print_system("No new files to initialize.")
 
 
 def main() -> None:
@@ -31,6 +77,7 @@ def main() -> None:
     # Positional Arguments
     parser.add_argument(
         "agent",
+        nargs='?',
         help="Target Agent Persona \n['junior-dev', 'pm', 'senior-dev', 'advisor', 'tech-writer' ]"
     )
 
@@ -71,6 +118,15 @@ def main() -> None:
         default="default",
         help="UI Color Theme (default: default)"
     )
+    parser.add_argument(
+        "--library",
+        help="Path to custom library root containing agents/ and skills/ directories."
+    )
+    parser.add_argument(
+        "--init-library",
+        action="store_true",
+        help="Copy system default agents and skills to user config directory."
+    )
 
     # Load User Config
     user_defaults = config.ConfigLoader.load()
@@ -82,6 +138,18 @@ def main() -> None:
     try:
         # 0. Configure UI Theme
         ui.set_theme(args.theme)
+
+        if args.init_library:
+            _init_user_library()
+            sys.exit(0)
+
+        if not args.agent:
+            parser.print_help()
+            sys.exit(1)
+
+        # Initialize Squad with library path
+        lib_path = Path(args.library) if args.library else None
+        Squad.initialize(custom_library_root=lib_path)
 
         # 1. Initialize the Google GenAI Client
         client = vibez.configure_genai_client()
