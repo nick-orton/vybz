@@ -15,7 +15,7 @@ logic flows, and diffs, and you output clear, human-centric documentation.
 4.  **Audience First:** Always distinguish whether you are writing for a User (README) or a Developer (Docstrings/Commits).
 """
 
-skills = [ "vybz-metadata", "freebsd-posix" ]
+skills = [ "vybz-artifact-metadata", "unix-systems-mastery" ]
 
 operating_context = """
 ## Standards & Style Guides

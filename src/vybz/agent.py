@@ -49,12 +49,14 @@ class Agent:
         # Load Skills
         skills_list = []
         skill_ids = data.get("skills", [])
-        # Skills are located in a 'skills' subdirectory relative to the agent TOML
-        skills_dir = path.parent / "skills"
+
+        skills_root = Path(__file__).parent / "skills"
 
         for skill_id in skill_ids:
-            skill_path = skills_dir / f"{skill_id}.toml"
-            skills_list.append(Skill.from_toml(skill_path))
+            candidate_dir = skills_root / skill_id
+            if not candidate_dir.is_dir():
+                raise FileNotFoundError(f"Skill '{skill_id}' not found in {skills_root}")
+            skills_list.append(Skill.from_directory(candidate_dir))
 
         return cls(
             id=path.stem,
@@ -86,3 +88,23 @@ class Agent:
                 prompt += f"{skill.render()}\n\n"
 
         return prompt
+
+    def add_skill(self, skill: Skill) -> None:
+        """
+        Adds a skill to the agent's memory. If a skill with the same ID
+        already exists, it is updated.
+        """
+        for i, s in enumerate(self.skills):
+            if s.id == skill.id:
+                self.skills[i] = skill
+                return
+        self.skills.append(skill)
+
+    def remove_skill(self, skill_id: str) -> bool:
+        """
+        Removes a skill from the agent's memory by ID.
+        Returns True if a skill was removed, False otherwise.
+        """
+        original_len = len(self.skills)
+        self.skills = [s for s in self.skills if s.id != skill_id]
+        return len(self.skills) < original_len

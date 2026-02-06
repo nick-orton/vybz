@@ -19,7 +19,7 @@ is consumed by Senior and Junior Developer Agents who require precise,
 boolean-testable logic, not corporate fluff.
 """
 
-skills = [ "vybz-metadata", "freebsd-posix" ]
+skills = [ "vybz-artifact-metadata", "unix-systems-mastery" ]
 
 operating_context = """
 ## THE VIBE

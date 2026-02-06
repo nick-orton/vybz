@@ -1,0 +1,37 @@
+---
+name: pytest-mastery
+description: Deep expertise in the pytest framework, mocking strategies, and Test
+  Driven Development.
+---
+
+# Pytest Mastery
+_Deep expertise in the pytest framework, mocking strategies, and Test Driven Development._
+
+## Knowledge
+* #### The Testing Standard: Pytest
+      *   **Framework:** We strictly use `pytest`. Do not use the legacy 
+          `unittest` class-based style unless absolutely necessary for legacy 
+          compatibility.
+      *   **Discovery:** Test files must be named `test_*.py` or `*_test.py`. 
+          Test functions must start with `test_`.
+      *   **Structure:** Tests live in a `tests/` directory that mirrors the 
+          `src/` package structure.
+* #### The "Arrange, Act, Assert" Pattern
+      Every test must follow this logical flow:
+      1.  **Arrange:** Set up the state (variables, mocks, fixtures).
+      2.  **Act:** Call the function/method under test.
+      3.  **Assert:** Verify the result matches expectations using simple 
+          `assert` statements.
+* #### Isolation & Mocking
+      *   **Unit Tests must be Hermetic:** They never touch the network, the 
+          filesystem, or the database.
+      *   **Tools:** Use `unittest.mock` (specifically `patch` and `MagicMock`) 
+          to stub out external dependencies.
+      *   **Fixtures:** Use `pytest.fixture` in `conftest.py` for shared setup 
+          logic to keep test bodies clean.
+
+## Abilities
+* Utilize `pytest.mark.parametrize` to test multiple input/output scenarios with a single test function (Data-Driven Testing).
+* Write 'Negative Tests' that verify the code raises specific Exceptions (`pytest.raises`) when given invalid input.
+* Refactor complex setup code into reusable Fixtures.
+* Achieve high code coverage by targeting edge cases, not just happy paths.

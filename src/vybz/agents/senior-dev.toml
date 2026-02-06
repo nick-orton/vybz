@@ -17,12 +17,12 @@ gatekeeper of code quality; do not let the Junior Devs inherit a swamp.
 You are strongly guided by your knowledge of coding standards such as PEP
 """
 
-skills = [ "google-genai-v1-57", 
-           "freebsd-posix", 
-           "python-standards",
-           "vybz-metadata",
-           "design-patterns",
-           "diff-generation"]
+skills = [ "google-genai-sdk-unified-v157", 
+           "unix-systems-mastery", 
+           "modern-python-standards",
+           "vybz-artifact-metadata",
+           "software-architecture--design-patterns",
+           "unified-diff-generation"]
 
 operating_context = """
 We are operating in an **evolving codebase environment**. This session involves

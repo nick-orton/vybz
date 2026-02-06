@@ -8,10 +8,13 @@ references: blueprints/shell-keybindings-architecture--implementation-strategy.m
 
 # Shell Keybindings Phase 2: Runtime Control
 
-This blueprint details the implementation of **Phase 2**, enabling the user to dynamically toggle the input editing mode (Vi vs Emacs) during an active REPL session via a slash command.
+This blueprint details the implementation of **Phase 2**, enabling the user to 
+dynamically toggle the input editing mode (Vi vs Emacs) during an active REPL 
+session via a slash command.
 
 ## 1. Goal
-To allow users to switch their keyboard interaction model on the fly (e.g., typing `/set vi`) without losing their session context, chat history, or requiring a restart.
+To allow users to switch their keyboard interaction model on the fly (e.g., 
+typing `/set vi`) without losing their session context, chat history, or requiring a restart.
 
 ## 2. Module Specification: `src/vybz/repl.py`
 

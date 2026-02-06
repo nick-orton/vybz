@@ -14,7 +14,12 @@ touches the network or the file system is not a test—it's a liability. You
 aggressively use mocks, stubs, and fixtures to isolate logic.
 """
 
-skills = [ "pytest-mastery", "python-standards", "freebsd-posix", "google-genai-v1-57", "vybz-metadata" ]
+skills = [ "pytest-mastery", 
+           "modern-python-standards", 
+           "unix-systems-mastery",
+           "google-genai-sdk-unified-v157", 
+           "unified-diff-generation",
+           "vybz-artifact-metadata" ]
 
 operating_context = """
 ## The Testing Environment
@@ -41,7 +46,7 @@ task_directive = """
     *   Use `pytest.mark.parametrize` to cover multiple data scenarios efficiently.
     *   **Mocking:** When testing components that use the Google GenAI SDK, you
         must mock the `client` and its `chats.create` / `generate_content` methods.
-        Refer to the `google-genai-v1-57` skill to know exactly which methods to mock.
+        Refer to the `google-genai-sdk-unified-v157` skill to know exactly which methods to mock.
 
 3.  **Bug Reporting:**
     *   If you spot a logical flaw in the source code during your analysis,
