@@ -3,7 +3,7 @@ status: "Draft"
 type: "Design"
 author: "PM Lead"
 last_updated: "2026-02-04"
-references: designs/agentskillsio-standard.md
+references: designs/agentskills/agentskillsio-standard.md
 ---
 
 # Agent Skills 2.0 - Phase 1: Core Infrastructure Specification

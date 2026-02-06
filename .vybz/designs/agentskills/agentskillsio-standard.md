@@ -3,7 +3,7 @@ status: "Draft"
 type: "Design"
 author: "PM Lead"
 last_updated: "2026-02-03"
-references: tmp-skills/specification.md, tmp-skills/what-are-skills.md
+references: 
 ---
 
 # Agent Skills 2.0: Adoption of AgentSkills.io Standard

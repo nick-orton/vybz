@@ -3,7 +3,7 @@ status: "Draft"
 type: "Design"
 author: "PM Lead"
 last_updated: "2026-02-04"
-references: designs/agentskillsio-standard.md, designs/agentskillsio-standard-phase-1.md
+references: designs/agentskills/agentskillsio-standard.md, designs/agentskills/agentskillsio-standard-phase-1.md
 ---
 
 # Agent Skills 2.0 - Phase 3: Runtime Dynamics Specification

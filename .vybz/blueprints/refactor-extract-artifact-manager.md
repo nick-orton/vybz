@@ -3,7 +3,7 @@ status: "Completed"
 type: "Blueprint"
 author: "Senior Python Architect"
 last_updated: "2026-01-14"
-references: blueprints/save-diffs.md, designs/no-copy-pasting.md
+references: blueprints/save-diffs--patches-implementation-plan.md, designs/no-copy-pasting.md
 ---
 
 # Refactor: Extract Artifact Manager

@@ -3,7 +3,7 @@ status: "Draft"
 type: "Blueprint"
 author: "Senior Python Architect"
 last_updated: "2026-02-04"
-references: designs/agentskillsio-standard.md
+references: designs/agentskills/agentskillsio-standard.md
 ---
 
 # AgentSkills.io Standard Implementation Strategy

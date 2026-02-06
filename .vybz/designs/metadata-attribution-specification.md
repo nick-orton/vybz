@@ -3,7 +3,7 @@ status: "Completed"
 type: "Design"
 author: "PM Lead"
 last_updated: "2026-01-16"
-references: intents/agents-sign-their-design-docs.md, src/vybz/agents/skills/vybz-metadata.toml
+references: intents/agents-sign-their-design-docs.md, src/vybz/skills/vybz-artifact-metadata/SKILL.md
 ---
 
 # Metadata Attribution Specification

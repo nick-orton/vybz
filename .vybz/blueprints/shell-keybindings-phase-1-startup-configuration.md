@@ -3,7 +3,7 @@ status: "Completed"
 type: "Blueprint"
 author: "Senior Python Architect"
 last_updated: "2026-01-14"
-references: blueprints/shell-keybindings-architecture.md
+references: blueprints/shell-keybindings-architecture--implementation-strategy.md
 ---
 
 # Shell Keybindings Phase 1: Startup Configuration

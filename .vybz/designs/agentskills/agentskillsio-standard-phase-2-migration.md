@@ -3,7 +3,7 @@ status: "Draft"
 type: "Design"
 author: "PM Lead"
 last_updated: "2026-02-04"
-references: designs/agent-skills-20---phase-1-core-infrastructure-specification.md, designs/agentskillsio-standard.md
+references: designs/agentskills/agentskillsio-standard-phase-1.md, designs/agentskills/agentskillsio-standard.md
 ---
 
 # Agent Skills 2.0 - Phase 2: Migration & Cleanup Specification

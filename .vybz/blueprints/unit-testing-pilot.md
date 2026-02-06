@@ -3,7 +3,7 @@ status: "Completed"
 type: "Blueprint"
 author: "Senior Python Architect"
 last_updated: "2026-01-12"
-references: designs/unit-testing-architecture.md
+references: designs/unit-testing-architecture-specification.md
 ---
 
 # Unit Testing Pilot Implementation

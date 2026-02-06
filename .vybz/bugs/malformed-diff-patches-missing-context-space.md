@@ -3,7 +3,7 @@ status: "Completed"
 type: "Bug"
 author: "Principal QA Engineer"
 last_updated: "2026-01-13"
-references: src/vybz/agents/skills/diff-generation.toml, src/vybz/artifact.py
+references: src/vybz/skills/unified-diff-generation/SKILL.md, src/vybz/artifact.py
 ---
 
 # Malformed Diff Patches (Missing Context Space)

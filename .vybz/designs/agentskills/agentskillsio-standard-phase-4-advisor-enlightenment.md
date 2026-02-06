@@ -3,7 +3,7 @@ status: "Draft"
 type: "Design"
 author: "PM Lead"
 last_updated: "2026-02-04"
-references: designs/agentskillsio-standard.md, designs/agentskillsio-standard-phase-3-runtime.md
+references: designs/agentskills/agentskillsio-standard.md, designs/agentskills/agentskillsio-standard-phase-3-runtime.md
 ---
 
 # Agent Skills 2.0 - Phase 4: The Skill Creator (Advisor Enlightenment)
