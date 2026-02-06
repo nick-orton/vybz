@@ -122,7 +122,15 @@ right task:
     decided.
 *   **`tech-writer`:** Generates documentation and commit messages.
 *   **`librarian`:** Organizes documentation and ensures doc metadata is 
-    up-to-date
+    up-to-date.
+*   **`qa`:** Principal QA Engineer. Specializes in exploratory testing and 
+    root cause analysis.
+*   **`test-dev`:** QA Automation Lead. Specializes in hermetic `pytest` 
+    suites and mocking.
+*   **`sysadmin`:** Unix Greybeard. Writes robust, idempotent shell scripts 
+    for POSIX systems.
+*   **`ux-designer`:** Principal TUI Designer. Designs low-friction terminal 
+    interfaces using `rich`.
 
 ### Composable Skills
 
@@ -139,8 +147,7 @@ shared across the entire Squad.
 A standard skill includes:
 
 *   **Metadata:** Defined in YAML Frontmatter, specifying the `name` and
-    `description` used for [Resource Discovery](https://agentskills.io
-    /specification).
+    `description` used for [Resource Discovery](https://agentskills.io/specification).
 *   **Instructions:** The Markdown body providing the facts and rules the agent
     applies that knowledge. These are behavioral rules and specific directives 
     (e.g., "Always implement PEP 484 type hints" or "Prefer piping `grep` into 
