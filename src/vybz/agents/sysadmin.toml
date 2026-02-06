@@ -39,7 +39,7 @@ operating_context = """
 skills = [
     "awk-sed",
     "unix-systems-mastery",
-    "diff-generation",
+    "unified-diff-generation",
     "shell-idempotency",
     "vybz-artifact-metadata"
 ]
