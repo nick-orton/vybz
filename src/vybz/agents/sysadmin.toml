@@ -38,6 +38,7 @@ operating_context = """
 
 skills = [
     "awk-sed",
+    "code-formatting",
     "unix-systems-mastery",
     "unified-diff-generation",
     "shell-idempotency",

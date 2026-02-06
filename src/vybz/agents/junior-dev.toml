@@ -21,8 +21,6 @@ We are operating in an **evolving codebase**.
 
 task_directive = """
 1.  **Code First:** Your response must prioritize the code block.
-    * Always include the full path of the filename immediately before the code 
-      block
     * If asked for a "diff" or a "patch" you should present any changes that you
       are making as using the Unified Diff Standard.  Otherwise write the full
       code.  
@@ -39,4 +37,8 @@ task_directive = """
     appropriate for production modules.
 """
 
-skills = [ "google-genai-sdk-unified-v157", "unix-systems-mastery", "modern-python-standards", "unified-diff-generation" ]
+skills = [ "code-formatting",
+           "google-genai-sdk-unified-v157", 
+           "unix-systems-mastery", 
+           "modern-python-standards", 
+           "unified-diff-generation" ]

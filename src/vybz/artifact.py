@@ -204,7 +204,7 @@ class CodeFileHandler(ArtifactHandler):
     # Regex to capture: # filename: src/foo.py
     # Supports # (Python/Shell), // (JS/C), -- (Lua/SQL)
     FILENAME_PATTERN = re.compile(
-        r'(?:^|\n)\s*(?:#|//|--)\s*(?:filename|file):\s*(.+)$',
+        r'(?:^|\n)\s*(?:#|//|--)\s*(?:filename|file):\s*(.+?)\s*(?:\n|$)',
         re.IGNORECASE | re.MULTILINE
     )
 
@@ -236,16 +236,20 @@ class CodeFileHandler(ArtifactHandler):
 
     def extract(self, token: Token, full_text: str) -> Artifact:
         # Try finding explicit comment first
-        match = self.FILENAME_PATTERN.search(token.content)
+        filename_match = self.FILENAME_PATTERN.search(token.content)
 
         # If no comment, try docstring
-        if not match:
-            match = self.DOCSTRING_PATTERN.search(token.content)
+        docstring_match = None
+        if not filename_match:
+            docstring_match = self.DOCSTRING_PATTERN.search(token.content)
+
+        match = filename_match or docstring_match
 
         # Default fallback
         ts = datetime.datetime.now().strftime("%H%M%S")
         filename = f"{ts}-snippet.txt"
         directory = ".vybz/output"
+        content = token.content
 
         if match:
             raw_path = match.group(1).strip()
@@ -256,8 +260,14 @@ class CodeFileHandler(ArtifactHandler):
             filename = p.name
             directory = str(p.parent)
 
+            if filename_match:
+                # Strip the metadata comment line to make shebangs valid
+                start, end = filename_match.span()
+                content = content[:start] + content[end:]
+                content = content.lstrip()
+
         return Artifact(
-            content=token.content,
+            content=content,
             filename=filename,
             directory=directory,
             type="Code"
