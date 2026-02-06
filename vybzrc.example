@@ -10,7 +10,7 @@ theme = "matrix"
 mode = "vi"
 
 # Default Gemini Model
-model = "gemini-3-pro-preview"
+model = "gemini-3-flash-preview"
 
 # Default Log File Path
 log_file = "/tmp/vybz-session.log"

@@ -40,7 +40,7 @@ _Standards and constraints for the unified google-genai library._
       4.  **Generation:**
           ```python
           response = client.models.generate_content(
-              model='gemini-3-pro-preview',
+              model='gemini-3-flash-preview',
               contents='Hello'
           )
           print(response.text)

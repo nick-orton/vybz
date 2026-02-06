@@ -44,8 +44,8 @@ def main() -> None:
     # Optional Arguments
     parser.add_argument(
         "-m", "--model",
-        default="gemini-3-pro-preview",
-        help="Target Gemini Model ID.\nDefault: gemini-3-pro-preview"
+        default="gemini-3-flash-preview",
+        help="Target Gemini Model ID.\nDefault: gemini-3-flash-preview"
     )
     parser.add_argument(
         "-l", "--log-file",
