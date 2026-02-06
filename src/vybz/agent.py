@@ -1,8 +1,9 @@
 import tomllib  # Built-in in Python 3.11+
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, TYPE_CHECKING
 from vybz.skill import Skill
+from vybz.biblos import Library
 
 @dataclass
 class Agent:
@@ -19,12 +20,13 @@ class Agent:
     skills: List[Skill] = field(default_factory=list)
 
     @classmethod
-    def from_toml(cls, file_path: str | Path) -> "Agent":
+    def from_toml(cls, file_path: str | Path, library: "Library") -> "Agent":
         """
         Factory method to create an Agent from a TOML file.
 
         Args:
             file_path: Path to the .toml definition file.
+            library: The Library instance for resolving skill paths.
 
         Returns:
             Initialized Agent instance.
@@ -50,13 +52,9 @@ class Agent:
         skills_list = []
         skill_ids = data.get("skills", [])
 
-        skills_root = Path(__file__).parent / "skills"
-
         for skill_id in skill_ids:
-            candidate_dir = skills_root / skill_id
-            if not candidate_dir.is_dir():
-                raise FileNotFoundError(f"Skill '{skill_id}' not found in {skills_root}")
-            skills_list.append(Skill.from_directory(candidate_dir))
+            skill_dir = library.get_skill_path(skill_id)
+            skills_list.append(Skill.from_directory(skill_dir))
 
         return cls(
             id=path.stem,

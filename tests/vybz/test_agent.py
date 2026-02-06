@@ -8,7 +8,6 @@ import pytest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
 from vybz.skill import Skill
-import vybz.agent
 from vybz.agent import Agent
 
 @pytest.fixture
@@ -101,9 +100,9 @@ def agent_env(tmp_path):
 
     return agent_file, v2_skills_dir
 
-def test_agent_load_skill_v2_success(agent_env, mock_skill_class):
+def test_agent_load_skill_success(agent_env, mock_skill_class):
     """
-    Verify that an agent can load a v2 skill directory.
+    Verify that an agent loads skills via the Library
     """
     agent_file, v2_dir = agent_env
 
@@ -111,25 +110,28 @@ def test_agent_load_skill_v2_success(agent_env, mock_skill_class):
     (v2_dir / "target-skill").mkdir()
     (v2_dir / "target-skill" / "SKILL.md").touch()
 
-    # Mock __file__ so Agent finds the v2_dir relative to itself
-    fake_agent_py = v2_dir.parent / "agent.py"
 
-    with patch.object(vybz.agent, "__file__", str(fake_agent_py)):
-        Agent.from_toml(agent_file)
+    mock_library = MagicMock()
+    mock_library.get_skill_path.return_value = v2_dir / "target-skill"
+
+    Agent.from_toml(agent_file, library=mock_library)
 
     # Assert
     mock_skill_class.from_directory.assert_called_once()
+    mock_library.get_skill_path.assert_called_with("target-skill")
 
 def test_agent_load_missing_skill(agent_env, mock_skill_class):
     """
-    Verify FileNotFoundError if skill is found in neither location.
+    Verify FileNotFoundError if Library fails to resolve skill.
     """
     agent_file, v2_dir = agent_env
 
     # Arrange: Create NEITHER
+    mock_library = MagicMock()
+    mock_library.get_skill_path.side_effect = FileNotFoundError("Skill 'target-skill' not found")
 
     with pytest.raises(FileNotFoundError) as exc:
-            Agent.from_toml(agent_file)
+            Agent.from_toml(agent_file, library=mock_library)
 
     assert "Skill 'target-skill' not found" in str(exc.value)
 
