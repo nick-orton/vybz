@@ -6,11 +6,17 @@ Verifies multi-agent state management, chat creation, and context refreshing.
 """
 import pytest
 from unittest.mock import MagicMock, patch
-from google.genai import types
+from dataclasses import dataclass
 
 from vybz.services.session import SessionManager
 from vybz.shared.agent import Agent
 from vybz.shared.codebase import CodeBase
+
+# Define a dummy class to replace the SDK config object for testing
+@dataclass
+class MockGenerateContentConfig:
+    system_instruction: str
+    temperature: float
 
 class TestSessionManager:
 
@@ -50,8 +56,14 @@ class TestSessionManager:
     @pytest.fixture
     def manager(self, mock_client, mock_agent_a, mock_codebase):
         """Returns an initialized SessionManager instance with dependencies patched."""
-        with patch("vybz.services.session.ContextAssembler") as mock_assembler:
+        with patch("vybz.services.session.ContextAssembler") as mock_assembler, \
+             patch("vybz.services.session.types") as mock_types:
+            
+            # Patch the types module used inside SessionManager to use our dummy class
+            mock_types.GenerateContentConfig = MockGenerateContentConfig
+            
             mock_assembler.build_system_instruction.return_value = "System Prompt"
+            
             return SessionManager(
                 client=mock_client,
                 model_id="gemini-test",
@@ -70,14 +82,21 @@ class TestSessionManager:
         mock_client.chats.create.assert_called_once()
         _, kwargs = mock_client.chats.create.call_args
         assert kwargs["model"] == "gemini-test"
-        # Verify config type usage
-        assert isinstance(kwargs["config"], types.GenerateContentConfig)
-        assert kwargs["config"].system_instruction == "System Prompt"
+        
+        # Verify config usage
+        # Since we patched types.GenerateContentConfig with our MockGenerateContentConfig dataclass,
+        # we can inspect the object directly.
+        config = kwargs["config"]
+        assert isinstance(config, MockGenerateContentConfig)
+        assert config.system_instruction == "System Prompt"
 
     def test_switch_agent_new_session(self, manager, mock_client, mock_agent_b):
         """Verify switching to a new agent creates a new session."""
         # Arrange
-        with patch("vybz.services.session.Squad") as mock_squad:
+        with patch("vybz.services.session.Squad") as mock_squad, \
+             patch("vybz.services.session.types") as mock_types:
+            
+            mock_types.GenerateContentConfig = MockGenerateContentConfig
             mock_squad.get_agent.return_value = mock_agent_b
 
             # Act
@@ -128,8 +147,10 @@ class TestSessionManager:
 
         # Mock CodeBase constructor to verify re-instantiation
         with patch("vybz.services.session.CodeBase", return_value=mock_codebase) as MockCodeBaseClass, \
-             patch("vybz.services.session.Squad") as mock_squad:
+             patch("vybz.services.session.Squad") as mock_squad, \
+             patch("vybz.services.session.types") as mock_types:
 
+            mock_types.GenerateContentConfig = MockGenerateContentConfig
             # Squad needs to return the agent object during rebuild loop
             mock_squad.get_agent.return_value = mock_agent_a
 
@@ -193,7 +214,11 @@ class TestSessionManager:
         # Arrange
         manager.manual_context = {"/path/to/file": "content"}
         
-        with patch("vybz.services.session.ContextAssembler") as mock_assembler:
+        with patch("vybz.services.session.ContextAssembler") as mock_assembler, \
+             patch("vybz.services.session.types") as mock_types:
+            
+            mock_types.GenerateContentConfig = MockGenerateContentConfig
+            
             # Act
             manager._create_chat(mock_agent_a)
             

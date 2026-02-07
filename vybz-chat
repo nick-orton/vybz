@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+JSON=$(curl -X POST http://127.0.0.1:8000/session/init  -H "Content-Type: application/json"  -d '{"agent_id": "senior-dev", "context": "# CodeBase..."}')
+SESSION_ID=$(echo "$JSON" | sed -n 's/.*"session_id":"\([^"]*\)".*/\1/p')
+websocat --linemode-strip-newlines -t "ws://127.0.0.1:8000/session/$SESSION_ID/chat"

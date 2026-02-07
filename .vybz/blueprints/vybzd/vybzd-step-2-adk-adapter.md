@@ -20,7 +20,7 @@ TOML/Markdown definitions.
 
 ## 2. Dependencies
 *   **Target:** `pyproject.toml`
-*   **Action:** Add `google-adk>=0.1.0` (or relevant version) to dependencies.
+*   **Action:** Add `google-adk>=1.24.1` (or relevant version) to dependencies.
 
 ## 3. Module Specification: `src/vybz/server/adapter.py`
 

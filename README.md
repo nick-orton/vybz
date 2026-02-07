@@ -57,6 +57,12 @@ in your terminal.
     export GEMINI_API_KEY="your-google-api-key-here"
     ```
 
+**Note:** on FreeBSD 15.0, installing pyarrow from pip can be problematic.
+Suggest installing the pre-built package.
+```
+$ sudo pkg isntall py311-pyarrow
+```
+
 ## Usage
 
 The primary interface is the `vybz` command. It supports two modes:
@@ -230,7 +236,7 @@ you can create a configuration file. Vybz looks for this file at startup.
 # ~/.vybzrc
 mode = "vi"               # Options: vi, emacs
 theme = "matrix"          # Options: default, matrix, dracula
-model = "gemini-3-pro-preview"
+model = "gemini-3-flash-preview"
 ```
 
 **Precedence:**

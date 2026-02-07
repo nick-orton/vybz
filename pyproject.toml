@@ -19,7 +19,9 @@ classifiers = [
 dependencies = [
     "pytest>=7.0",
     "pytest-mock>=3.10",
-    "google-genai>=1.57",  # Assuming v1.57+ syntax alignment
+    "pytest-asyncio>=0.21.0",
+    "google-genai>=1.57",  
+    "google-adk>=1.24.1",
     "markdown-it-py>=3.0.0", 
     "fastapi>=0.109.0",
     "uvicorn[standard]>=0.27.0",
@@ -34,6 +36,7 @@ dependencies = [
 vybz = "vybz.tools.work:main"
 vybz-commit = "vybz.tools.autocommit_gen:main"
 vybz-fmt = "vybz.tools.mdformat:main"
+vybzd = "vybz.server.main:start"
 
 [tool.setuptools.package-data]
 vybz = ["library/agents/*.toml", "library/skills/**/*", "assets/*.txt", "themes.toml"]
@@ -42,3 +45,6 @@ vybz = ["library/agents/*.toml", "library/skills/**/*", "assets/*.txt", "themes.
 filterwarnings = [
     "ignore"
 ]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
