@@ -10,10 +10,10 @@ from prompt_toolkit.enums import EditingMode
 
 from vybz.commands.base import Command
 from vybz import ui
-from vybz.squad import Squad
+from vybz.shared.squad import Squad
 from vybz.artifact import ArtifactProcessor
 from vybz.assets.loader import AssetLoader
-from vybz.skill import Skill
+from vybz.shared.skill import Skill
 
 
 

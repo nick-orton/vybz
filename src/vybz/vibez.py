@@ -1,8 +1,8 @@
 import os
 import sys
 import datetime
-from vybz.agent import Agent
-from vybz.context_engine import CodeBase
+from vybz.shared.agent import Agent
+from vybz.shared.codebase import CodeBase
 import vybz.ui as ui
 from vybz.services.context import ContextAssembler
 from pathlib import Path

@@ -9,8 +9,8 @@ from unittest.mock import MagicMock, patch
 from google.genai import types
 
 from vybz.services.session import SessionManager
-from vybz.agent import Agent
-from vybz.context_engine import CodeBase
+from vybz.shared.agent import Agent
+from vybz.shared.codebase import CodeBase
 
 class TestSessionManager:
 

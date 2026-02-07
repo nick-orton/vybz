@@ -20,9 +20,9 @@ from prompt_toolkit.enums import EditingMode
 from google import genai
 from google.genai import types
 
-from vybz.agent import Agent
-from vybz.context_engine import CodeBase
-from vybz.squad import Squad
+from vybz.shared.agent import Agent
+from vybz.shared.codebase import CodeBase
+from vybz.shared.squad import Squad
 from vybz.artifact import ArtifactProcessor
 from vybz.services.session import SessionManager
 from vybz.commands.registry import CommandRegistry

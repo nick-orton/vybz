@@ -8,8 +8,8 @@ import pytest
 from unittest.mock import MagicMock
 
 from vybz.services.context import ContextAssembler
-from vybz.agent import Agent
-from vybz.context_engine import CodeBase
+from vybz.shared.agent import Agent
+from vybz.shared.codebase import CodeBase
 
 
 class TestContextAssembler:

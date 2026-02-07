@@ -7,8 +7,8 @@ Centralizes the logic for combining Persona, Time, and Codebase.
 
 import datetime
 from typing import Dict, Optional
-from vybz.agent import Agent
-from vybz.context_engine import CodeBase
+from vybz.shared.agent import Agent
+from vybz.shared.codebase import CodeBase
 
 
 class ContextAssembler:

@@ -10,8 +10,8 @@ from pathlib import Path
 from prompt_toolkit.enums import EditingMode
 
 from vybz.repl import ReplSession
-from vybz.agent import Agent
-from vybz.context_engine import CodeBase
+from vybz.shared.agent import Agent
+from vybz.shared.codebase import CodeBase
 
 # -----------------------------------------------------------------------------
 # Fixtures

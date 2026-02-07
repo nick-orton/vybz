@@ -17,8 +17,8 @@ import vybz.vibez as vibez
 import vybz.ui as ui
 import vybz.repl as repl
 import vybz.config as config
-from vybz.context_engine import CodeBase
-from vybz.squad import Squad
+from vybz.shared.codebase import CodeBase
+from vybz.shared.squad import Squad
 from vybz.services.session import SessionManager
 
 

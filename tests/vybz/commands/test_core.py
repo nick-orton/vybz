@@ -9,8 +9,8 @@ from unittest.mock import MagicMock, patch, ANY
 from pathlib import Path
 
 from vybz.repl import ReplSession
-from vybz.skill import Skill
-from vybz.agent import Agent
+from vybz.shared.skill import Skill
+from vybz.shared.agent import Agent
 from vybz.commands.core import (
     ExitCommand,
     ClearCommand,

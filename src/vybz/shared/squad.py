@@ -1,8 +1,8 @@
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
-from vybz.agent import Agent
-from vybz.biblos import Library
+from vybz.shared.agent import Agent
+from vybz.shared.library import Library
 from vybz.config import ConfigLoader
 import vybz.ui as ui
 

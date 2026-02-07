@@ -10,9 +10,9 @@ from typing import Dict, Any, Optional
 from google import genai
 from google.genai import types
 
-from vybz.agent import Agent
-from vybz.context_engine import CodeBase
-from vybz.squad import Squad
+from vybz.shared.agent import Agent
+from vybz.shared.codebase import CodeBase
+from vybz.shared.squad import Squad
 from vybz.services.context import ContextAssembler
 from vybz import ui
 
