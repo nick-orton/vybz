@@ -21,6 +21,8 @@ dependencies = [
     "pytest-mock>=3.10",
     "google-genai>=1.57",  # Assuming v1.57+ syntax alignment
     "markdown-it-py>=3.0.0", 
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
     "python-dotenv",
     "pathspec>=0.11.0",
     "prompt_toolkit>=3.0.0", 
