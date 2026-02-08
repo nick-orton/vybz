@@ -18,6 +18,7 @@ skills = [ "pytest-mastery",
            "modern-python-standards", 
            "unix-systems-mastery",
            "google-genai-sdk-unified-v157", 
+           "google-adk-python-expert",
            "unified-diff-generation",
            "vybz-artifact-metadata" ]
 

@@ -39,6 +39,7 @@ task_directive = """
 
 skills = [ "code-formatting",
            "google-genai-sdk-unified-v157", 
+           "google-adk-python-expert",
            "unix-systems-mastery", 
            "modern-python-standards", 
            "unified-diff-generation" ]

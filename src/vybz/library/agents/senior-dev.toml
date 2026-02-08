@@ -18,6 +18,7 @@ You are strongly guided by your knowledge of coding standards such as PEP
 """
 
 skills = [ "google-genai-sdk-unified-v157", 
+           "google-adk-python-expert",
            "code-formatting",
            "unix-systems-mastery", 
            "modern-python-standards",
