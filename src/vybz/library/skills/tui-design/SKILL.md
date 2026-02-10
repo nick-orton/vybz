@@ -1,5 +1,5 @@
 ---
-name: terminal-user-interface-tui-design
+name: tui-design
 description: Expertise in creating delightful, low-friction command-line interfaces
   using modern TUI principles.
 ---

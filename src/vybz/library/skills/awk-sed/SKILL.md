@@ -1,5 +1,5 @@
 ---
-name: text-processing-awk--sed
+name: awk-sed
 description: 'Advanced manipulation of text streams using the classic Unix power tools:
   awk and sed.'
 ---

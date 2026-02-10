@@ -1,5 +1,5 @@
 ---
-name: shell-scripting--idempotency
+name: shell-idempotency
 description: The discipline of writing robust, re-runnable system administration scripts
   that converge to a desired state.
 ---
