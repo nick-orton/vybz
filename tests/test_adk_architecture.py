@@ -36,6 +36,7 @@ def test_runner_architecture():
     state.session_service.create_session.return_value = mock_session
 
     with patch("vybz.server.state.VybzAgent.from_toml", return_value=mock_vybz_agent), \
+         patch("vybz.server.state.FileSystemTools"), \
          patch("vybz.server.state.adk.Runner") as MockRunner:
 
         # Execute

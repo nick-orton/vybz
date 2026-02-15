@@ -126,21 +126,25 @@ class TestServerStateMutation:
 
             # Assert
             assert session.state["manual_context"][filename] == content
-            # Verify refresh
-            mock_assembler.assert_called_with(ANY, codebase=None, manual_context=session.state["manual_context"])
+            # Verify refresh (Match the codebase_context from the active_session fixture)
+            mock_assembler.assert_called_with(
+                ANY,
+                codebase_root="# Initial Code",
+                manual_context=session.state["manual_context"]
+            )
             assert session.agent.instruction.startswith("Prompt with Manual Context")
 
-    async def test_refresh_instructions_appends_codebase(self, state, active_session):
-        """Verify that refresh logic combines persona prompt with codebase string."""
+    async def test_refresh_instructions_delegates_to_assembler(self, state, active_session):
+        """Verify that refresh logic delegates to ContextAssembler with correct path."""
         sid, session = active_session
-        session.state["codebase_context"] = "CODEBASE_CONTENT"
+        session.state["codebase_context"] = "/path/to/code"
 
         with patch("vybz.services.context.ContextAssembler.build_system_instruction") as mock_assembler:
-            mock_assembler.return_value = "PERSONA_PROMPT"
+            mock_assembler.return_value = "ASSEMBLED_PROMPT"
 
             # Act
             await state._refresh_session_instructions(sid)
 
             # Assert
-            expected = "PERSONA_PROMPT\n\nCODEBASE_CONTENT"
-            assert session.agent.instruction == expected
+            mock_assembler.assert_called_with(ANY, codebase_root="/path/to/code", manual_context={})
+            assert session.agent.instruction == "ASSEMBLED_PROMPT"

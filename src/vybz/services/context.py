@@ -19,7 +19,7 @@ class ContextAssembler:
     @staticmethod
     def build_system_instruction(
         agent: Agent, 
-        codebase: CodeBase | None,
+        codebase_root: str | None = None,
         manual_context: Dict[str, str] | None = None
     ) -> str:
         """
@@ -27,7 +27,7 @@ class ContextAssembler:
 
         Args:
             agent: The active Agent persona.
-            codebase: The optional filesystem snapshot.
+            codebase_root: The optional absolute path to the project root.
             manual_context: Dictionary of {filename: content} for manually loaded files.
 
         Returns:
@@ -40,9 +40,14 @@ class ContextAssembler:
         current_date = datetime.datetime.now().strftime("%Y-%m-%d")
         sys_instructions += f"\n\n### SYSTEM METADATA\nCurrent Date: {current_date}\n"
 
-        # 3. CodeBase Injection
-        if codebase:
-            sys_instructions += "\n\n" + codebase.render()
+        # 3. Agentic RAG Instructions
+        if codebase_root:
+            sys_instructions += (
+                f"\n\n### FILESYSTEM ACCESS\n"
+                f"You have access to the filesystem at: `{codebase_root}`\n"
+                f"Use `list_files` to explore the directory structure and `read_file` to examine code.\n"
+                f"Do not hallucinate file contents; always read them if you are unsure.\n"
+            )
 
         # 4. Manual Context Injection
         if manual_context:

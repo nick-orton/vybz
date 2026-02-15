@@ -4,7 +4,6 @@ from .core import (
     AgentCommand,
     DownlevelCommand,
     SkillsCommand,
-    UpdateCommand,
     UplevelCommand
 )
 
@@ -29,7 +28,6 @@ __all__ = [
     "SetModeCommand",
     "SkillsCommand",
     "ThemeCommand",
-    "UpdateCommand",
     "UplevelCommand"
 ]
 

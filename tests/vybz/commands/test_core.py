@@ -12,7 +12,6 @@ from pathlib import Path
 from vybz.repl import ReplSession
 from vybz.client.api import AgentListing, SkillDTO
 from vybz.commands.core import (
-    UpdateCommand,
     AgentCommand,
     LoadCommand,
     SkillsCommand,
@@ -28,7 +27,7 @@ from vybz.commands.core import (
 def mock_session():
     """Returns a mock ReplSession with an async session manager."""
     session = MagicMock(spec=ReplSession)
-    
+
     # Mock the ClientSessionManager
     sm = MagicMock()
     sm.client = MagicMock()
@@ -37,18 +36,18 @@ def mock_session():
     sm.codebase = None
     sm.model_id = "gemini-test"
     sm.session_id = "uuid-123"
-    
+
     # Async methods on manager
     sm.refresh_context = AsyncMock()
     sm.switch_agent = AsyncMock()
-    
+
     # Async methods on client
     sm.client.list_agents = AsyncMock()
     sm.client.list_session_skills = AsyncMock()
     sm.client.uplevel_skill = AsyncMock()
     sm.client.downlevel_skill = AsyncMock()
     sm.client.load_file_content = AsyncMock()
-    
+
     session.session_manager = sm
     session.session = MagicMock()
     session.last_response = None
@@ -57,23 +56,12 @@ def mock_session():
 # -----------------------------------------------------------------------------
 # Session Orchestration Tests
 # -----------------------------------------------------------------------------
-
-@pytest.mark.asyncio
-async def test_update_command(mock_session):
-    cmd = UpdateCommand()
-    mock_session.session_manager.refresh_context.return_value = True
-
-    with patch("vybz.commands.core.ui") as mock_ui:
-        assert await cmd.execute(mock_session, []) is True
-        mock_ui.print_success.assert_called_with("Context and CodeBase refreshed.")
-        mock_session.session_manager.refresh_context.assert_called_once()
-
 @pytest.mark.asyncio
 async def test_agent_command_list(mock_session):
     """Verify /agent without args lists agents from the client."""
     cmd = AgentCommand()
     sm = mock_session.session_manager
-    
+
     # Arrange
     sm.client.list_agents.return_value = [
         AgentListing(id="pm", name="PM", description="..."),
@@ -87,7 +75,7 @@ async def test_agent_command_list(mock_session):
 
         # Act
         assert await cmd.execute(mock_session, []) is True
-        
+
         # Assert
         sm.client.list_agents.assert_called_once()
         mock_ui.print_from_template.assert_called()
@@ -123,7 +111,7 @@ async def test_load_command_success(mock_session, tmp_path):
     cmd = LoadCommand()
     sm = mock_session.session_manager
     sm.client.load_file_content.return_value = True
-    
+
     # Create a real temp file to satisfy Path.is_file()
     test_file = tmp_path / "test.py"
     test_file.write_text("print(1)", encoding="utf-8")
@@ -146,7 +134,7 @@ async def test_load_command_error(mock_session, tmp_path):
     cmd = LoadCommand()
     sm = mock_session.session_manager
     sm.client.load_file_content.side_effect = Exception("Upload Failed")
-    
+
     test_file = tmp_path / "test.py"
     test_file.touch()
 
@@ -176,14 +164,14 @@ async def test_uplevel_command_success(mock_session, tmp_path):
     cmd = UplevelCommand()
     sm = mock_session.session_manager
     sm.client.uplevel_skill.return_value = True
-    
+
     skill_dir = tmp_path / "new-skill"
     skill_dir.mkdir()
     (skill_dir / "SKILL.md").write_text("---\nname: new-skill\n---", encoding="utf-8")
 
     with patch("vybz.commands.core.Skill") as MockSkill, \
          patch("vybz.commands.core.ui") as mock_ui:
-        
+
         mock_skill_obj = MagicMock()
         mock_skill_obj.id = "new-skill"
         mock_skill_obj.name = "New Skill"

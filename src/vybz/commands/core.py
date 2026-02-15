@@ -16,19 +16,6 @@ from vybz.client.api import SkillDTO
 from vybz.assets.loader import AssetLoader
 
 
-class UpdateCommand(Command):
-    """Refreshes the local codebase snapshot and uploads it to the engine."""
-    name = "/update"
-    description = "Refresh CodeBase snapshot and System Date."
-
-    async def execute(self, session, args: List[str]) -> bool:
-        ui.print_system("Refreshing local CodeBase and updating remote context...")
-        success = await session.session_manager.refresh_context()
-        if success:
-            ui.print_success("Context and CodeBase refreshed.")
-        return True
-
-
 class AgentCommand(Command):
     """Switches the active agent persona or lists available options from the server."""
     name = "/agent"

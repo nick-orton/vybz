@@ -1,0 +1,7 @@
+@@ -40,4 +40,4 @@
+         # 1. State updated?
+         assert mock_session.state["codebase_context"] == "NEW_CONTEXT"
+-        # 2. Agent instruction updated?
+-        assert mock_session.agent.instruction == "PROMPT\n\nNEW_CONTEXT"
++        # 2. Agent instruction updated to match assembler output
++        assert mock_session.agent.instruction == "PROMPT"

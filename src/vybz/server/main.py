@@ -47,9 +47,6 @@ class FileLoadDTO(BaseModel):
     filename: str
     content: str
 
-class ContextUpdateRequest(BaseModel):
-    context: str
-
 # -----------------------------------------------------------------------------
 # Application Lifecycle
 # -----------------------------------------------------------------------------
@@ -131,14 +128,6 @@ async def downlevel_skill(session_id: str, request: SkillDownlevelRequest):
 async def load_context(session_id: str, request: FileLoadDTO):
     try:
         await state.load_session_context(session_id, request.filename, request.content)
-        return {"status": "success"}
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-@app.post("/session/{session_id}/context")
-async def update_context(session_id: str, request: ContextUpdateRequest):
-    try:
-        await state.update_session_codebase(session_id, request.context)
         return {"status": "success"}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

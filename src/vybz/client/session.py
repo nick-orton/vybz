@@ -46,24 +46,24 @@ class ClientSessionManager:
 
     async def initialize(self, agent_id: str, codebase_root: Optional[Path] = None) -> str:
         """
-        Starts a remote session and snapshots the local codebase.
+        Starts a remote session and provides the codebase root path.
         
         Args:
             agent_id: The ID of the persona to activate.
-            codebase_root: Optional local path to snapshot.
+            codebase_root: Optional local path to provide to the agent tools.
             
         Returns:
             str: The remote session ID.
         """
-        # 1. Local Snapshot
-        context_str = ""
+        # 1. Resolve Root Path
+        path_str = ""
         if codebase_root:
-            ui.print_system(f"Snapshotting codebase at: {codebase_root.resolve()}")
             self.codebase = CodeBase(codebase_root)
-            context_str = self.codebase.render()
+            path_str = str(codebase_root.resolve())
+            ui.print_system(f"Linking remote session to codebase: {path_str}")
 
-        # 2. Remote Init
-        self.session_id = await self.client.start_session(agent_id, context_str)
+        # 2. Remote Init (Sending path string, not file dump)
+        self.session_id = await self.client.start_session(agent_id, path_str)
 
         # 3. Resolve metadata for UI
         agents = await self.client.list_agents()
@@ -88,34 +88,12 @@ class ClientSessionManager:
         async for chunk in self.client.chat_stream(text):
             yield chunk
 
-    async def refresh_context(self) -> bool:
-        """
-        Re-snapshots the local filesystem and uploads it to the remote session.
-        """
-        if not self.codebase or not self.session_id:
-            ui.print_warning("No codebase loaded to refresh.")
-            return False
-
-        ui.print_system("Refreshing local CodeBase snapshot...")
-        # Re-instantiate to walk the disk again
-        self.codebase = CodeBase(self.codebase.root_path)
-        context_str = self.codebase.render()
-
-        success = await self.client.update_context(self.session_id, context_str)
-        if success:
-            ui.print_success("Remote context updated.")
-        return success
-
     async def switch_agent(self, agent_id: str) -> bool:
         """
         Switches the active persona by starting a new remote session.
         Preserves the current codebase context if active.
         """
-        context_str = self.codebase.render() if self.codebase else ""
-        
         try:
-            # Note: Switching agents in the current ADK implementation creates a 
-            # new session ID.
             await self.initialize(agent_id, self.codebase.root_path if self.codebase else None)
             ui.print_success(f"Switched to {self.active_agent.name}")
             return True
@@ -126,4 +104,3 @@ class ClientSessionManager:
     async def close(self):
         """Clean up network resources."""
         await self.client.close()
-

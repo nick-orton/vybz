@@ -33,10 +33,6 @@ class FileLoadDTO(BaseModel):
     filename: str
     content: str
 
-class ContextUpdateRequest(BaseModel):
-    """Payload for refreshing the codebase snapshot."""
-    context: str
-
 class VybzApiClient:
     """
     Async client for the vybzd engine.
@@ -55,9 +51,12 @@ class VybzApiClient:
 
     async def get_health(self) -> Dict[str, Any]:
         """Checks server health and returns metadata."""
-        response = await self._http_client.get("/health")
-        response.raise_for_status()
-        return response.json()
+        try:
+            response = await self._http_client.get("/health")
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            raise ConnectionError(f"Engine unreachable at {self.base_url}: {e}")
 
     async def list_agents(self) -> List[AgentListing]:
         """Retrieves the list of available agents from the engine."""
@@ -71,7 +70,7 @@ class VybzApiClient:
         
         Args:
             agent_id: The ID of the agent to chat with.
-            context: The CodeBase snapshot string.
+            context: The absolute root path of the codebase.
             
         Returns:
             str: The session UUID.
@@ -127,18 +126,6 @@ class VybzApiClient:
         response = await self._http_client.post(
             f"/session/{session_id}/load",
             json=payload.model_dump()
-        )
-        response.raise_for_status()
-        return response.json().get("status") == "success"
-
-    async def update_context(self, session_id: str, context: str) -> bool:
-        """
-        Uploads a fresh CodeBase snapshot to the remote session.
-        Returns True if successful.
-        """
-        response = await self._http_client.post(
-            f"/session/{session_id}/context",
-            json={"context": context}
         )
         response.raise_for_status()
         return response.json().get("status") == "success"

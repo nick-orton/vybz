@@ -93,6 +93,7 @@ class TestServerState:
 
         # 3. Patch Dependencies
         with patch("vybz.server.state.VybzAgent") as MockVybzAgentClass, \
+             patch("vybz.server.state.FileSystemTools"), \
              patch("vybz.server.state.adk.Runner") as MockRunnerClass, \
              patch("vybz.server.state.ContextAssembler") as MockAssembler:
 
@@ -110,7 +111,7 @@ class TestServerState:
             MockVybzAgentClass.from_toml.assert_called()
 
             # 2. Verify ADK Agent Hydration
-            state.hydrator.hydrate_agent.assert_called_with(mock_vybz_instance, "test-model")
+            state.hydrator.hydrate_agent.assert_called_with(mock_vybz_instance, "test-model", tools=ANY)
 
             # 3. Verify Runner Instantiation
             MockRunnerClass.assert_called_with(

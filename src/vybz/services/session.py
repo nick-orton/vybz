@@ -91,35 +91,3 @@ class SessionManager:
             
         self.manual_context[str(path)] = path.read_text(encoding="utf-8")
         return str(path)
-
-    def refresh_context(self) -> int:
-        """
-        Reloads CodeBase and Hot-Swaps all active sessions.
-        Returns the number of sessions refreshed.
-        """
-        if self.codebase:
-            # Re-snapshot filesystem
-            self.codebase = CodeBase(self.codebase.root_path)
-
-        count = 0
-        for agent_id, old_chat in list(self.sessions.items()):
-            try:
-                # Extract history
-                try:
-                    history = old_chat.get_history()
-                except AttributeError:
-                    history = getattr(old_chat, "_history", [])
-
-                # Rebuild chat
-                agent = Squad.get_agent(agent_id)  # Reload agent def too
-                new_chat = self._create_chat(agent, history)
-                self.sessions[agent_id] = new_chat
-                count += 1
-            except Exception as e:
-                ui.print_error(f"Failed to refresh session for {agent_id}: {e}")
-
-        # Update active pointer
-        if self.active_agent:
-            self.active_chat = self.sessions.get(self.active_agent.id)
-
-        return count

@@ -6,7 +6,7 @@ Responsible for hydrating Vybz proprietary configuration objects (Agents, Skills
 into executable Google Agent Development Kit (ADK) objects.
 """
 
-from typing import Dict
+from typing import Dict, List, Optional
 from vybz.shared.agent import Agent as VybzAgent
 from vybz.shared.library import Library
 from google.genai import types
@@ -18,13 +18,19 @@ class AdkHydrator:
     Service class to convert Vybz domain objects into ADK runtime objects.
     """
 
-    def hydrate_agent(self, vybz_agent: VybzAgent, model: str) -> adk.Agent:
+    def hydrate_agent(
+        self, 
+        vybz_agent: VybzAgent, 
+        model: str, 
+        tools: Optional[List[adk.Tool]] = None
+    ) -> adk.Agent:
         """
         Converts a Vybz Agent (configuration) into an ADK Agent (executable).
 
         Args:
             vybz_agent: The loaded Vybz agent definition.
             model: The Google GenAI model ID to use.
+            tools: Optional list of ADK tools to bind to the agent.
 
         Returns:
             adk.Agent: An initialized ADK agent ready for the runtime.
@@ -50,7 +56,7 @@ class AdkHydrator:
             description=vybz_agent.name, # Map human-readable name to description
             instruction=system_prompt,
             planner=adk.planners.BuiltInPlanner(thinking_config=thinking_config),
-            tools=[] # Future: Hydrate tools from Skills if executable
+            tools=tools or []
         )
 
     def hydrate_squad_templates(self, library: Library) -> Dict[str, VybzAgent]:

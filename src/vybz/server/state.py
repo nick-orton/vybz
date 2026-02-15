@@ -16,6 +16,7 @@ from vybz.shared.library import Library
 from vybz.shared.agent import Agent as VybzAgent
 from vybz.shared.skill import Skill as VybzSkill
 from vybz.server.adapter import AdkHydrator
+from vybz.server.tools.fs import FileSystemTools
 from vybz.config import ConfigLoader
 from vybz.services.context import ContextAssembler
 
@@ -86,10 +87,20 @@ class ServerState:
         path = self.library.get_agent_path(agent_id)
         vybz_agent = VybzAgent.from_toml(path, library=self.library)
 
-        # 2. Hydrate unique ADK Agent
-        adk_agent = self.hydrator.hydrate_agent(vybz_agent, self.model_id)
+        # 2. Setup Session-Scoped Tools (Agentic RAG)
+        tools = []
+        if context:
+            # In Step 3.6, 'context' is the absolute root path string
+            fs_impl = FileSystemTools(context)
+            tools = [
+                adk.Tool.from_function(fs_impl.list_files),
+                adk.Tool.from_function(fs_impl.read_file)
+            ]
 
-        # 3. Initialize Runner
+        # 3. Hydrate unique ADK Agent with Tools
+        adk_agent = self.hydrator.hydrate_agent(vybz_agent, self.model_id, tools=tools)
+
+        # 4. Initialize Runner
         # The Runner orchestrates this specific agent instance
         runner = adk.Runner(
             agent=adk_agent,
@@ -178,12 +189,6 @@ class ServerState:
 
         await self._refresh_session_instructions(session_id)
 
-    async def update_session_codebase(self, session_id: str, context: str) -> None:
-        """Updates the codebase snapshot for a session and refreshes instructions."""
-        session = await self.get_session_data(session_id)
-        session.state["codebase_context"] = context
-        await self._refresh_session_instructions(session_id)
-
     async def _refresh_session_instructions(self, session_id: str) -> None:
         """
         Re-assembles system instructions and updates the Runner's Agent.
@@ -199,12 +204,12 @@ class ServerState:
         # 1. Build Base Prompt (Persona + Skills + Manual Context)
         base_prompt = ContextAssembler.build_system_instruction(
             vybz_agent,
-            codebase=None, # Codebase handled separately below
+            codebase_root=codebase_str, # In 3.6 this is the path
             manual_context=manual_context
         )
 
-        # 2. Append CodeBase
-        full_instruction = f"{base_prompt}\n\n{codebase_str}"
+        # 2. Full Instruction
+        full_instruction = base_prompt
 
         # 3. Update the ADK Agent (Dynamic Property)
         # Since we have a unique Runner/Agent per session, this is safe.

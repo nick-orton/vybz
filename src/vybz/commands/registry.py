@@ -12,7 +12,6 @@ from vybz.commands.base import Command
 from vybz.commands.core import (
     AgentCommand,
     LoadCommand,
-    UpdateCommand,
     SkillsCommand,
     UplevelCommand,
     DownlevelCommand
@@ -61,7 +60,6 @@ class CommandRegistry:
         """Registers all available commands from both modules."""
         # Core / Session
         self.register(AgentCommand())
-        self.register(UpdateCommand())
         self.register(LoadCommand())
         self.register(SkillsCommand())
         self.register(UplevelCommand())

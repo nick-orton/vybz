@@ -32,9 +32,9 @@ async def test_client_session_init_flow():
         assert sid == "session-uuid-123"
         assert manager.active_agent.name == "Junior"
         assert manager.codebase is not None
-        
-        # Verify API was called with the rendered context
-        mock_client.start_session.assert_called_with("junior-dev", "# CodeBase Data")
+
+        # Verify API was called with the resolved path string (Step 3.6 requirement)
+        mock_client.start_session.assert_called_with("junior-dev", str(Path("/tmp").resolve()))
 
 if __name__ == "__main__":
     import asyncio
