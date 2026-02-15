@@ -2,7 +2,7 @@
 src/vybz/commands/core.py
 
 Concrete implementations of Agent and Session orchestration commands.
-These commands interact with the SessionManager to mutate LLM context.
+Refactored to be asynchronous and communicate with the vybzd engine.
 """
 
 import datetime
@@ -11,82 +11,88 @@ from pathlib import Path
 
 from vybz.commands.base import Command
 from vybz import ui
-from vybz.shared.squad import Squad
 from vybz.shared.skill import Skill
+from vybz.client.api import SkillDTO
 from vybz.assets.loader import AssetLoader
 
 
 class UpdateCommand(Command):
-    """Refreshes the local codebase snapshot and re-primes the LLM context."""
+    """Refreshes the local codebase snapshot and uploads it to the engine."""
     name = "/update"
     description = "Refresh CodeBase snapshot and System Date."
 
-    def execute(self, session, args: List[str]) -> bool:
-        ui.print_system("Refreshing CodeBase snapshot and Session Context...")
-        count = session.session_manager.refresh_context()
-        ui.print_success(f"Context refreshed for {count} active sessions.")
-
-        ui.print_system(f"System Date updated to: {datetime.datetime.now().strftime('%Y-%m-%d')}")
+    async def execute(self, session, args: List[str]) -> bool:
+        ui.print_system("Refreshing local CodeBase and updating remote context...")
+        success = await session.session_manager.refresh_context()
+        if success:
+            ui.print_success("Context and CodeBase refreshed.")
         return True
 
 
 class AgentCommand(Command):
-    """Switches the active agent persona or lists available options."""
+    """Switches the active agent persona or lists available options from the server."""
     name = "/agent"
     description = "Switch active agent (or list available)."
 
-    def execute(self, session, args: List[str]) -> bool:
+    async def execute(self, session, args: List[str]) -> bool:
+        sm = session.session_manager
+        
         if not args:
-            # List agents
-            agents = Squad.list_agents()
-            template = AssetLoader.load_text("agent_tool_tip.txt")
-            ui.print_from_template(
-                template,
-                agent_name=session.session_manager.active_agent.name,
-                agent_list=', '.join(agents)
-            )
+            # Fetch available agents from the engine
+            try:
+                agents = await sm.client.list_agents()
+                agent_ids = [a.id for a in agents]
+                template = AssetLoader.load_text("agent_tool_tip.txt")
+                ui.print_from_template(
+                    template,
+                    agent_name=sm.active_agent.name if sm.active_agent else "None",
+                    agent_list=', '.join(agent_ids)
+                )
+            except Exception as e:
+                ui.print_error(f"Failed to list agents: {e}")
             return True
 
-        target_name = args[0]
-        try:
-            agent = session.session_manager.switch_agent(target_name)
-
-            # Log switch event
-            if hasattr(session, 'logger'):
-                session.logger.log_event(f"SWITCHED AGENT: {agent.get_identity()}")
-
+        target_id = args[0]
+        success = await sm.switch_agent(target_id)
+        
+        if success:
             # Update UI Header
-            codebase = session.session_manager.codebase
-            cb_root = str(codebase.root_path) if codebase else None
+            cb_root = str(sm.codebase.root_path) if sm.codebase else None
             ui.render_session_header(
-                agent_name=agent.get_identity(),
-                model_id=session.session_manager.model_id,
+                agent_name=sm.active_agent.name,
+                model_id=sm.model_id,
                 codebase_root=cb_root
             )
-            return True
-        except ValueError:
-            ui.print_error(f"Agent '{target_name}' not found.")
-            ui.print_system(f"Available: {', '.join(Squad.list_agents())}")
-            return False
-        except Exception as e:
-            ui.print_error(f"Error switching agent: {e}")
-            return False
+        return True
 
 
 class LoadCommand(Command):
-    """Surgically injects a specific file's content into the session context."""
+    """Surgically injects a local file's content into the remote session context."""
     name = "/load"
     description = "Load a file into context."
 
-    def execute(self, session, args: List[str]) -> bool:
+    async def execute(self, session, args: List[str]) -> bool:
         if not args:
             ui.print_error("Usage: /load <path>")
             return True
 
+        path = Path(args[0]).resolve()
+        if not path.is_file():
+            ui.print_error(f"File not found: {path}")
+            return True
+
         try:
-            path = session.session_manager.load_file(args[0])
-            session.session_manager.refresh_context()
-            ui.print_success(f"Loaded {path} into context.")
+            content = path.read_text(encoding="utf-8")
+            sm = session.session_manager
+            
+            success = await sm.client.load_file_content(
+                session_id=sm.session_id,
+                filename=str(path),
+                content=content
+            )
+            
+            if success:
+                ui.print_success(f"Loaded {path.name} into remote context.")
         except Exception as e:
             ui.print_error(f"Failed to load file: {e}")
         
@@ -94,44 +100,59 @@ class LoadCommand(Command):
 
 
 class SkillsCommand(Command):
-    """Visualizes the current agent's capabilities in a Rich table."""
+    """Visualizes the session-scoped agent's capabilities in a Rich table."""
     name = "/skills"
     description = "Visualize the active agent's capabilities."
 
-    def execute(self, session, args: List[str]) -> bool:
+    async def execute(self, session, args: List[str]) -> bool:
         from rich.table import Table
-        agent = session.session_manager.active_agent
+        sm = session.session_manager
+        
+        try:
+            skills = await sm.client.list_session_skills(sm.session_id)
+            
+            table = Table(title=f"Skills for {sm.active_agent.name}", box=ui.ROUNDED)
+            table.add_column("ID", style="header.label")
+            table.add_column("Name", style="header.value")
+            table.add_column("Description")
 
-        table = Table(title=f"Skills for {agent.name}", box=ui.ROUNDED)
-        table.add_column("ID", style="header.label")
-        table.add_column("Name", style="header.value")
-        table.add_column("Description")
+            for s in skills:
+                table.add_row(s.id, s.name, s.description)
 
-        for skill in agent.skills:
-            table.add_row(skill.id, skill.name, skill.description)
-
-        ui.console.print(table)
+            ui.console.print(table)
+        except Exception as e:
+            ui.print_error(f"Failed to fetch skills: {e}")
+            
         return True
 
 
 class UplevelCommand(Command):
-    """Injects a new skill directory into the active agent at runtime."""
+    """Injects a local skill directory into the remote session."""
     name = "/uplevel"
     description = "Inject a local skill directory into the active agent."
 
-    def execute(self, session, args: List[str]) -> bool:
+    async def execute(self, session, args: List[str]) -> bool:
         if not args:
             ui.print_error("Usage: /uplevel <path>")
             return True
 
         try:
             path = Path(args[0]).resolve()
+            # 1. Read locally
             skill = Skill.from_directory(path)
-
-            session.session_manager.active_agent.add_skill(skill)
-            session.session_manager.refresh_context()
-
-            ui.print_success(f"Skill '{skill.name}' injected and context refreshed.")
+            
+            # 2. Upload to engine
+            sm = session.session_manager
+            dto = SkillDTO(
+                id=skill.id,
+                name=skill.name,
+                description=skill.description,
+                instructions=skill.instructions
+            )
+            
+            success = await sm.client.uplevel_skill(sm.session_id, dto)
+            if success:
+                ui.print_success(f"Skill '{skill.name}' injected into remote session.")
         except Exception as e:
             ui.print_error(f"Failed to uplevel skill: {e}")
 
@@ -139,20 +160,25 @@ class UplevelCommand(Command):
 
 
 class DownlevelCommand(Command):
-    """Removes a skill from the active agent persona."""
+    """Removes a skill from the remote session."""
     name = "/downlevel"
     description = "Remove a skill from the active agent."
 
-    def execute(self, session, args: List[str]) -> bool:
+    async def execute(self, session, args: List[str]) -> bool:
         if not args:
             ui.print_error("Usage: /downlevel <id>")
             return True
 
         skill_id = args[0]
-        if session.session_manager.active_agent.remove_skill(skill_id):
-            session.session_manager.refresh_context()
-            ui.print_success(f"Skill '{skill_id}' removed.")
-        else:
-            ui.print_error(f"Skill '{skill_id}' not found on active agent.")
+        sm = session.session_manager
+        
+        try:
+            success = await sm.client.downlevel_skill(sm.session_id, skill_id)
+            if success:
+                ui.print_success(f"Skill '{skill_id}' removed from remote session.")
+            else:
+                ui.print_error(f"Skill '{skill_id}' not found on remote agent.")
+        except Exception as e:
+            ui.print_error(f"Failed to remove skill: {e}")
 
         return True

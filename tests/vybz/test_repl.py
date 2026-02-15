@@ -5,7 +5,7 @@ Unit tests for the ReplSession (Presentation Layer).
 Verifies Command Dispatching, TUI State Rendering, and Input Delegation.
 """
 import pytest
-from unittest.mock import MagicMock, patch, ANY
+from unittest.mock import MagicMock, AsyncMock, patch, ANY
 from pathlib import Path
 from prompt_toolkit.enums import EditingMode
 
@@ -120,40 +120,43 @@ def test_get_rprompt_tokens_no_context(repl, mock_session_manager):
 # Command Dispatching Tests (The Command Pattern)
 # -----------------------------------------------------------------------------
 
-def test_handle_command_dispatches_to_registry(repl):
+@pytest.mark.asyncio
+async def test_handle_command_dispatches_to_registry(repl):
     """
     Verify _handle_command looks up the command in registry and executes it.
     """
     # Arrange
-    mock_cmd = MagicMock()
+    mock_cmd = AsyncMock()
     mock_cmd.execute.return_value = True
     repl.registry.get_command.return_value = mock_cmd
 
     # Act
-    result = repl._handle_command("/test arg1")
+    result = await repl._handle_command("/test arg1")
 
     # Assert
     repl.registry.get_command.assert_called_with("/test")
     mock_cmd.execute.assert_called_with(repl, ["arg1"])
     assert result is True
 
-def test_handle_command_unknown(repl):
+@pytest.mark.asyncio
+async def test_handle_command_unknown(repl):
     """Verify handling of unknown slash commands."""
     # Arrange
     repl.registry.get_command.return_value = None
 
     with patch("vybz.repl.ui") as mock_ui:
         # Act
-        result = repl._handle_command("/unknown")
+        result = await repl._handle_command("/unknown")
 
         # Assert
         mock_ui.print_error.assert_called_with("Unknown command '/unknown'. Type /help for list.")
         assert result is True # Should continue loop, not crash
 
-def test_handle_command_not_a_command(repl):
+@pytest.mark.asyncio
+async def test_handle_command_not_a_command(repl):
     """Verify normal text input is ignored by command handler."""
     # Act
-    result = repl._handle_command("just some text")
+    result = await repl._handle_command("just some text")
 
     # Assert
     assert result is False

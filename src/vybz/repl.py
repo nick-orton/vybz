@@ -92,7 +92,7 @@ class ReplSession:
             ("class:meta", f"{mode_str} | {ctx_str}"),
         ]
 
-    def start(self) -> None:
+    async def start(self) -> None:
         """
         Starts the interactive loop.
         """
@@ -104,7 +104,7 @@ class ReplSession:
         while True:
             try:
                 # 1. READ
-                user_input = self.session.prompt(
+                user_input = await self.session.prompt_async(
                     self._get_prompt_tokens,
                     rprompt=self._get_rprompt_tokens,
                     style=ui.get_ptk_style(), # <--- DELEGATED TO UI
@@ -115,7 +115,7 @@ class ReplSession:
                     continue
 
                 # 2. CHECK COMMANDS
-                if self._handle_command(user_input):
+                if await self._handle_command(user_input):
                     continue
 
                 # 3. EVAL & PRINT
@@ -129,7 +129,7 @@ class ReplSession:
             except Exception as e:
                 ui.print_error(f"REPL Error: {e}")
 
-    def _handle_command(self, text: str) -> bool:
+    async def _handle_command(self, text: str) -> bool:
         """
         Intercepts slash commands using the CommandRegistry.
         Returns True if a command was handled (skipping LLM inference).
@@ -148,7 +148,7 @@ class ReplSession:
         # Lookup
         command = self.registry.get_command(cmd_name)
         if command:
-            return command.execute(self, args)
+            return await command.execute(self, args)
 
         # Unknown command but starts with /
         ui.print_error(f"Unknown command '{cmd_name}'. Type /help for list.")

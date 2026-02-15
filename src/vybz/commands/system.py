@@ -21,7 +21,7 @@ class ExitCommand(Command):
     aliases = ["/quit", "exit", "quit"]
     description = "End the session."
 
-    def execute(self, session, args: List[str]) -> bool:
+    async def execute(self, session, args: List[str]) -> bool:
         raise EOFError
 
 
@@ -30,7 +30,7 @@ class ClearCommand(Command):
     name = "/clear"
     description = "Clear the terminal screen."
 
-    def execute(self, session, args: List[str]) -> bool:
+    async def execute(self, session, args: List[str]) -> bool:
         ui.console.clear()
 
         # Redraw header using session metadata
@@ -52,7 +52,7 @@ class HelpCommand(Command):
     aliases = ["/helpd"]
     description = "Show the help menu."
 
-    def execute(self, session, args: List[str]) -> bool:
+    async def execute(self, session, args: List[str]) -> bool:
         content = AssetLoader.load_text("repl_help.txt")
         ui.print_panel(content, title="Help Menu")
         return True
@@ -63,7 +63,7 @@ class SaveCommand(Command):
     name = "/save"
     description = "Auto-save the last generated artifact(s)."
 
-    def execute(self, session, args: List[str]) -> bool:
+    async def execute(self, session, args: List[str]) -> bool:
         if not session.last_response:
             ui.print_error("Nothing to save. Generate something first.")
             return True
@@ -106,7 +106,7 @@ class SetModeCommand(Command):
     name = "/set"
     description = "Set input mode (vi | emacs)."
 
-    def execute(self, session, args: List[str]) -> bool:
+    async def execute(self, session, args: List[str]) -> bool:
         if not args:
             ui.print_error("Usage: /set <mode> (vi | emacs)")
             return True
@@ -128,7 +128,7 @@ class ThemeCommand(Command):
     name = "/theme"
     description = "Set UI color theme."
 
-    def execute(self, session, args: List[str]) -> bool:
+    async def execute(self, session, args: List[str]) -> bool:
         if not args:
             ui.print_error("Usage: /theme <name>")
             return True

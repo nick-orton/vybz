@@ -33,7 +33,7 @@ dependencies = [
 ]
 
 [project.scripts]
-vybz = "vybz.tools.work:main"
+vybz = "vybz.tools.work:run_main"
 vybz-commit = "vybz.tools.autocommit_gen:main"
 vybz-fmt = "vybz.tools.mdformat:main"
 vybzd = "vybz.server.main:start"

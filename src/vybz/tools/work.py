@@ -6,6 +6,7 @@ The primary CLI entry point for Vybz Kartel.
 """
 
 import argparse
+import asyncio
 import os
 import shutil
 import sys
@@ -65,7 +66,7 @@ def _init_user_library() -> None:
         ui.print_system("No new files to initialize.")
 
 
-def main() -> None:
+async def main() -> None:
     """
     Parses command line arguments and orchestrates the Vibe Coding session.
     """
@@ -194,7 +195,7 @@ def main() -> None:
                 log_file=Path(args.log_file),
                 mode=args.mode
             )
-            session.start()
+            await session.start()
 
     except KeyboardInterrupt:
         ui.print_warning("Session interrupted by user.")
@@ -206,7 +207,12 @@ def main() -> None:
         traceback.print_exc()
         sys.exit(1)
 
+def run_main():
+    """Synchronous wrapper to run the async main."""
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        sys.exit(130)
 
 if __name__ == "__main__":
-    main()
-
+    run_main()

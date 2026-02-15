@@ -20,7 +20,7 @@ class Command(ABC):
     aliases: List[str] = []
 
     @abstractmethod
-    def execute(self, session: "ReplSession", args: List[str]) -> bool:
+    async def execute(self, session: "ReplSession", args: List[str]) -> bool:
         """
         Executes the command logic.
 
