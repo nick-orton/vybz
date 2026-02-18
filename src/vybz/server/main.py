@@ -150,45 +150,43 @@ async def chat_endpoint(websocket: WebSocket, session_id: str):
         return
 
     try:
-        while True:
-            # 1. Receive Input
-            data = await websocket.receive_json()
-            user_text = data.get("content")
-            if not user_text:
-                continue
+        # 1. Receive Input (One-shot turn per connection)
+        data = await websocket.receive_json()
+        user_text = data.get("content")
+        if not user_text:
+            await websocket.close()
+            return
 
-            # 2. Format as GenAI Content
-            input_content = types.Content(
-                role="user",
-                parts=[types.Part(text=user_text)]
+        # 2. Format as GenAI Content
+        input_content = types.Content(
+            role="user",
+            parts=[types.Part(text=user_text)]
+        )
+
+        # 3. Execute Runner (Streaming)
+        # runner.run returns a generator of events
+        try:
+            events = runner.run(
+                user_id=state.user_id,
+                session_id=session_id,
+                new_message=input_content
             )
 
-            # 3. Execute Runner (Streaming)
-            # runner.run returns a generator of events
-            try:
-                events = runner.run(
-                    user_id=state.user_id,
-                    session_id=session_id,
-                    new_message=input_content
-                )
+            for event in events:
+                # Handle streaming partials
+                if event.content and event.content.parts:
+                    for part in event.content.parts:
+                        if hasattr(part, 'thought') and part.thought:
+                            # Sending with a prefix
+                            await websocket.send_text(f"\033[36m💭 {part.thought}\033[0m\n")
+                            continue
 
+                        # Check for standard text parts
+                        if hasattr(part, 'text') and part.text:
+                            await websocket.send_text(part.text)
 
-                for event in events:
-                    # Handle streaming partials
-                    if event.content and event.content.parts:
-                        for part in event.content.parts:
-                            if hasattr(part, 'thought') and part.thought:
-                                # Sending with a prefix
-                                await websocket.send_text(f"\033[36m💭 {part.thought}\033[0m\n")
-                                continue
-
-                            # Check for standard text parts
-                            if hasattr(part, 'text') and part.text:
-                                await websocket.send_text(part.text)
-                            # Note: We could handle tool calls here if needed in future
-
-            except Exception as e:
-                await websocket.send_text(f"[Error: {str(e)}]")
+        except Exception as e:
+            await websocket.send_text(f"[Error: {str(e)}]")
 
     except WebSocketDisconnect:
         pass

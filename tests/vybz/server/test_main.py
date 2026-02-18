@@ -13,8 +13,10 @@ from fastapi.testclient import TestClient
 # 1. Mock google.adk BEFORE importing vybz.server.main to prevent runtime errors
 mock_adk = MagicMock()
 mock_sessions_module = MagicMock()
+mock_tools_module = MagicMock()
 sys.modules["google.adk"] = mock_adk
 sys.modules["google.adk.sessions"] = mock_sessions_module
+sys.modules["google.adk.tools"] = mock_tools_module
 
 from vybz.server.main import app
 

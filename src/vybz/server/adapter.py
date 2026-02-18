@@ -19,10 +19,10 @@ class AdkHydrator:
     """
 
     def hydrate_agent(
-        self, 
-        vybz_agent: VybzAgent, 
-        model: str, 
-        tools: Optional[List[adk.Tool]] = None
+        self,
+        vybz_agent: VybzAgent,
+        model: str,
+        tools: Optional[List[adk.tools.FunctionTool]] = None
     ) -> adk.Agent:
         """
         Converts a Vybz Agent (configuration) into an ADK Agent (executable).

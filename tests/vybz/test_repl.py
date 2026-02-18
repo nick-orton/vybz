@@ -165,48 +165,37 @@ async def test_handle_command_not_a_command(repl):
 # Input Handling Tests
 # -----------------------------------------------------------------------------
 
-def test_handle_input_delegates_to_stream(repl, mock_session_manager):
+@pytest.mark.asyncio
+async def test_handle_input_delegates_to_stream(repl, mock_session_manager):
     """Verify user input is sent to the active chat stream and logged."""
     # Arrange
-    mock_chat = mock_session_manager.active_chat
-    mock_chat.send_message_stream.return_value = [
-        MagicMock(text="Chunk 1"),
-        MagicMock(text="Chunk 2")
-    ]
+    async def mock_stream(text):
+        yield "Chunk 1"
+        yield "Chunk 2"
+    
+    mock_session_manager.chat.side_effect = mock_stream
 
     with patch("vybz.repl.ui") as mock_ui:
         # Act
-        repl._handle_input("Hello World")
+        await repl._handle_input("Hello World")
 
         # Assert
-        mock_chat.send_message_stream.assert_called_with("Hello World")
+        mock_session_manager.chat.assert_called_with("Hello World")
         # Verify streaming to UI
         mock_ui.stream_chunk.assert_any_call("Chunk 1")
         mock_ui.stream_chunk.assert_any_call("Chunk 2")
         # Verify auto-save state capture
         assert repl.last_response == "Chunk 1Chunk 2"
 
-def test_handle_input_no_active_chat(repl, mock_session_manager):
-    """Verify robust handling when no chat is active (e.g. init failure)."""
-    # Arrange
-    mock_session_manager.active_chat = None
-
-    with patch("vybz.repl.ui") as mock_ui:
-        # Act
-        repl._handle_input("Hello")
-
-        # Assert
-        mock_ui.print_error.assert_called_with("No active chat session.")
-
-def test_handle_input_api_error(repl, mock_session_manager):
+@pytest.mark.asyncio
+async def test_handle_input_api_error(repl, mock_session_manager):
     """Verify API errors are caught and logged without crashing REPL."""
     # Arrange
-    mock_chat = mock_session_manager.active_chat
-    mock_chat.send_message_stream.side_effect = Exception("API 500")
+    mock_session_manager.chat.side_effect = Exception("API 500")
 
     with patch("vybz.repl.ui") as mock_ui:
         # Act
-        repl._handle_input("Crash me")
+        await repl._handle_input("Crash me")
 
         # Assert
         mock_ui.print_error.assert_called()

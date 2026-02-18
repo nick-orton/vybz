@@ -10,9 +10,7 @@ import pytest
 from unittest.mock import MagicMock, patch, ANY, AsyncMock
 
 # Mock ADK before imports
-mock_adk = MagicMock()
 mock_sessions = MagicMock()
-sys.modules["google.adk"] = mock_adk
 sys.modules["google.adk.sessions"] = mock_sessions
 
 from vybz.server.state import ServerState

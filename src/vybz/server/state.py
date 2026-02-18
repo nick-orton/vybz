@@ -9,7 +9,8 @@ Implements the ADK v1.24+ architecture (Agent -> Runner -> Session).
 import uuid
 from typing import Dict, Optional, List, Any
 
-import google.adk as adk
+from google.adk import Runner
+from google.adk.tools import FunctionTool
 from google.adk.sessions import InMemorySessionService, Session
 
 from vybz.shared.library import Library
@@ -41,10 +42,10 @@ class ServerState:
         # Templates: VybzAgent definitions loaded from disk (Read-Only)
         self.agent_templates: Dict[str, VybzAgent] = {}
 
-        # Runtime: Mapping of session_id -> adk.Runner
+        # Runtime: Mapping of session_id -> Runner
         # We maintain a dedicated Runner per session to allow for
         # session-specific Agent instruction mutation (Context/Skills).
-        self.runners: Dict[str, adk.Runner] = {}
+        self.runners: Dict[str, Runner] = {}
 
     def initialize(self) -> None:
         """
@@ -93,8 +94,8 @@ class ServerState:
             # In Step 3.6, 'context' is the absolute root path string
             fs_impl = FileSystemTools(context)
             tools = [
-                adk.Tool.from_function(fs_impl.list_files),
-                adk.Tool.from_function(fs_impl.read_file)
+                FunctionTool(fs_impl.list_files),
+                FunctionTool(fs_impl.read_file)
             ]
 
         # 3. Hydrate unique ADK Agent with Tools
@@ -102,7 +103,7 @@ class ServerState:
 
         # 4. Initialize Runner
         # The Runner orchestrates this specific agent instance
-        runner = adk.Runner(
+        runner = Runner(
             agent=adk_agent,
             app_name=self.app_name,
             session_service=self.session_service
@@ -132,7 +133,7 @@ class ServerState:
 
         return session_id
 
-    def get_runner(self, session_id: str) -> adk.Runner:
+    def get_runner(self, session_id: str) -> Runner:
         """Retrieves the Runner responsible for a specific session."""
         if session_id not in self.runners:
             raise ValueError(f"Session '{session_id}' not found or expired.")

@@ -37,7 +37,7 @@ def test_runner_architecture():
 
     with patch("vybz.server.state.VybzAgent.from_toml", return_value=mock_vybz_agent), \
          patch("vybz.server.state.FileSystemTools"), \
-         patch("vybz.server.state.adk.Runner") as MockRunner:
+         patch("vybz.server.state.Runner") as MockRunner:
 
         # Execute
         sid = asyncio.run(state.create_session("junior", "# Context"))

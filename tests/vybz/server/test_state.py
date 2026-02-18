@@ -10,10 +10,8 @@ from unittest.mock import MagicMock, patch, ANY, AsyncMock
 
 # We must mock google.labs.adk BEFORE importing vybz.server.state
 # because the module imports it at the top level.
-mock_adk = MagicMock()
 mock_sessions_module = MagicMock()
 
-sys.modules["google.adk"] = mock_adk
 sys.modules["google.adk.sessions"] = mock_sessions_module
 
 from vybz.server.state import ServerState
@@ -94,7 +92,7 @@ class TestServerState:
         # 3. Patch Dependencies
         with patch("vybz.server.state.VybzAgent") as MockVybzAgentClass, \
              patch("vybz.server.state.FileSystemTools"), \
-             patch("vybz.server.state.adk.Runner") as MockRunnerClass, \
+             patch("vybz.server.state.Runner") as MockRunnerClass, \
              patch("vybz.server.state.ContextAssembler") as MockAssembler:
 
             mock_vybz_instance = MagicMock()

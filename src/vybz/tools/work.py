@@ -18,9 +18,8 @@ import vybz.vibez as vibez
 import vybz.ui as ui
 import vybz.repl as repl
 import vybz.config as config
-from vybz.shared.codebase import CodeBase
+from vybz.client.session import ClientSessionManager
 from vybz.shared.squad import Squad
-from vybz.services.session import SessionManager
 
 
 def _init_user_library() -> None:
@@ -163,22 +162,17 @@ async def main() -> None:
             ui.print_system(f"Available Agents: {', '.join(Squad.list_agents())}")
             sys.exit(1)
 
-        # 3. Snapshot Codebase (Optional)
-        codebase: Optional[CodeBase] = None
-        if args.codebase:
-            cb_path = Path(args.codebase)
-            ui.print_system(f"Snapshotting codebase at: {cb_path.resolve()} ...")
-            try:
-                codebase = CodeBase(cb_path)
-            except (FileNotFoundError, NotADirectoryError) as e:
-                ui.print_error(f"CodeBase Error: {e}")
-                sys.exit(1)
-        else:
-            ui.print_system("No codebase provided. Running in GREENFIELD mode.")
-
         # 4. Execution Branching
         if args.intent:
             # ---> ONE-SHOT MODE (Legacy)
+            # Note: One-shot still uses local SDK for now.
+            from vybz.shared.codebase import CodeBase
+            codebase = None
+            if args.codebase:
+                codebase = CodeBase(Path(args.codebase))
+            else:
+                ui.print_system("No codebase provided. Running in GREENFIELD mode.")
+
             vibez.generate_and_continuous_log(
                 client=client,
                 model_id=args.model,
@@ -188,10 +182,18 @@ async def main() -> None:
                 log_file_path=args.log_file
             )
         else:
-            # ---> INTERACTIVE MODE (Phase 2)
-            session_manager = SessionManager(client=client, model_id=args.model, initial_agent=agent, codebase=codebase)
+            # ---> INTERACTIVE MODE (Phase 4 Client/Server)
+            manager = ClientSessionManager()
+            
+            if not await manager.connect():
+                ui.print_error("vybzd engine unreachable. Please start the server with 'vybzd'.")
+                sys.exit(1)
+
+            cb_root = Path(args.codebase) if args.codebase else None
+            await manager.initialize(args.agent, cb_root)
+
             session = repl.ReplSession(
-                session_manager,
+                manager,
                 log_file=Path(args.log_file),
                 mode=args.mode
             )
