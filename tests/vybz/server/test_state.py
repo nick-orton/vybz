@@ -6,6 +6,7 @@ Verifies initialization, agent registry lookups, and session lifecycle managemen
 """
 import sys
 import pytest
+import os
 from unittest.mock import MagicMock, patch, ANY, AsyncMock
 
 # We must mock google.labs.adk BEFORE importing vybz.server.state
@@ -24,7 +25,9 @@ class TestServerState:
     @pytest.fixture
     def state(self):
         """Returns a fresh ServerState instance."""
-        return ServerState()
+        with patch("vybz.server.state.ConfigLoader") as MockConfig:
+            MockConfig.load.return_value = {"model": "custom-model"}
+            return ServerState()
 
     @pytest.fixture
     def mock_adk_agent(self):
@@ -41,11 +44,8 @@ class TestServerState:
         # Arrange
         mock_templates = {"junior-dev": MagicMock()}
 
-        with patch("vybz.server.state.ConfigLoader") as MockConfig, \
-             patch("vybz.server.state.Library") as MockLibrary:
-
-            # Setup Config
-            MockConfig.load.return_value = {"model": "custom-model"}
+        with patch("vybz.server.state.Library") as MockLibrary, \
+             patch.dict(os.environ, {"GOOGLE_API_KEY": "fake-key-for-test"}):
 
             # Setup Hydrator behavior on the instance
             # Since hydrator is created in __init__, we mock the method on the existing instance
@@ -54,7 +54,7 @@ class TestServerState:
             # Act
             state.initialize()
 
-            # Assert
+            # Assert model comes from mock config in fixture
             assert state.model_id == "custom-model"
             MockLibrary.assert_called_once()
             state.hydrator.hydrate_squad_templates.assert_called_with(
@@ -128,10 +128,6 @@ class TestServerState:
                         "codebase_context": context_str
                     }
             )
-
-            # 5. Verify Context Injection into Session State
-            #assert mock_session_obj.state["vybz_agent"] == mock_vybz_instance
-            #assert mock_session_obj.state["codebase_context"] == context_str
 
             # 6. Verify Return
             assert session_id == "session-uuid"

@@ -2,8 +2,9 @@
 src/vybz/client/api.py
 
 The Vybz Network Client.
-Wraps httpx and websockets to provide a clean interface for the CLI to 
+Wraps httpx and websockets to provide a clean interface for the CLI to
 interact with the vybzd engine.
+Updated to support persistent WebSocket sessions and turn-based streaming.
 """
 
 import json
@@ -13,6 +14,7 @@ from pathlib import Path
 
 import httpx
 import websockets
+from websockets.protocol import State
 from pydantic import BaseModel
 
 class AgentListing(BaseModel):
@@ -45,8 +47,14 @@ class VybzApiClient:
         self.session_id: Optional[str] = None
         self._http_client = httpx.AsyncClient(base_url=self.base_url, timeout=30.0)
 
+        # Persistent WebSocket connection
+        self._ws: Optional[websockets.WebSocketClientProtocol] = None
+
     async def close(self) -> None:
-        """Closes the underlying HTTP client."""
+        """Closes the underlying HTTP client and WebSocket."""
+        if self._ws:
+            await self._ws.close()
+            self._ws = None
         await self._http_client.aclose()
 
     async def get_health(self) -> Dict[str, Any]:
@@ -67,24 +75,17 @@ class VybzApiClient:
     async def start_session(self, agent_id: str, context: str = "") -> str:
         """
         Initializes a session on the server.
-        
-        Args:
-            agent_id: The ID of the agent to chat with.
-            context: The absolute root path of the codebase.
-            
-        Returns:
-            str: The session UUID.
         """
         payload = {"agent_id": agent_id, "context": context}
         response = await self._http_client.post("/session/init", json=payload)
         response.raise_for_status()
-        
+
         data = response.json()
         self.session_id = data["session_id"]
         return self.session_id
 
     # -------------------------------------------------------------------------
-    # Session Mutation Methods (Phase 3)
+    # Session Mutation Methods
     # -------------------------------------------------------------------------
 
     async def list_session_skills(self, session_id: str) -> List[SkillDTO]:
@@ -94,10 +95,7 @@ class VybzApiClient:
         return [SkillDTO(**s) for s in response.json()]
 
     async def uplevel_skill(self, session_id: str, skill_data: SkillDTO) -> bool:
-        """
-        Uploads and injects a local skill into the remote session.
-        Returns True if successful.
-        """
+        """Uploads and injects a local skill into the remote session."""
         response = await self._http_client.post(
             f"/session/{session_id}/skills/uplevel",
             json=skill_data.model_dump()
@@ -106,10 +104,7 @@ class VybzApiClient:
         return response.json().get("status") == "success"
 
     async def downlevel_skill(self, session_id: str, skill_id: str) -> bool:
-        """
-        Requests the removal of a skill from the remote session.
-        Returns True if successful.
-        """
+        """Requests the removal of a skill from the remote session."""
         response = await self._http_client.post(
             f"/session/{session_id}/skills/downlevel",
             json={"skill_id": skill_id}
@@ -118,10 +113,7 @@ class VybzApiClient:
         return response.json().get("status") == "success"
 
     async def load_file_content(self, session_id: str, filename: str, content: str) -> bool:
-        """
-        Surgically injects raw file content into the remote session context.
-        Returns True if successful.
-        """
+        """Surgically injects raw file content into the remote session context."""
         payload = FileLoadDTO(filename=filename, content=content)
         response = await self._http_client.post(
             f"/session/{session_id}/load",
@@ -134,28 +126,38 @@ class VybzApiClient:
     # Streaming
     # -------------------------------------------------------------------------
 
+    async def _ensure_ws_connection(self) -> websockets.WebSocketClientProtocol:
+        """
+        Ensures a WebSocket connection is active.
+        """
+        if self._ws is None or not self._ws.state is State.OPEN:
+            uri = f"{self.ws_url}/session/{self.session_id}/chat"
+            # connect() returns a Connect object which is an awaitable context manager.
+            # We await the context manager to get the protocol instance.
+            self._ws = await websockets.connect(uri)
+        return self._ws
+
     async def chat_stream(self, prompt: str) -> AsyncGenerator[str, None]:
         """
-        Connects to the session WebSocket and streams chunks of the response.
-        
-        Args:
-            prompt: The user input string.
-            
-        Yields:
-            str: Text chunks as they arrive from the engine.
+        Streams a prompt to the server and yields response chunks.
+        Uses a persistent connection and listens for the Turn-End sentinel (\x04).
         """
         if not self.session_id:
             raise RuntimeError("Session not initialized. Call start_session first.")
 
-        uri = f"{self.ws_url}/session/{self.session_id}/chat"
-        
-        async with websockets.connect(uri) as ws:
-            # 1. Send the prompt
-            await ws.send(json.dumps({"content": prompt}))
-            
-            # 2. Consume the stream
-            try:
-                async for message in ws:
-                    yield str(message)
-            except websockets.ConnectionClosed:
-                pass
+        ws = await self._ensure_ws_connection()
+
+        # 1. Send the prompt
+        await ws.send(json.dumps({"content": prompt}))
+
+        # 2. Consume the stream until turn end
+        try:
+            async for message in ws:
+                # Check for the End-of-Turn sentinel
+                if str(message) == "\x04":
+                    break
+                yield str(message)
+        except websockets.ConnectionClosed:
+            self._ws = None
+            raise
+

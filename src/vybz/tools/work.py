@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Optional
 
 import vybz
-import vybz.vibez as vibez
 import vybz.ui as ui
 import vybz.repl as repl
 import vybz.config as config
@@ -81,13 +80,6 @@ async def main() -> None:
         help="Target Agent Persona \n['junior-dev', 'pm', 'senior-dev', 'advisor', 'tech-writer' ]"
     )
 
-    parser.add_argument(
-        "intent",
-        nargs='?',
-        default=None,
-        help="The task description. If omitted, enters Interactive Mode."
-    )
-
     # Optional Arguments
     parser.add_argument(
         "-m", "--model",
@@ -151,10 +143,7 @@ async def main() -> None:
         lib_path = Path(args.library) if args.library else None
         Squad.initialize(custom_library_root=lib_path)
 
-        # 1. Initialize the Google GenAI Client
-        client = vibez.configure_genai_client()
-
-        # 2. Load the Agent
+        # Load the Agent
         try:
             agent = Squad.get_agent(args.agent)
         except ValueError:
@@ -162,42 +151,21 @@ async def main() -> None:
             ui.print_system(f"Available Agents: {', '.join(Squad.list_agents())}")
             sys.exit(1)
 
-        # 4. Execution Branching
-        if args.intent:
-            # ---> ONE-SHOT MODE (Legacy)
-            # Note: One-shot still uses local SDK for now.
-            from vybz.shared.codebase import CodeBase
-            codebase = None
-            if args.codebase:
-                codebase = CodeBase(Path(args.codebase))
-            else:
-                ui.print_system("No codebase provided. Running in GREENFIELD mode.")
+        manager = ClientSessionManager()
 
-            vibez.generate_and_continuous_log(
-                client=client,
-                model_id=args.model,
-                agent=agent,
-                intent=args.intent,
-                codebase=codebase,
-                log_file_path=args.log_file
-            )
-        else:
-            # ---> INTERACTIVE MODE (Phase 4 Client/Server)
-            manager = ClientSessionManager()
-            
-            if not await manager.connect():
-                ui.print_error("vybzd engine unreachable. Please start the server with 'vybzd'.")
-                sys.exit(1)
+        if not await manager.connect():
+            ui.print_error("vybzd engine unreachable. Please start the server with 'vybzd'.")
+            sys.exit(1)
 
-            cb_root = Path(args.codebase) if args.codebase else None
-            await manager.initialize(args.agent, cb_root)
+        cb_root = Path(args.codebase) if args.codebase else None
+        await manager.initialize(args.agent, cb_root)
 
-            session = repl.ReplSession(
-                manager,
-                log_file=Path(args.log_file),
-                mode=args.mode
-            )
-            await session.start()
+        session = repl.ReplSession(
+            manager,
+            log_file=Path(args.log_file),
+            mode=args.mode
+        )
+        await session.start()
 
     except KeyboardInterrupt:
         ui.print_warning("Session interrupted by user.")

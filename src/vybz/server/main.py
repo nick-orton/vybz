@@ -3,10 +3,13 @@ src/vybz/server/main.py
 
 The entry point for the Vybz Engine (vybzd).
 Updated to use Google ADK v1.24+ Runner and Event Streaming.
+Fixes: WebSocket Stream Exhaustion, Inconsistent Event Access, 
+       Session Locking, and WebSocket Keepalive timeouts.
 """
 
 import argparse
 import uvicorn
+import asyncio
 from typing import List
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
@@ -140,56 +143,65 @@ async def load_context(session_id: str, request: FileLoadDTO):
 async def chat_endpoint(websocket: WebSocket, session_id: str):
     """
     Bidirectional WebSocket using ADK Runner.
+    Maintains a persistent loop to support multi-turn conversations.
     """
     await websocket.accept()
 
     try:
         runner = state.get_runner(session_id)
+        lock = state.get_lock(session_id)
     except ValueError:
         await websocket.close(code=4004, reason="Session not found")
         return
 
     try:
-        # 1. Receive Input (One-shot turn per connection)
-        data = await websocket.receive_json()
-        user_text = data.get("content")
-        if not user_text:
-            await websocket.close()
-            return
+        while True:
+            try:
+                data = await websocket.receive_json()
+            except (WebSocketDisconnect, Exception):
+                break
 
-        # 2. Format as GenAI Content
-        input_content = types.Content(
-            role="user",
-            parts=[types.Part(text=user_text)]
-        )
+            user_text = data.get("content")
+            if not user_text:
+                continue
 
-        # 3. Execute Runner (Streaming)
-        # runner.run returns a generator of events
-        try:
-            events = runner.run(
-                user_id=state.user_id,
-                session_id=session_id,
-                new_message=input_content
+            input_content = types.Content(
+                role="user",
+                parts=[types.Part(text=user_text)]
             )
 
-            for event in events:
-                # Handle streaming partials
-                if event.content and event.content.parts:
-                    for part in event.content.parts:
-                        if hasattr(part, 'thought') and part.thought:
-                            # Sending with a prefix
-                            await websocket.send_text(f"\033[36m💭 {part.thought}\033[0m\n")
+            async with lock:
+                try:
+                    events = runner.run(
+                        user_id=state.user_id,
+                        session_id=session_id,
+                        new_message=input_content
+                    )
+
+                    for event in events:
+                        # Yield control back to the event loop for heartbeats
+                        await asyncio.sleep(0)
+
+                        if not hasattr(event, "content") or event.content is None:
                             continue
 
-                        # Check for standard text parts
-                        if hasattr(part, 'text') and part.text:
-                            await websocket.send_text(part.text)
+                        for part in event.content.parts:
+                            thought = getattr(part, "thought", None)
+                            if thought:
+                                await websocket.send_text(f"\033[36m💭 {thought}\033[0m\n")
+                                continue
 
-        except Exception as e:
-            await websocket.send_text(f"[Error: {str(e)}]")
+                            text_part = getattr(part, "text", None)
+                            if text_part:
+                                await websocket.send_text(text_part)
+                    
+                    await websocket.send_text("\x04")
 
-    except WebSocketDisconnect:
-        pass
+                except Exception as e:
+                    await websocket.send_text(f"[Error: {str(e)}]\n\x04")
+
+    except Exception as e:
+        print(f"[vybzd] WebSocket handler error: {e}")
 
 # -----------------------------------------------------------------------------
 # Entry Point
@@ -201,7 +213,18 @@ def start() -> None:
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--reload", action="store_true")
     args = parser.parse_args()
-    uvicorn.run("vybz.server.main:app", host=args.host, port=args.port, reload=args.reload)
+    
+    # WebSocket Keepalive Configuration (Fixes timeout 1011 error)
+    # ws_ping_interval: How often to send a ping.
+    # ws_ping_timeout: How long to wait for a pong.
+    uvicorn.run(
+        "vybz.server.main:app", 
+        host=args.host, 
+        port=args.port, 
+        reload=args.reload,
+        ws_ping_interval=20,
+        ws_ping_timeout=20
+    )
 
 if __name__ == "__main__":
     start()

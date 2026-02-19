@@ -12,7 +12,7 @@ async def test_interactive_branch_logic():
     and initializes the ClientSessionManager.
     """
     from vybz.tools.work import main
-    
+
     # Mock CLI Args: vybz junior-dev (no intent)
     mock_args = MagicMock()
     mock_args.agent = "junior-dev"
@@ -29,14 +29,13 @@ async def test_interactive_branch_logic():
          patch("vybz.tools.work.ClientSessionManager") as MockManager, \
          patch("vybz.tools.work.repl.ReplSession") as MockRepl, \
          patch("vybz.tools.work.ui"), \
-         patch("vybz.tools.work.vibez.configure_genai_client"), \
          patch("vybz.tools.work.Squad"):
 
         # Setup manager mock
         instance = MockManager.return_value
         instance.connect = AsyncMock(return_value=True)
         instance.initialize = AsyncMock()
-        
+
         # Setup REPL mock
         repl_instance = MockRepl.return_value
         repl_instance.start = AsyncMock()

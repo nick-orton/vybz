@@ -84,7 +84,8 @@ class TestFileSystemTools:
     def test_list_files_non_existent(self, tools):
         """Sad Path: Handle non-existent directories gracefully."""
         output = tools.list_files("ghost_folder")
-        assert "Error: Path ghost_folder does not exist" in output
+        # Match the implementation in fs.py: _secure_path raises FileNotFoundError
+        assert "Error: Path does not exist: ghost_folder" in output
 
     # -------------------------------------------------------------------------
     # read_file Tests
@@ -115,7 +116,8 @@ class TestFileSystemTools:
     def test_read_file_not_found(self, tools):
         """Sad Path: Handle missing files."""
         output = tools.read_file("missing.txt")
-        assert "Error: missing.txt is not a file or does not exist" in output
+        # Match implementation in fs.py: _secure_path raises FileNotFoundError
+        assert "Error: Path does not exist: missing.txt" in output
 
     @pytest.mark.parametrize("rel_path", [
         "src/main.py",
@@ -128,4 +130,3 @@ class TestFileSystemTools:
         assert output.startswith(f"### {rel_path}")
         assert "```" in output
         assert output.endswith("```")
-

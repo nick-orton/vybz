@@ -7,6 +7,8 @@ Uses AsyncMock to simulate HTTP and WebSocket interactions.
 
 import json
 import pytest
+import websockets
+from websockets.protocol import State
 from unittest.mock import AsyncMock, MagicMock, patch
 from vybz.client.api import VybzApiClient, AgentListing, SkillDTO
 
@@ -29,7 +31,7 @@ class TestVybzApiClient:
         mock_response = MagicMock()
         mock_response.json.return_value = {"status": "ok", "model": "test-model"}
         mock_response.raise_for_status = MagicMock()
-        
+
         mocker.patch.object(client._http_client, "get", AsyncMock(return_value=mock_response))
 
         # Act
@@ -49,7 +51,7 @@ class TestVybzApiClient:
         mock_response = MagicMock()
         mock_response.json.return_value = mock_data
         mock_response.raise_for_status = MagicMock()
-        
+
         mocker.patch.object(client._http_client, "get", AsyncMock(return_value=mock_response))
 
         # Act
@@ -67,7 +69,7 @@ class TestVybzApiClient:
         mock_response = MagicMock()
         mock_response.json.return_value = {"session_id": "uuid-1234"}
         mock_response.raise_for_status = MagicMock()
-        
+
         mocker.patch.object(client._http_client, "post", AsyncMock(return_value=mock_response))
 
         # Act
@@ -87,9 +89,9 @@ class TestVybzApiClient:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"status": "success"}
-        
+
         mocker.patch.object(client._http_client, "post", AsyncMock(return_value=mock_response))
-        
+
         skill = SkillDTO(id="s1", name="S1", description="D", instructions="I")
 
         # Act
@@ -110,40 +112,43 @@ class TestVybzApiClient:
         # Arrange
         client.session_id = "active-sess"
         prompt = "Hello"
-        
-        # 1. Mock the WebSocket object
-        mock_ws = AsyncMock()
-        # The websocket object is an async iterator
-        mock_ws.__aiter__.return_value = ["chunk1", "chunk2", "chunk3"]
-        
-        # 2. Mock websockets.connect context manager
-        # It must return the mock_ws in __aenter__
-        mock_connect = MagicMock()
-        mock_connect.__aenter__.return_value = mock_ws
-        
-        with patch("websockets.connect", return_value=mock_connect):
-            # Act
-            chunks = []
-            async for chunk in client.chat_stream(prompt):
-                chunks.append(chunk)
 
-        # Assert
-        assert chunks == ["chunk1", "chunk2", "chunk3"]
-        # Verify prompt was sent
-        mock_ws.send.assert_called_once()
-        sent_payload = json.loads(mock_ws.send.call_args[0][0])
-        assert sent_payload["content"] == prompt
+        # 1. Mock the WebSocket object
+        mock_ws = AsyncMock(spec=websockets.WebSocketClientProtocol)
+        mock_ws.state = State.OPEN
+        # The websocket object is an async iterator
+        mock_ws.__aiter__.return_value = ["chunk1", "chunk2", "\x04"]
+
+        with patch("websockets.connect", AsyncMock(return_value=mock_ws)) as mock_connect:
+            # First call
+            chunks = [c async for c in client.chat_stream("first prompt")]
+            assert chunks == ["chunk1", "chunk2"]
+            assert mock_connect.call_count == 1
+
+            # Verify JSON was sent
+            mock_ws.send.assert_called_with(json.dumps({"content": "first prompt"}))
+
+            # Second call - should reuse the same connection (mock_connect call count remains 1)
+            mock_ws.__aiter__.return_value = ["chunk3", "\x04"]
+            chunks2 = [c async for c in client.chat_stream("second prompt")]
+            assert chunks2 == ["chunk3"]
+            assert mock_connect.call_count == 1
+
+            # Final cleanup
+            await client.close()
+            assert client._ws is None
+            mock_ws.close.assert_called_once()
 
     async def test_chat_stream_no_session_raises_error(self, client):
         """Sad Path: chat_stream should fail if start_session wasn't called."""
         # Arrange
         client.session_id = None
-        
+
         # Act & Assert
         with pytest.raises(RuntimeError) as exc:
             async for _ in client.chat_stream("hi"):
                 pass
-        
+
         assert "Session not initialized" in str(exc.value)
 
     async def test_api_error_propagation(self, client, mocker):
@@ -152,11 +157,11 @@ class TestVybzApiClient:
         mock_response = MagicMock()
         # Simulate httpx error
         mock_response.raise_for_status.side_effect = Exception("Server Error")
-        
+
         mocker.patch.object(client._http_client, "get", AsyncMock(return_value=mock_response))
 
         # Act & Assert
         with pytest.raises(Exception) as exc:
             await client.get_health()
-        
+
         assert "Server Error" in str(exc.value)
