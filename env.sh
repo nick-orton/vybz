@@ -2,3 +2,4 @@
 export FZF_DEFAULT_COMMAND='rg --files --hidden --follow'
 alias vc="vybz-commit"
 alias patch="patch -V none"
+alias clean-output="rm .vybz/output/*"
