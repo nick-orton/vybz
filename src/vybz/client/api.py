@@ -81,7 +81,14 @@ class VybzApiClient:
         response.raise_for_status()
 
         data = response.json()
-        self.session_id = data["session_id"]
+        new_sid = data["session_id"]
+
+        # BUGFIX: If changing sessions, explicitly close and clear the stale WebSocket.
+        if self.session_id and self.session_id != new_sid and self._ws:
+            await self._ws.close()
+            self._ws = None
+
+        self.session_id = new_sid
         return self.session_id
 
     # -------------------------------------------------------------------------

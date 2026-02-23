@@ -46,8 +46,8 @@ Output Format (Strict Markdown, Max Line Length: 79 chars):
 status: "Draft"
 type: "Design"
 author: "PM Lead"
-last_updated: "{{DATE}}"
-references: {{INTENT_FILE}}
+last_updated: "<DATE>"
+references: <INTENT_FILE>
 ---
 ```
 
