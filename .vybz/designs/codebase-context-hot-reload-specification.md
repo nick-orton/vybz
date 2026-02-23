@@ -1,8 +1,8 @@
 ---
-status: "Completed"
+status: "Obsolete"
 type: "Design"
 author: "PM Lead"
-last_updated: "2026-01-12"
+last_updated: "2026-02-24"
 references: intents/refresh-codebase-context-via-update.md
 ---
 
