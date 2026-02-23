@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Dict, List, Optional
 from vybz.shared.agent import Agent
 from vybz.shared.library import Library
-from vybz.config import ConfigLoader
-import vybz.ui as ui
+from vybz.shared.config import ConfigLoader
+import vybz.client.ui as ui
 
 
 class Squad:

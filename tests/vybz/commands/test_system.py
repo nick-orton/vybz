@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch, ANY
 from pathlib import Path
 from prompt_toolkit.enums import EditingMode
 
-from vybz.repl import ReplSession
+from vybz.client.repl import ReplSession
 from vybz.commands.system import (
     ExitCommand,
     ClearCommand,
@@ -30,7 +30,7 @@ def mock_session():
     sm.active_agent.get_identity.return_value = "Test Agent (v1)"
     sm.model_id = "gemini-test"
     sm.codebase = None
-    
+
     session.session_manager = sm
     session.session = MagicMock()
     session.last_response = None

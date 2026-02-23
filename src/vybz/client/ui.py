@@ -14,7 +14,7 @@ from rich.box import ROUNDED
 from rich.markup import escape
 from prompt_toolkit.styles import Style as PtkStyle
 
-from vybz.theme import ThemeLoader
+from vybz.client.theme import ThemeLoader
 
 # -----------------------------------------------------------------------------
 # Global Console Instances

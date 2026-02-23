@@ -8,11 +8,11 @@ import pytest
 import textwrap
 from unittest.mock import MagicMock, patch
 from markdown_it.token import Token
-from vybz.artifact import DocumentHandler
+from vybz.commands.artifact import DocumentHandler
 
 class TestDocumentHandler:
     """
-    Tests for the DocumentHandler class in src/vybz/artifact.py
+    Tests for the DocumentHandler class in src/vybz/commands/artifact.py
     """
 
     @pytest.fixture
@@ -111,7 +111,7 @@ class TestDocumentHandler:
         # Expect: lowercase, spaces to dashes, non-alphanumeric removed
         assert artifact.filename == "my-cool-feature-v20.md"
 
-    @patch("vybz.artifact.datetime")
+    @patch("vybz.commands.artifact.datetime")
     def test_extract_fallback_filename(self, mock_dt, handler):
         """Verify fallback filename when no H1 header is present."""
         content = "---\ntype: Design\n---\nNo header here."

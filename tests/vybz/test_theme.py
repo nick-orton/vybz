@@ -8,7 +8,7 @@ as specified in 'designs/theming-the-repl-specification.md'.
 import pytest
 from unittest.mock import patch, MagicMock, mock_open
 from rich.theme import Theme
-from vybz.theme import ThemeLoader, DEFAULT_STYLES
+from vybz.client.theme import ThemeLoader, DEFAULT_STYLES
 
 class TestThemeLoader:
     """
@@ -18,13 +18,13 @@ class TestThemeLoader:
     @pytest.fixture
     def mock_tomllib(self):
         """Mock tomllib to avoid actual parsing, focusing on logic flow."""
-        with patch("vybz.theme.tomllib") as mock_toml:
+        with patch("vybz.client.theme.tomllib") as mock_toml:
             yield mock_toml
 
     @pytest.fixture
     def mock_path_exists(self):
         """Mock Path.exists to control file discovery."""
-        with patch("vybz.theme.Path.exists") as mock_exists:
+        with patch("vybz.client.theme.Path.exists") as mock_exists:
             yield mock_exists
 
     def test_load_default_fallback_no_file(self, mock_path_exists):

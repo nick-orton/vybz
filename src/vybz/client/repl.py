@@ -16,8 +16,8 @@ from prompt_toolkit.enums import EditingMode
 from vybz.client.session import ClientSessionManager
 from vybz.commands.registry import CommandRegistry
 from vybz.services.logger import InteractionLogger
-from vybz.config import parse_editing_mode
-from vybz import ui
+from vybz.shared.config import parse_editing_mode
+from vybz.client import ui
 
 class ReplSession:
     """

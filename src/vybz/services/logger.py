@@ -9,7 +9,7 @@ Updated to sanitize ANSI escape codes before writing to disk (Fixes Issue #5).
 import re
 from pathlib import Path
 from datetime import datetime
-from vybz import ui
+from vybz.client import ui
 
 
 class InteractionLogger:
@@ -26,7 +26,7 @@ class InteractionLogger:
         """
         self.log_path = log_path
         self._ensure_directory()
-        
+
         # Regex to match ANSI escape sequences (Issue #5)
         # This targets standard SGR (Select Graphic Rendition) codes used for colors/styling.
         self._ansi_regex = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')

@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, AsyncMock, patch, ANY
 from pathlib import Path
 from prompt_toolkit.enums import EditingMode
 
-from vybz.repl import ReplSession
+from vybz.client.repl import ReplSession
 from vybz.shared.agent import Agent
 from vybz.shared.codebase import CodeBase
 
@@ -42,10 +42,10 @@ def repl(mock_session_manager, tmp_path):
     Returns an initialized ReplSession with dependencies mocked.
     We patch PromptSession and CommandRegistry to isolate the REPL loop logic.
     """
-    with patch("vybz.repl.PromptSession"), \
-         patch("vybz.repl.CommandRegistry") as MockRegistry, \
-         patch("vybz.repl.ui"), \
-         patch("vybz.repl.InteractionLogger"): # Mock logger dependencies
+    with patch("vybz.client.repl.PromptSession"), \
+         patch("vybz.client.repl.CommandRegistry") as MockRegistry, \
+         patch("vybz.client.repl.ui"), \
+         patch("vybz.client.repl.InteractionLogger"): # Mock logger dependencies
 
         session = ReplSession(
             mock_session_manager,
@@ -144,7 +144,7 @@ async def test_handle_command_unknown(repl):
     # Arrange
     repl.registry.get_command.return_value = None
 
-    with patch("vybz.repl.ui") as mock_ui:
+    with patch("vybz.client.repl.ui") as mock_ui:
         # Act
         result = await repl._handle_command("/unknown")
 
@@ -172,10 +172,10 @@ async def test_handle_input_delegates_to_stream(repl, mock_session_manager):
     async def mock_stream(text):
         yield "Chunk 1"
         yield "Chunk 2"
-    
+
     mock_session_manager.chat.side_effect = mock_stream
 
-    with patch("vybz.repl.ui") as mock_ui:
+    with patch("vybz.client.repl.ui") as mock_ui:
         # Act
         await repl._handle_input("Hello World")
 
@@ -193,7 +193,7 @@ async def test_handle_input_api_error(repl, mock_session_manager):
     # Arrange
     mock_session_manager.chat.side_effect = Exception("API 500")
 
-    with patch("vybz.repl.ui") as mock_ui:
+    with patch("vybz.client.repl.ui") as mock_ui:
         # Act
         await repl._handle_input("Crash me")
 

@@ -9,7 +9,7 @@ import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 from pathlib import Path
 
-from vybz.repl import ReplSession
+from vybz.client.repl import ReplSession
 from vybz.client.api import AgentListing, SkillDTO
 from vybz.commands.core import (
     AgentCommand,

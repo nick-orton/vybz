@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Optional, AsyncGenerator, List
 
 from vybz.client.api import VybzApiClient, AgentListing
+from vybz.client import ui
 from vybz.shared.codebase import CodeBase
-from vybz import ui
 
 
 class ClientSessionManager:
@@ -23,7 +23,7 @@ class ClientSessionManager:
     def __init__(self, host: str = "127.0.0.1", port: int = 8000):
         self.client = VybzApiClient(host=host, port=port)
         self.session_id: Optional[str] = None
-        
+
         # Local state for UI feedback
         self.active_agent: Optional[AgentListing] = None
         self.codebase: Optional[CodeBase] = None
@@ -32,7 +32,7 @@ class ClientSessionManager:
     async def connect(self) -> bool:
         """
         Verifies connectivity with the vybzd server.
-        
+
         Returns:
             bool: True if server is healthy.
         """
@@ -47,11 +47,11 @@ class ClientSessionManager:
     async def initialize(self, agent_id: str, codebase_root: Optional[Path] = None) -> str:
         """
         Starts a remote session and provides the codebase root path.
-        
+
         Args:
             agent_id: The ID of the persona to activate.
             codebase_root: Optional local path to provide to the agent tools.
-            
+
         Returns:
             str: The remote session ID.
         """
@@ -71,7 +71,7 @@ class ClientSessionManager:
             if a.id == agent_id:
                 self.active_agent = a
                 break
-        
+
         # Fallback if agent not in listing (should not happen)
         if not self.active_agent:
             self.active_agent = AgentListing(id=agent_id, name=agent_id, description="")

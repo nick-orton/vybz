@@ -28,7 +28,7 @@ async def test_interactive_branch_logic():
     with patch("argparse.ArgumentParser.parse_args", return_value=mock_args), \
          patch("vybz.tools.work.ClientSessionManager") as MockManager, \
          patch("vybz.tools.work.repl.ReplSession") as MockRepl, \
-         patch("vybz.tools.work.ui"), \
+         patch("vybz.tools.work.client.ui"), \
          patch("vybz.tools.work.Squad"):
 
         # Setup manager mock

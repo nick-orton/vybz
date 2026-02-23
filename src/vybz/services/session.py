@@ -10,11 +10,11 @@ from typing import Dict, Any, Optional
 from google import genai
 from google.genai import types
 
+from vybz.client import ui
 from vybz.shared.agent import Agent
 from vybz.shared.codebase import CodeBase
 from vybz.shared.squad import Squad
 from vybz.services.context import ContextAssembler
-from vybz import ui
 
 
 class SessionManager:
@@ -74,13 +74,13 @@ class SessionManager:
     def load_file(self, path_str: str) -> str:
         """
         Reads a file and stores it in manual context.
-        
+
         Args:
             path_str: The filesystem path string.
-            
+
         Returns:
             str: The resolved path string for feedback.
-            
+
         Raises:
             FileNotFoundError: If file not found.
             IOError: If read fails.
@@ -88,6 +88,6 @@ class SessionManager:
         path = Path(path_str).resolve()
         if not path.is_file():
             raise FileNotFoundError(f"File not found: {path}")
-            
+
         self.manual_context[str(path)] = path.read_text(encoding="utf-8")
         return str(path)

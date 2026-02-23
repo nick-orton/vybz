@@ -5,6 +5,7 @@ Handles the loading and management of UI color themes.
 Decouples visual aesthetics from the core UI logic by parsing TOML configurations.
 """
 
+import os
 import tomllib
 from pathlib import Path
 from typing import Dict, List, Final
@@ -32,10 +33,20 @@ class ThemeLoader:
     """
 
     @staticmethod
-    def _get_config_path() -> Path:
-        """Returns the path of the packaged themes configuration file."""
-        # Fix: Resolve relative to the installed package, not CWD
-        return Path(__file__).parent / "themes.toml"
+    def _get_search_paths() -> List[Path]:
+        """Returns an ordered list of config paths (User first, then Packaged)."""
+        home = Path.home()
+        xdg_config_home = os.getenv("XDG_CONFIG_HOME")
+        if xdg_config_home:
+            xdg_root = Path(xdg_config_home)
+        else:
+            xdg_root = home / ".config"
+
+        return [
+            xdg_root / "vybz" / "themes.toml",
+            # theme.py is in src/vybz/client/, themes.toml is in src/vybz/
+            Path(__file__).parent.parent / "themes.toml"
+        ]
 
     @classmethod
     def load(cls, name: str) -> Theme:
@@ -51,22 +62,10 @@ class ThemeLoader:
         Raises:
             ValueError: If the theme name is not found in the configuration.
         """
-        config_path = cls._get_config_path()
-        styles = {}
+        all_themes = cls._gather_styles()
+        styles = all_themes.get(name)
 
-        # 1. Load from file if exists
-        if config_path.exists():
-            try:
-                with open(config_path, "rb") as f:
-                    data = tomllib.load(f)
-
-                if name in data:
-                    styles = data[name]
-            except Exception:
-                # If parsing fails, we fall through to defaults if name is default
-                pass
-
-        # 2. Fallback Logic
+        # Fallback Logic
         if not styles:
             if name == "default":
                 styles = DEFAULT_STYLES
@@ -80,23 +79,31 @@ class ThemeLoader:
         return Theme(styles)
 
     @classmethod
+    def _gather_styles(cls) -> Dict[str, Dict[str, str]]:
+        """Aggregates styles from all discovered files. User config overrides package."""
+        aggregated: Dict[str, Dict[str, str]] = {}
+
+        # Reverse search paths so higher precedence (user) is applied last in .update()
+        for path in reversed(cls._get_search_paths()):
+            if path.exists() and path.is_file():
+                try:
+                    with open(path, "rb") as f:
+                        data = tomllib.load(f)
+                        aggregated.update(data)
+                except Exception:
+                    continue
+        return aggregated
+
+    @classmethod
     def list_available(cls) -> List[str]:
         """
-        Returns a list of available theme names found in themes.toml,
+        Returns a list of available theme names found in configuration files,
         plus the built-in 'default'.
 
         Returns:
             List[str]: A list of theme keys.
         """
         keys = {"default"}
-        config_path = cls._get_config_path()
-
-        if config_path.exists():
-            try:
-                with open(config_path, "rb") as f:
-                    data = tomllib.load(f)
-                    keys.update(data.keys())
-            except Exception:
-                pass
-
+        keys.update(cls._gather_styles().keys())
         return sorted(list(keys))
+

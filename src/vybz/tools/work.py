@@ -14,9 +14,9 @@ from pathlib import Path
 from typing import Optional
 
 import vybz
-import vybz.ui as ui
-import vybz.repl as repl
-import vybz.config as config
+import vybz.client.ui as ui
+import vybz.client.repl as repl
+import vybz.shared.config as config
 from vybz.client.session import ClientSessionManager
 from vybz.shared.squad import Squad
 

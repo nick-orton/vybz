@@ -10,8 +10,8 @@ from pathlib import Path
 from prompt_toolkit.enums import EditingMode
 
 from vybz.commands.base import Command
-from vybz import ui
-from vybz.artifact import ArtifactProcessor
+from vybz.client import ui
+from vybz.commands.artifact import ArtifactProcessor
 from vybz.assets.loader import AssetLoader
 
 

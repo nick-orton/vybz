@@ -9,7 +9,7 @@ import argparse
 import sys
 from pathlib import Path
 from typing import Final
-from vybz.md_utils import format_markdown_content
+from vybz.tools.md_utils import format_markdown_content
 
 # Configuration
 DEFAULT_WIDTH: Final[int] = 80

@@ -169,7 +169,7 @@ class DiffHandler(ArtifactHandler):
 
         # 1. Sanitize
         try:
-            from vybz.diff_utils import DiffSanitizer
+            from vybz.tools.diff_utils import DiffSanitizer
             content = DiffSanitizer.sanitize(content)
         except ImportError:
             pass  # Graceful degradation

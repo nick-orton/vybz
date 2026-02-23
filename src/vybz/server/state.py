@@ -22,7 +22,7 @@ from vybz.shared.agent import Agent as VybzAgent
 from vybz.shared.skill import Skill as VybzSkill
 from vybz.server.adapter import AdkHydrator
 from vybz.server.tools.fs import FileSystemTools
-from vybz.config import ConfigLoader
+from vybz.shared.config import ConfigLoader
 from vybz.services.context import ContextAssembler
 
 

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Set, Final
 from prompt_toolkit.enums import EditingMode
 
-from vybz import ui
+from vybz.client import ui
 
 # Allowed configuration keys to prevent polluting the argparse namespace
 ALLOWED_KEYS: Final[Set[str]] = {

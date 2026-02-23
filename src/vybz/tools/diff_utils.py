@@ -8,7 +8,7 @@ incorrect hunk header arithmetic.
 
 import re
 from typing import List, Tuple, Optional
-from vybz import ui
+from vybz.client import ui
 
 class DiffSanitizer:
     """

@@ -7,7 +7,7 @@ Validates polymorphic parsing strategies, routing logic, and filesystem persiste
 import pytest
 import textwrap
 from pathlib import Path
-from vybz.artifact import Artifact, ArtifactProcessor
+from vybz.commands.artifact import Artifact, ArtifactProcessor
 
 
 @pytest.fixture
@@ -145,8 +145,8 @@ End.
         text = textwrap.dedent("""
         Here is the patch:
         ```diff
-        --- a/src/vybz/ui.py
-        +++ b/src/vybz/ui.py
+        --- a/src/vybz/client/ui.py
+        +++ b/src/vybz/client/ui.py
         @@ -10,1 +10,1 @@
         - old
         + new
@@ -160,9 +160,9 @@ End.
         assert len(artifacts) == 1
         artifact = artifacts[0]
         assert artifact.type == "Diff"
-        assert artifact.filename == "src-vybz-ui.py.diff"
+        assert artifact.filename == "src-vybz-client-ui.py.diff"
         assert artifact.directory == ".vybz/output"
-        assert "+++ b/src/vybz/ui.py" in artifact.content
+        assert "+++ b/src/vybz/client/ui.py" in artifact.content
 
     def test_parse_extracts_multiple_artifacts(self, processor):
         """
