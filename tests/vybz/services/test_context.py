@@ -8,8 +8,8 @@ import pytest
 from unittest.mock import MagicMock
 
 from vybz.services.context import ContextAssembler
-from vybz.agent import Agent
-from vybz.context_engine import CodeBase
+from vybz.shared.agent import Agent
+from vybz.shared.codebase import CodeBase
 
 
 class TestContextAssembler:
@@ -41,8 +41,8 @@ class TestContextAssembler:
         mock_dt = mocker.patch("vybz.services.context.datetime")
         mock_dt.datetime.now.return_value.strftime.return_value = "2099-01-01"
 
-        # Act
-        result = ContextAssembler.build_system_instruction(mock_agent, mock_codebase)
+        # Act (Pass root path string as per 3.6 architecture)
+        result = ContextAssembler.build_system_instruction(mock_agent, "/mnt/project")
 
         # Assert
         # 1. Check Agent Role presence
@@ -52,8 +52,9 @@ class TestContextAssembler:
         assert "### SYSTEM METADATA" in result
         assert "Current Date: 2099-01-01" in result
 
-        # 3. Check CodeBase Injection
-        assert "# CodeBase Snapshot" in result
+        # 3. Check Filesystem Access section
+        assert "### FILESYSTEM ACCESS" in result
+        assert "/mnt/project" in result
 
     def test_build_system_instruction_without_codebase(self, mock_agent, mocker):
         """

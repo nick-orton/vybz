@@ -7,13 +7,13 @@ Verifies loading logic, specifically the dual-path skill resolution strategy.
 import pytest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
-from vybz.skill import Skill
-from vybz.agent import Agent
+from vybz.shared.skill import Skill
+from vybz.shared.agent import Agent
 
 @pytest.fixture
 def mock_skill_class():
     """Mocks the Skill class to verify factory calls."""
-    with patch("vybz.agent.Skill") as MockSkill:
+    with patch("vybz.shared.agent.Skill") as MockSkill:
         yield MockSkill
 
 @pytest.fixture
@@ -51,7 +51,7 @@ def test_agent_load_missing_skill(agent_env, mock_skill_class):
     agent_file, v2_dir = agent_env
     fake_agent_py = v2_dir.parent / "agent.py"
 
-    with patch.object(vybz.agent, "__file__", str(fake_agent_py)):
+    with patch.object(vybz.shared.agent, "__file__", str(fake_agent_py)):
         with pytest.raises(FileNotFoundError) as exc:
             Agent.from_toml(agent_file)
 
@@ -65,12 +65,12 @@ Verifies loading logic, specifically the dual-path skill resolution strategy.
 import pytest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
-from vybz.agent import Agent
+from vybz.shared.agent import Agent
 
 @pytest.fixture
 def mock_skill_class():
     """Mocks the Skill class to verify factory calls."""
-    with patch("vybz.agent.Skill") as MockSkill:
+    with patch("vybz.shared.agent.Skill") as MockSkill:
         yield MockSkill
 
 @pytest.fixture

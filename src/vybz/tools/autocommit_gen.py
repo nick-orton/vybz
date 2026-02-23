@@ -30,8 +30,8 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
 from google import genai
 from google.genai import types
-from vybz.squad import Squad
-from vybz.agent import Agent
+from vybz.shared.squad import Squad
+from vybz.shared.agent import Agent
 
 # -----------------------------------------------------------------------------
 # Configuration & Constants

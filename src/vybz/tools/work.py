@@ -6,6 +6,7 @@ The primary CLI entry point for Vybz Kartel.
 """
 
 import argparse
+import asyncio
 import os
 import shutil
 import sys
@@ -13,13 +14,11 @@ from pathlib import Path
 from typing import Optional
 
 import vybz
-import vybz.vibez as vibez
-import vybz.ui as ui
-import vybz.repl as repl
-import vybz.config as config
-from vybz.context_engine import CodeBase
-from vybz.squad import Squad
-from vybz.services.session import SessionManager
+import vybz.client.ui as ui
+import vybz.client.repl as repl
+import vybz.shared.config as config
+from vybz.client.session import ClientSessionManager
+from vybz.shared.squad import Squad
 
 
 def _init_user_library() -> None:
@@ -65,7 +64,7 @@ def _init_user_library() -> None:
         ui.print_system("No new files to initialize.")
 
 
-def main() -> None:
+async def main() -> None:
     """
     Parses command line arguments and orchestrates the Vibe Coding session.
     """
@@ -79,13 +78,6 @@ def main() -> None:
         "agent",
         nargs='?',
         help="Target Agent Persona \n['junior-dev', 'pm', 'senior-dev', 'advisor', 'tech-writer' ]"
-    )
-
-    parser.add_argument(
-        "intent",
-        nargs='?',
-        default=None,
-        help="The task description. If omitted, enters Interactive Mode."
     )
 
     # Optional Arguments
@@ -151,10 +143,7 @@ def main() -> None:
         lib_path = Path(args.library) if args.library else None
         Squad.initialize(custom_library_root=lib_path)
 
-        # 1. Initialize the Google GenAI Client
-        client = vibez.configure_genai_client()
-
-        # 2. Load the Agent
+        # Load the Agent
         try:
             agent = Squad.get_agent(args.agent)
         except ValueError:
@@ -162,39 +151,21 @@ def main() -> None:
             ui.print_system(f"Available Agents: {', '.join(Squad.list_agents())}")
             sys.exit(1)
 
-        # 3. Snapshot Codebase (Optional)
-        codebase: Optional[CodeBase] = None
-        if args.codebase:
-            cb_path = Path(args.codebase)
-            ui.print_system(f"Snapshotting codebase at: {cb_path.resolve()} ...")
-            try:
-                codebase = CodeBase(cb_path)
-            except (FileNotFoundError, NotADirectoryError) as e:
-                ui.print_error(f"CodeBase Error: {e}")
-                sys.exit(1)
-        else:
-            ui.print_system("No codebase provided. Running in GREENFIELD mode.")
+        manager = ClientSessionManager()
 
-        # 4. Execution Branching
-        if args.intent:
-            # ---> ONE-SHOT MODE (Legacy)
-            vibez.generate_and_continuous_log(
-                client=client,
-                model_id=args.model,
-                agent=agent,
-                intent=args.intent,
-                codebase=codebase,
-                log_file_path=args.log_file
-            )
-        else:
-            # ---> INTERACTIVE MODE (Phase 2)
-            session_manager = SessionManager(client=client, model_id=args.model, initial_agent=agent, codebase=codebase)
-            session = repl.ReplSession(
-                session_manager,
-                log_file=Path(args.log_file),
-                mode=args.mode
-            )
-            session.start()
+        if not await manager.connect():
+            ui.print_error("vybzd engine unreachable. Please start the server with 'vybzd'.")
+            sys.exit(1)
+
+        cb_root = Path(args.codebase) if args.codebase else None
+        await manager.initialize(args.agent, cb_root)
+
+        session = repl.ReplSession(
+            manager,
+            log_file=Path(args.log_file),
+            mode=args.mode
+        )
+        await session.start()
 
     except KeyboardInterrupt:
         ui.print_warning("Session interrupted by user.")
@@ -206,7 +177,12 @@ def main() -> None:
         traceback.print_exc()
         sys.exit(1)
 
+def run_main():
+    """Synchronous wrapper to run the async main."""
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        sys.exit(130)
 
 if __name__ == "__main__":
-    main()
-
+    run_main()

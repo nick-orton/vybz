@@ -2,8 +2,8 @@ import tomllib  # Built-in in Python 3.11+
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import List, TYPE_CHECKING
-from vybz.skill import Skill
-from vybz.biblos import Library
+from vybz.shared.skill import Skill
+from vybz.shared.library import Library
 
 @dataclass
 class Agent:

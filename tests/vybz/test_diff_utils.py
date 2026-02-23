@@ -7,7 +7,7 @@ and header recalculation using the unidiff library.
 """
 import pytest
 import textwrap
-from vybz.diff_utils import DiffSanitizer
+from vybz.tools.diff_utils import DiffSanitizer
 
 class TestDiffSanitizer:
     """

@@ -9,7 +9,7 @@ routed to their destination.
 """
 import pytest
 import textwrap
-from vybz.artifact import ArtifactProcessor
+from vybz.commands.artifact import ArtifactProcessor
 
 def test_docstring_convention_is_recognized_by_parser():
     """

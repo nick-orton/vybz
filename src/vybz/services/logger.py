@@ -3,11 +3,13 @@ src/vybz/services/logger.py
 
 Handles persistence of interaction logs.
 Decouples file I/O and formatting from the REPL session loop.
+Updated to sanitize ANSI escape codes before writing to disk (Fixes Issue #5).
 """
 
+import re
 from pathlib import Path
 from datetime import datetime
-from vybz import ui
+from vybz.client import ui
 
 
 class InteractionLogger:
@@ -25,6 +27,10 @@ class InteractionLogger:
         self.log_path = log_path
         self._ensure_directory()
 
+        # Regex to match ANSI escape sequences (Issue #5)
+        # This targets standard SGR (Select Graphic Rendition) codes used for colors/styling.
+        self._ansi_regex = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+
     def _ensure_directory(self) -> None:
         """Creates the parent directory if it does not exist."""
         try:
@@ -33,14 +39,26 @@ class InteractionLogger:
         except OSError as e:
             ui.print_error(f"Failed to create log directory: {e}")
 
+    def _sanitize(self, text: str) -> str:
+        """
+        Removes ANSI escape codes from text to ensure clean log files.
+        """
+        if not text:
+            return ""
+        return self._ansi_regex.sub('', text)
+
     def _append(self, text: str) -> None:
         """
-        Appends raw text to the log file.
+        Appends sanitized text to the log file.
         """
+        # Sanitize before persisting to disk
+        clean_text = self._sanitize(text)
         try:
             with open(self.log_path, "a", encoding="utf-8") as f:
-                f.write(text)
+                f.write(clean_text)
         except IOError as e:
+            # We don't want to crash the whole application if logging fails,
+            # but we should notify the UI.
             ui.print_error(f"Logging failed: {e}")
 
     def log_session_start(self) -> None:

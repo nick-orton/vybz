@@ -4,7 +4,7 @@ tests/vybz/test_skill.py
 Unit tests for the Skill domain object.
 """
 import pytest
-from vybz.skill import Skill
+from vybz.shared.skill import Skill
 
 def test_skill_render():
     """

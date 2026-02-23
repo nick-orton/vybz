@@ -3,48 +3,36 @@ repl.py
 
 Handles the Interactive Read-Eval-Print Loop (REPL) for Vybz.
 Leverages prompt_toolkit for multi-line editing and custom keybindings.
-Connects to Google GenAI SDK for stateful chat.
-Supports multi-agent session switching, artifact auto-saving, and context hot-reloading.
+Communicates with the vybzd engine via ClientSessionManager.
 """
 
-import sys
-import datetime
 from pathlib import Path
-from typing import Optional, Dict, Any, Tuple, List
+from typing import Optional, Tuple, List
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.enums import EditingMode
 
-from google import genai
-from google.genai import types
-
-from vybz.agent import Agent
-from vybz.context_engine import CodeBase
-from vybz.squad import Squad
-from vybz.artifact import ArtifactProcessor
-from vybz.services.session import SessionManager
+from vybz.client.session import ClientSessionManager
 from vybz.commands.registry import CommandRegistry
 from vybz.services.logger import InteractionLogger
-from vybz.config import parse_editing_mode
-from vybz import ui
+from vybz.shared.config import parse_editing_mode
+from vybz.client import ui
 
 class ReplSession:
     """
     Manages the state and input loop for an interactive session.
-    Supports switching between multiple agent personas.
+    Delegates LLM logic to the remote ClientSessionManager.
     """
 
     def __init__(
         self,
-        session_manager: SessionManager,
+        session_manager: ClientSessionManager,
         log_file: Optional[Path] = None,
         mode: str = "emacs"
     ):
         log_path = log_file or Path("/tmp/vybz.log")
         self.logger = InteractionLogger(log_path)
-        #TODO import SessionManager rather than all the arguments
         self.session_manager = session_manager
 
         # State Tracking for Auto-Save
@@ -92,7 +80,7 @@ class ReplSession:
             ("class:meta", f"{mode_str} | {ctx_str}"),
         ]
 
-    def start(self) -> None:
+    async def start(self) -> None:
         """
         Starts the interactive loop.
         """
@@ -104,10 +92,10 @@ class ReplSession:
         while True:
             try:
                 # 1. READ
-                user_input = self.session.prompt(
+                user_input = await self.session.prompt_async(
                     self._get_prompt_tokens,
                     rprompt=self._get_rprompt_tokens,
-                    style=ui.get_ptk_style(), # <--- DELEGATED TO UI
+                    style=ui.get_ptk_style(),
                     multiline=True
                 )
 
@@ -115,11 +103,11 @@ class ReplSession:
                     continue
 
                 # 2. CHECK COMMANDS
-                if self._handle_command(user_input):
+                if await self._handle_command(user_input):
                     continue
 
                 # 3. EVAL & PRINT
-                self._handle_input(user_input)
+                await self._handle_input(user_input)
 
             except KeyboardInterrupt:
                 continue
@@ -129,7 +117,7 @@ class ReplSession:
             except Exception as e:
                 ui.print_error(f"REPL Error: {e}")
 
-    def _handle_command(self, text: str) -> bool:
+    async def _handle_command(self, text: str) -> bool:
         """
         Intercepts slash commands using the CommandRegistry.
         Returns True if a command was handled (skipping LLM inference).
@@ -141,28 +129,25 @@ class ReplSession:
         cmd_name = parts[0].lower()
         args = parts[1:]
 
-        # Check if it looks like a command
         if not cmd_name.startswith("/"):
             return False
 
-        # Lookup
         command = self.registry.get_command(cmd_name)
         if command:
-            return command.execute(self, args)
+            return await command.execute(self, args)
 
-        # Unknown command but starts with /
         ui.print_error(f"Unknown command '{cmd_name}'. Type /help for list.")
         return True
 
-    def _handle_input(self, text: str) -> None:
+    async def _handle_input(self, text: str) -> None:
         """
-        Sends input to the model, streams the response, and logs the turn.
+        Sends input to the vybzd engine, streams the response, and logs the turn.
         """
         agent = self.session_manager.active_agent
-        chat = self.session_manager.active_chat
+        agent_name = agent.name if agent else "vybz"
 
-        # Log User Input
-        self.logger.log_user_input(agent.name, text)
+        # 1. Log User Input
+        self.logger.log_user_input(agent_name, text)
 
         # Visual separator
         ui.console.print()
@@ -170,28 +155,17 @@ class ReplSession:
         full_response = []
 
         try:
-            # SDK Call: Stream Message using ACTIVE chat
-            if not chat:
-                ui.print_error("No active chat session.")
-                return
+            # 2. Consume Remote Stream
+            async for chunk in self.session_manager.chat(text):
+                if chunk:
+                    ui.stream_chunk(chunk)
+                    full_response.append(chunk)
 
-            response_stream = chat.send_message_stream(text)
-
-            for chunk in response_stream:
-                if chunk.text:
-                    ui.stream_chunk(chunk.text)
-                    full_response.append(chunk.text)
-
-            # Print newline after stream ends
+            # 3. Finalize Turn
             ui.console.print()
-
-            # Capture full response for state tracking (Auto-Save)
             self.last_response = "".join(full_response)
-
-            # Log Model Response
-            self.logger.log_model_response(agent.name, self.last_response)
+            self.logger.log_model_response(agent_name, self.last_response)
 
         except Exception as e:
             ui.print_error(f"Generation Error: {e}")
             self.logger.log_error(str(e))
-

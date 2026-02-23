@@ -7,11 +7,11 @@ Verifies identification of diff blocks and filename extraction logic.
 import pytest
 from unittest.mock import MagicMock, patch
 from markdown_it.token import Token
-from vybz.artifact import DiffHandler
+from vybz.commands.artifact import DiffHandler
 
 class TestDiffHandler:
     """
-    Tests for the DiffHandler class in src/vybz/artifact.py
+    Tests for the DiffHandler class in src/vybz/commands/artifact.py
     """
 
     @pytest.fixture
@@ -41,7 +41,7 @@ class TestDiffHandler:
         token.info = "diff"
         assert handler.can_handle(token) is False
 
-    @patch("vybz.diff_utils.DiffSanitizer")
+    @patch("vybz.tools.diff_utils.DiffSanitizer")
     def test_extract_valid_diff(self, MockSanitizer, handler):
         """
         Happy Path: Verify extraction logic.
@@ -69,8 +69,8 @@ class TestDiffHandler:
         # Verify Sanitizer was invoked
         MockSanitizer.sanitize.assert_called_with(raw_content)
 
-    @patch("vybz.artifact.datetime")
-    @patch("vybz.diff_utils.DiffSanitizer")
+    @patch("vybz.commands.artifact.datetime")
+    @patch("vybz.tools.diff_utils.DiffSanitizer")
     def test_extract_fallback_filename(self, MockSanitizer, mock_dt, handler):
         """
         Edge Case: Verify fallback filename generation when diff header is missing.

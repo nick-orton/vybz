@@ -6,11 +6,17 @@ Verifies multi-agent state management, chat creation, and context refreshing.
 """
 import pytest
 from unittest.mock import MagicMock, patch
-from google.genai import types
+from dataclasses import dataclass
 
 from vybz.services.session import SessionManager
-from vybz.agent import Agent
-from vybz.context_engine import CodeBase
+from vybz.shared.agent import Agent
+from vybz.shared.codebase import CodeBase
+
+# Define a dummy class to replace the SDK config object for testing
+@dataclass
+class MockGenerateContentConfig:
+    system_instruction: str
+    temperature: float
 
 class TestSessionManager:
 
@@ -50,8 +56,14 @@ class TestSessionManager:
     @pytest.fixture
     def manager(self, mock_client, mock_agent_a, mock_codebase):
         """Returns an initialized SessionManager instance with dependencies patched."""
-        with patch("vybz.services.session.ContextAssembler") as mock_assembler:
+        with patch("vybz.services.session.ContextAssembler") as mock_assembler, \
+             patch("vybz.services.session.types") as mock_types:
+
+            # Patch the types module used inside SessionManager to use our dummy class
+            mock_types.GenerateContentConfig = MockGenerateContentConfig
+
             mock_assembler.build_system_instruction.return_value = "System Prompt"
+
             return SessionManager(
                 client=mock_client,
                 model_id="gemini-test",
@@ -70,14 +82,21 @@ class TestSessionManager:
         mock_client.chats.create.assert_called_once()
         _, kwargs = mock_client.chats.create.call_args
         assert kwargs["model"] == "gemini-test"
-        # Verify config type usage
-        assert isinstance(kwargs["config"], types.GenerateContentConfig)
-        assert kwargs["config"].system_instruction == "System Prompt"
+
+        # Verify config usage
+        # Since we patched types.GenerateContentConfig with our MockGenerateContentConfig dataclass,
+        # we can inspect the object directly.
+        config = kwargs["config"]
+        assert isinstance(config, MockGenerateContentConfig)
+        assert config.system_instruction == "System Prompt"
 
     def test_switch_agent_new_session(self, manager, mock_client, mock_agent_b):
         """Verify switching to a new agent creates a new session."""
         # Arrange
-        with patch("vybz.services.session.Squad") as mock_squad:
+        with patch("vybz.services.session.Squad") as mock_squad, \
+             patch("vybz.services.session.types") as mock_types:
+
+            mock_types.GenerateContentConfig = MockGenerateContentConfig
             mock_squad.get_agent.return_value = mock_agent_b
 
             # Act
@@ -112,63 +131,6 @@ class TestSessionManager:
             with pytest.raises(ValueError):
                 manager.switch_agent("ghost-agent")
 
-    def test_refresh_context_rebuilds_sessions(self, manager, mock_client, mock_agent_a, mock_codebase):
-        """
-        Verify refresh_context:
-        1. Re-snapshots CodeBase.
-        2. Iterates sessions.
-        3. Extracts history.
-        4. Creates new chat objects.
-        """
-        # Arrange
-        # Mock the existing chat to return some history
-        old_chat = manager.sessions["agent-a"]
-        mock_history = [{"role": "user", "parts": ["Hi"]}]
-        old_chat.get_history.return_value = mock_history
-
-        # Mock CodeBase constructor to verify re-instantiation
-        with patch("vybz.services.session.CodeBase", return_value=mock_codebase) as MockCodeBaseClass, \
-             patch("vybz.services.session.Squad") as mock_squad:
-
-            # Squad needs to return the agent object during rebuild loop
-            mock_squad.get_agent.return_value = mock_agent_a
-
-            # Act
-            count = manager.refresh_context()
-
-            # Assert
-            assert count == 1
-            # CodeBase should be re-initialized
-            MockCodeBaseClass.assert_called_with(mock_codebase.root_path)
-
-            # Client.chats.create should be called again (Init + Refresh = 2)
-            assert mock_client.chats.create.call_count == 2
-
-            # Verify history was passed to the new chat
-            _, kwargs = mock_client.chats.create.call_args
-            assert kwargs["history"] == mock_history
-
-            # Verify session dictionary updated
-            assert manager.sessions["agent-a"] != old_chat
-
-    def test_refresh_context_handles_errors(self, manager):
-        """Verify that a failure in one session refresh doesn't crash the method."""
-        # Arrange
-        # Force an error during history extraction for the active session
-        bad_chat = MagicMock()
-        bad_chat.get_history.side_effect = Exception("API Error")
-        manager.sessions["agent-a"] = bad_chat
-
-        # Act
-        with patch("vybz.services.session.CodeBase"), \
-             patch("vybz.services.session.ui") as mock_ui:
-
-            count = manager.refresh_context()
-
-        # Assert
-        assert count == 0 # No sessions successfully refreshed
-        mock_ui.print_error.assert_called() # Error logged
-
     def test_load_file_success(self, manager, tmp_path):
         """Verify load_file reads content and updates manual_context."""
         # Arrange
@@ -192,14 +154,18 @@ class TestSessionManager:
         """Verify that manual context is passed to the prompt assembler."""
         # Arrange
         manager.manual_context = {"/path/to/file": "content"}
-        
-        with patch("vybz.services.session.ContextAssembler") as mock_assembler:
+
+        with patch("vybz.services.session.ContextAssembler") as mock_assembler, \
+             patch("vybz.services.session.types") as mock_types:
+
+            mock_types.GenerateContentConfig = MockGenerateContentConfig
+
             # Act
             manager._create_chat(mock_agent_a)
-            
+
             # Assert
             mock_assembler.build_system_instruction.assert_called_with(
-                mock_agent_a, 
-                manager.codebase, 
+                mock_agent_a,
+                manager.codebase,
                 manager.manual_context
             )

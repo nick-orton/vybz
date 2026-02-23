@@ -5,13 +5,13 @@ Unit tests for the ReplSession (Presentation Layer).
 Verifies Command Dispatching, TUI State Rendering, and Input Delegation.
 """
 import pytest
-from unittest.mock import MagicMock, patch, ANY
+from unittest.mock import MagicMock, AsyncMock, patch, ANY
 from pathlib import Path
 from prompt_toolkit.enums import EditingMode
 
-from vybz.repl import ReplSession
-from vybz.agent import Agent
-from vybz.context_engine import CodeBase
+from vybz.client.repl import ReplSession
+from vybz.shared.agent import Agent
+from vybz.shared.codebase import CodeBase
 
 # -----------------------------------------------------------------------------
 # Fixtures
@@ -42,10 +42,10 @@ def repl(mock_session_manager, tmp_path):
     Returns an initialized ReplSession with dependencies mocked.
     We patch PromptSession and CommandRegistry to isolate the REPL loop logic.
     """
-    with patch("vybz.repl.PromptSession"), \
-         patch("vybz.repl.CommandRegistry") as MockRegistry, \
-         patch("vybz.repl.ui"), \
-         patch("vybz.repl.InteractionLogger"): # Mock logger dependencies
+    with patch("vybz.client.repl.PromptSession"), \
+         patch("vybz.client.repl.CommandRegistry") as MockRegistry, \
+         patch("vybz.client.repl.ui"), \
+         patch("vybz.client.repl.InteractionLogger"): # Mock logger dependencies
 
         session = ReplSession(
             mock_session_manager,
@@ -120,40 +120,43 @@ def test_get_rprompt_tokens_no_context(repl, mock_session_manager):
 # Command Dispatching Tests (The Command Pattern)
 # -----------------------------------------------------------------------------
 
-def test_handle_command_dispatches_to_registry(repl):
+@pytest.mark.asyncio
+async def test_handle_command_dispatches_to_registry(repl):
     """
     Verify _handle_command looks up the command in registry and executes it.
     """
     # Arrange
-    mock_cmd = MagicMock()
+    mock_cmd = AsyncMock()
     mock_cmd.execute.return_value = True
     repl.registry.get_command.return_value = mock_cmd
 
     # Act
-    result = repl._handle_command("/test arg1")
+    result = await repl._handle_command("/test arg1")
 
     # Assert
     repl.registry.get_command.assert_called_with("/test")
     mock_cmd.execute.assert_called_with(repl, ["arg1"])
     assert result is True
 
-def test_handle_command_unknown(repl):
+@pytest.mark.asyncio
+async def test_handle_command_unknown(repl):
     """Verify handling of unknown slash commands."""
     # Arrange
     repl.registry.get_command.return_value = None
 
-    with patch("vybz.repl.ui") as mock_ui:
+    with patch("vybz.client.repl.ui") as mock_ui:
         # Act
-        result = repl._handle_command("/unknown")
+        result = await repl._handle_command("/unknown")
 
         # Assert
         mock_ui.print_error.assert_called_with("Unknown command '/unknown'. Type /help for list.")
         assert result is True # Should continue loop, not crash
 
-def test_handle_command_not_a_command(repl):
+@pytest.mark.asyncio
+async def test_handle_command_not_a_command(repl):
     """Verify normal text input is ignored by command handler."""
     # Act
-    result = repl._handle_command("just some text")
+    result = await repl._handle_command("just some text")
 
     # Assert
     assert result is False
@@ -162,48 +165,37 @@ def test_handle_command_not_a_command(repl):
 # Input Handling Tests
 # -----------------------------------------------------------------------------
 
-def test_handle_input_delegates_to_stream(repl, mock_session_manager):
+@pytest.mark.asyncio
+async def test_handle_input_delegates_to_stream(repl, mock_session_manager):
     """Verify user input is sent to the active chat stream and logged."""
     # Arrange
-    mock_chat = mock_session_manager.active_chat
-    mock_chat.send_message_stream.return_value = [
-        MagicMock(text="Chunk 1"),
-        MagicMock(text="Chunk 2")
-    ]
+    async def mock_stream(text):
+        yield "Chunk 1"
+        yield "Chunk 2"
 
-    with patch("vybz.repl.ui") as mock_ui:
+    mock_session_manager.chat.side_effect = mock_stream
+
+    with patch("vybz.client.repl.ui") as mock_ui:
         # Act
-        repl._handle_input("Hello World")
+        await repl._handle_input("Hello World")
 
         # Assert
-        mock_chat.send_message_stream.assert_called_with("Hello World")
+        mock_session_manager.chat.assert_called_with("Hello World")
         # Verify streaming to UI
         mock_ui.stream_chunk.assert_any_call("Chunk 1")
         mock_ui.stream_chunk.assert_any_call("Chunk 2")
         # Verify auto-save state capture
         assert repl.last_response == "Chunk 1Chunk 2"
 
-def test_handle_input_no_active_chat(repl, mock_session_manager):
-    """Verify robust handling when no chat is active (e.g. init failure)."""
-    # Arrange
-    mock_session_manager.active_chat = None
-
-    with patch("vybz.repl.ui") as mock_ui:
-        # Act
-        repl._handle_input("Hello")
-
-        # Assert
-        mock_ui.print_error.assert_called_with("No active chat session.")
-
-def test_handle_input_api_error(repl, mock_session_manager):
+@pytest.mark.asyncio
+async def test_handle_input_api_error(repl, mock_session_manager):
     """Verify API errors are caught and logged without crashing REPL."""
     # Arrange
-    mock_chat = mock_session_manager.active_chat
-    mock_chat.send_message_stream.side_effect = Exception("API 500")
+    mock_session_manager.chat.side_effect = Exception("API 500")
 
-    with patch("vybz.repl.ui") as mock_ui:
+    with patch("vybz.client.repl.ui") as mock_ui:
         # Act
-        repl._handle_input("Crash me")
+        await repl._handle_input("Crash me")
 
         # Assert
         mock_ui.print_error.assert_called()

@@ -1,41 +1,47 @@
-# Vybz Kartel: AI-Orchestrated Vibe Coding Workbench
+# Vybz Kartel: AI-Orchestrated Coding Workbench
 
-**Vybz Kartel** is a world-boss level coding workbench designed for POSIX 
-environments.  This terminal-centric system leverages 
-**Google Gemini 3.0** models via the `google-genai` SDK to facilitate 
-"Vibe Coding"—a workflow that prioritizes flow state, low-friction 
-CLI interactions, and high-velocity software evolution.
+**Vybz** is a high-velocity coding workbench designed for POSIX
+environments. It transforms your local terminal into a sophisticated
+development studio where specialized AI Agents collaborate on your source
+tree.
 
-This system is not a simple autocomplete plugin. It is a **Context Engine**
-that snapshots your local filesystem, injects it into specialized AI Personas
-(Agents), and enables stateful, multi-turn architectural discussions directly
-in your terminal.
+Built on a **Client-Server Architecture**, Vybz separates heavy-duty
+LLM orchestration (`vybzd`) from the interactive user experience (`vybz`),
+providing a stateful, low-latency "Vibe Coding" workflow.
 
-## Core Features
+## Core Architecture
 
-*   **Interactive REPL:** A robust Read-Eval-Print Loop powered by
-    `prompt_toolkit`. Supports multi-line input, slash commands, and persistent
-    chat history for iterative development.
-*   **The Squad:** A modular system of specialized AI agents defined in TOML.
-    Agents range from "Junior Developers" (code generation) to "Product
-    Managers" (specification) and "Technical Writers" (documentation).
-*   **Agent Skills:** A composable architecture where agents inherit shared
-    knowledge (e.g., SDK versions, OS constraints) from reusable skill modules,
-    ensuring consistency across the squad.
-*   **Context Engine:** A read-only filesystem snapshot tool (`CodeBase`) that
-    respects `.gitignore`, excludes binary files, and serializes your source
-    tree into Markdown for accurate LLM context.
-*   **TUI Experience:** Styled output using `rich` with a "Cyber/Oceanic"
-    theme, ensuring clear visual separation between user input, system logs,
-    and agent responses.
+Vybz operates on a client-server model to ensure stability and state
+persistence:
+
+- **`vybzd` (The Server):** A persistent background process that manages
+  agent sessions, context snapshots, and the `google-genai` SDK
+  connections. It maintains the "Source of Truth" for your project's
+  state.
+- **`vybz` (The Client):** A lightweight, interactive REPL powered by
+  `prompt_toolkit`. It communicates with the server via an internal API
+  to provide real-time feedback and high-fidelity TUI rendering.
+
+## Key Features
+
+- **The Squad:** Specialized AI agents defined in TOML (e.g., `senior-dev`,
+  `pm`, `tech-writer`). Each agent possesses unique system instructions
+  and personality.
+- **Composable Skills:** Agents inherit capabilities from modular,
+  directory-based "Skills" (adhering to the AgentSkills.io standard).
+- **Context Engine:** Automatic codebase snapshotting that respects
+  `.gitignore`, enabling agents to "see" your files and directory structure.
+- **Artifact Management:** Slash commands like `/save` automatically
+  extract, name, and route code blocks, designs, and blueprints to the
+  correct directories based on metadata.
+- **Advanced REPL:** Supports Vi/Emacs keybindings, multi-line input, and
+  custom themes (Dracula, Matrix, etc.).
 
 ## Prerequisites
 
-*   **Python:** 3.11 or higher.
-*   **API Key:** Google Gemini API key (`GEMINI_API_KEY`).
-*   **OS:** POSIX-compliant (FreeBSD/Linux/macOS).
-*   **Terminal:** A modern terminal emulator. Vi and Tmux are recommended
-    for optimal rendering.
+- **Python:** 3.11 or higher.
+- **API Key:** Google Gemini API key (`GEMINI_API_KEY`).
+- **OS:** POSIX-compliant (FreeBSD/Linux/macOS).
 
 ## Installation
 
@@ -57,56 +63,38 @@ in your terminal.
     export GEMINI_API_KEY="your-google-api-key-here"
     ```
 
-## Usage
+## Quick Start
 
-The primary interface is the `vybz` command. It supports two modes:
-**Interactive (Recommended)** and **One-Shot**.
-
-### 1. Interactive Mode (REPL)
-Launch a stateful chat session with a specific agent. This mode allows you to
-refine requirements, ask follow-up questions, and paste large blocks of code
-for refactoring.
-
-**Command:**
+### 1. Start the Server
+In a dedicated terminal (or tmux pane), launch the Vybz daemon:
 ```bash
-# Syntax: vybz <agent> [-c path/to/codebase] [--mode vi|emacs]
-vybz junior-dev --codebase . --mode vi
+vybzd
 ```
 
-**Keybindings & Commands:**
-*   **Alt+Enter** (or `Esc` then `Enter`): Submit input to the agent.
-*   **Enter**: Insert a newline (allows for multi-line code pasting).
-*   **`/agent [name]`**: Switch active agent (e.g., `/agent pm`). Type without
-    arguments to list available agents.
-*   **`/clear`**: Clear the terminal screen (preserves chat history).
-*   **`/downlevel <id>`**: Remove a skill from the active session.
-*   **`/load <file>`**: Load a specific file into the active context.
-*   **`/save`**: Auto-save the last generated artifact to the appropriate
-    directory based on its metadata.
-*   **`/set <mode>`**: Set input mode (`vi` or `emacs`).
-*   **`/skills`**: Visualize the active agent's capabilities in a table.
-*   **`/theme <name>`**: Set UI color theme (e.g., `/theme matrix`).
-*   **`/update`**: Refresh CodeBase snapshot and System Date.
-*   **`/uplevel <path>`**: Inject a local skill directory at runtime.
-*   **`/help`**: Show available commands and keybindings.
-*   **`/exit`**: End the session.
-
-### 2. One-Shot Mode (Legacy)
-Execute a single, fire-and-forget task. Useful for quick questions or scripting.
-
-**Command:**
+### 2. Launch the Client
+In another terminal, start an interactive session with an agent:
 ```bash
-# Syntax: vybz <agent> "Your instruction here"
-vybz senior-dev "Explain the factory pattern in Python"
+# Start a session with the senior developer
+vybz senior-dev --codebase .
 ```
 
-### Context Injection (`--codebase`)
-The `--codebase` (or `-c`) snapshots the target directory
-and injects it into the Agent's system instructions.
+## Interactive Commands
 
-*   **Without `-c`:** The agent runs in "Greenfield" mode.
-*   **With `-c .`:** The agent "sees" your current project structure and file
-    contents (respecting `.gitignore`).
+Inside the REPL, use slash commands to manage the session:
+
+- **Alt+Enter** (or `Esc` then `Enter`): Submit input to the agent.
+- **`/agent <name>`**: Switch the active agent in the current session.
+- **`/clear`**: Clear the terminal screen (preserves chat history).
+- **`/set <mode>`**: Set input mode (`vi` or `emacs`).
+- **`/save`**: Extract and save code/docs from the agent's last response.
+- **`/update`**: Refresh the codebase context (e.g., after manual file edits).
+- **`/load <path>`**: Manually inject a specific file's content into context.
+- **`/skills`**: Display the active agent's current capabilities.
+- **`/uplevel <path>`**: Inject a local skill directory at runtime.
+- **`/downlevel <id>`**: Remove a skill from the active session.
+- **`/theme <name>`**: Switch the UI theme (e.g., `matrix`, `dracula`).
+- **`/help`**: List all available commands and keybindings.
+- **`/exit`**: End the session.
 
 ## The Squad: Specialized Agents
 
@@ -230,13 +218,14 @@ you can create a configuration file. Vybz looks for this file at startup.
 # ~/.vybzrc
 mode = "vi"               # Options: vi, emacs
 theme = "matrix"          # Options: default, matrix, dracula
-model = "gemini-3-pro-preview"
+model = "gemini-3-flash-preview"
 ```
+
+See `vybzrc.example` for more details.
 
 **Precedence:**
 CLI Arguments (e.g., `--mode emacs`) override Config File settings, which
 override System Defaults.
-
 
 ## CLI Utilities
 
@@ -271,53 +260,20 @@ vybz-fmt README.md > README.md.tmp && mv README.md.tmp README.md
 vybz-fmt docs/spec.md -w 100
 ```
 
-## Project Structure
+## Development
 
-*   `src/vybz/`: Core source code.
-*   `src/vybz/tools`: CLI utilities
-*   `src/vybz/agents/`: TOML definitions for AI personas.
-*   `designs/`: High-level specifications and designs.
-*   `blueprints/`: Architectural implementation plans.
-*   `intents/`: Raw user intents (historical).
-
-## Development & Testing
-
-Vybz utilizes `pytest` for the test runner and `pytest-mock` to ensure all unit
-tests are hermetic (no network calls).
-
-### Running the Suite
-
-Ensure your virtual environment is active and development dependencies are
-installed:
+Vybz uses `pytest` for testing. The suite is hermetic and does not call
+the live API.
 
 ```bash
-pip install -e .
-```
-
-Execute the full test suite from the project root:
-
-```bash
+# Run all tests
 pytest
+
+# Run tests for the server specifically
+pytest tests/vybz/server/
 ```
-
-To run a specific test file or output verbose logs:
-
-```bash
-# Run only the Skill domain tests
-pytest tests/vybz/test_skill.py
-
-# Run with verbose output
-pytest -v
-```
-
-### Testing Standards
-
-*   **Hermetic:** Tests never hit the live Google Gemini API. The client is
-    mocked globally in `tests/conftest.py`.
-*   **Isolation:** File I/O tests use the `tmp_path` fixture. Do not write to
-    the local filesystem during tests.
-*   **Speed:** The suite is designed to execute in sub-second time.
 
 ## License
 
 MIT License. See `LICENSE` for details.
+```

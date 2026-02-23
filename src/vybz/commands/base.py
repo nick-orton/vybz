@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from typing import List, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from vybz.repl import ReplSession
+    from vybz.client.repl import ReplSession
 
 
 class Command(ABC):
@@ -20,7 +20,7 @@ class Command(ABC):
     aliases: List[str] = []
 
     @abstractmethod
-    def execute(self, session: "ReplSession", args: List[str]) -> bool:
+    async def execute(self, session: "ReplSession", args: List[str]) -> bool:
         """
         Executes the command logic.
 

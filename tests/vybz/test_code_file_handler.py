@@ -9,11 +9,11 @@ import pytest
 import textwrap
 from unittest.mock import MagicMock
 from markdown_it.token import Token
-from vybz.artifact import CodeFileHandler
+from vybz.commands.artifact import CodeFileHandler
 
 class TestCodeFileHandler:
     """
-    Tests for the CodeFileHandler class in src/vybz/artifact.py
+    Tests for the CodeFileHandler class in src/vybz/commands/artifact.py
     """
 
     @pytest.fixture

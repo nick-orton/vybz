@@ -1,6 +1,6 @@
 # filename: .vybz/intents/restructure-agents-and-skills.md
 ---
-status: "Draft"
+status: "Completed"
 type: "Intent"
 author: "Lead Technical Writer"
 last_updated: "2026-02-06"

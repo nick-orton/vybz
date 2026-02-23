@@ -14,6 +14,14 @@ import pytest
 src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
+@pytest.fixture(autouse=True)
+def stub_google_api_key():
+    """
+    Ensure GOOGLE_API_KEY is present in the environment for all tests
+    to prevent the ServerState initialization check from failing.
+    """
+    os.environ["GOOGLE_API_KEY"] = "sk-fake-test-key-12345"
+
 @pytest.fixture
 def mock_genai_client(mocker):
     """

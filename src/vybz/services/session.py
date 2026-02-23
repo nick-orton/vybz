@@ -10,11 +10,11 @@ from typing import Dict, Any, Optional
 from google import genai
 from google.genai import types
 
-from vybz.agent import Agent
-from vybz.context_engine import CodeBase
-from vybz.squad import Squad
+from vybz.client import ui
+from vybz.shared.agent import Agent
+from vybz.shared.codebase import CodeBase
+from vybz.shared.squad import Squad
 from vybz.services.context import ContextAssembler
-from vybz import ui
 
 
 class SessionManager:
@@ -74,13 +74,13 @@ class SessionManager:
     def load_file(self, path_str: str) -> str:
         """
         Reads a file and stores it in manual context.
-        
+
         Args:
             path_str: The filesystem path string.
-            
+
         Returns:
             str: The resolved path string for feedback.
-            
+
         Raises:
             FileNotFoundError: If file not found.
             IOError: If read fails.
@@ -88,38 +88,6 @@ class SessionManager:
         path = Path(path_str).resolve()
         if not path.is_file():
             raise FileNotFoundError(f"File not found: {path}")
-            
+
         self.manual_context[str(path)] = path.read_text(encoding="utf-8")
         return str(path)
-
-    def refresh_context(self) -> int:
-        """
-        Reloads CodeBase and Hot-Swaps all active sessions.
-        Returns the number of sessions refreshed.
-        """
-        if self.codebase:
-            # Re-snapshot filesystem
-            self.codebase = CodeBase(self.codebase.root_path)
-
-        count = 0
-        for agent_id, old_chat in list(self.sessions.items()):
-            try:
-                # Extract history
-                try:
-                    history = old_chat.get_history()
-                except AttributeError:
-                    history = getattr(old_chat, "_history", [])
-
-                # Rebuild chat
-                agent = Squad.get_agent(agent_id)  # Reload agent def too
-                new_chat = self._create_chat(agent, history)
-                self.sessions[agent_id] = new_chat
-                count += 1
-            except Exception as e:
-                ui.print_error(f"Failed to refresh session for {agent_id}: {e}")
-
-        # Update active pointer
-        if self.active_agent:
-            self.active_chat = self.sessions.get(self.active_agent.id)
-
-        return count

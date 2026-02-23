@@ -1,5 +1,5 @@
 ---
-status: "Draft"
+status: "Complete"
 type: "Intent"
 author: "Nick Orton"
 last_updated: "2026-01-12"

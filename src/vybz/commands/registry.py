@@ -2,28 +2,35 @@
 src/vybz/commands/registry.py
 
 Handles registration and lookup of command objects.
+Aggregates commands from both core (Session) and system (Local) modules.
 """
 
 from typing import Dict, List, Optional
 from vybz.commands.base import Command
+
+# Agent & Session Commands
 from vybz.commands.core import (
     AgentCommand,
-    ClearCommand,
-    ExitCommand,
-    HelpCommand,
-    SaveCommand,
     LoadCommand,
-    SetModeCommand,
-    ThemeCommand,
-    UpdateCommand,
     SkillsCommand,
     UplevelCommand,
     DownlevelCommand
 )
 
+# Local System & UI Commands
+from vybz.commands.system import (
+    ExitCommand,
+    ClearCommand,
+    HelpCommand,
+    SaveCommand,
+    SetModeCommand,
+    ThemeCommand
+)
+
 class CommandRegistry:
     """
     Central registry for REPL commands.
+    Shields the REPL loop from the implementation details of where commands live.
     """
 
     def __init__(self) -> None:
@@ -47,21 +54,21 @@ class CommandRegistry:
         """
         Returns a list of unique command objects.
         """
-        # Dedup by object identity
         return list({cmd for cmd in self._commands.values()})
 
     def initialize(self) -> None:
-        """Registers all available commands."""
+        """Registers all available commands from both modules."""
+        # Core / Session
         self.register(AgentCommand())
-        self.register(ClearCommand())
-        self.register(ExitCommand())
-        self.register(HelpCommand())
-        self.register(SaveCommand())
         self.register(LoadCommand())
-        self.register(SetModeCommand())
-        self.register(ThemeCommand())
-        self.register(UpdateCommand())
         self.register(SkillsCommand())
         self.register(UplevelCommand())
         self.register(DownlevelCommand())
 
+        # System / UI
+        self.register(ExitCommand())
+        self.register(ClearCommand())
+        self.register(HelpCommand())
+        self.register(SaveCommand())
+        self.register(SetModeCommand())
+        self.register(ThemeCommand())

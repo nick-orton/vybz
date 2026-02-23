@@ -1,5 +1,5 @@
 ---
-status: "Completed"
+status: "Obsolete"
 type: "Intent"
 author: "Lead Technical Writer"
 last_updated: "2026-01-11"
